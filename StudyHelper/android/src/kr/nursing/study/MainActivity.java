@@ -109,7 +109,10 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (web.canGoBack()) web.goBack(); else finish();
+        web.evaluateJavascript("window.onBack ? window.onBack() : false", new ValueCallback<String>() {
+            @Override
+            public void onReceiveValue(String value) { if (!"true".equals(value)) finish(); }
+        });
     }
 
     private boolean readShared(Intent intent) {

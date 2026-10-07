@@ -125,6 +125,7 @@
         if (((big && t.length <= 60) || (headingLike(t) && (emph || big))) && !/[①②③④⑤]/.test(t) && !/\?\s*$/.test(t)) {
           var level = big ? (L.h >= (bigs[0] || 0) * 0.97 ? 1 : 2) : 3;
           if (/^\d+-\d+/.test(t)) level = 3; else if (/^\d+\.\s/.test(t) && !big) level = 2;
+          if (/^(제\s*)?\d+\s*(장|절|단원|강)(\s|$)/.test(t)) level = 1;
           units.push({ type: 'heading', level: level, text: t, page: pg.p }); cur = null; return;
         }
         var prev = pg.lines[i - 1];

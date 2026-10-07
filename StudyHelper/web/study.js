@@ -68,41 +68,94 @@
   }
 
   // ---------- 학습 자료 만들기 ----------
+  // 제목 비교용: 공백·기호·'(계속)' 등을 지운다 → "1. 고혈압"과 "1.고혈압 (계속)"을 같은 제목으로 본다
+  function headKey(t) { return t.replace(/\((계속|이어서|cont\.?|continued)\)/gi, '').replace(/[\s.·:,\-–()［］\[\]]/g, '').toLowerCase(); }
+
   function build(doc, opt) {
     opt = opt || {};
     var nQ = opt.questions || 20, r = rng(hash(doc.title + doc.units.length));
     var a = analyse(doc), lowEmphasis = a.emphasis < 0.01;
-    var outline = [], numbers = [], cand = [], allSpans = [];
-    var cur = null, sectionTitle = '';
-    function ensure() { if (!cur) { cur = { kind: 'points', items: [], callout: [] }; outline.push(cur); } }
+    var numbers = [], cand = [], allSpans = [];
+    // 제목 나무: 같은 부모 아래 같은 제목이 다시 나오면 새로 만들지 않고 처음 것에 합친다
+    var root = { level: 0, text: '', children: [], items: [], callout: [], page: 1 }, stack = [root];
+    var node = root;
+    function crumb(n) { var out = []; for (var x = n; x && x.level; x = x.parent) out.unshift(x.text); return out; }
+    function topic(n) { var t2 = '', t1 = ''; for (var x = n; x && x.level; x = x.parent) { if (x.level === 2) t2 = x.text; if (x.level === 1) t1 = x.text; } return t2 || t1 || '기타'; }
     a.blocks.forEach(function (b, bi) {
       if (b.kind === 'para') b.unit.order = bi;
-      if (b.kind !== 'para') { outline.push({ kind: b.kind, text: b.text, page: b.page }); cur = null; if (b.kind !== 'h1') sectionTitle = b.text; return; }
+      if (b.kind !== 'para') {
+        var lv = +b.kind.charAt(1);
+        while (stack.length > 1 && stack[stack.length - 1].level >= lv) stack.pop();
+        var parent = stack[stack.length - 1], key = headKey(b.text), same = null;
+        parent.children.forEach(function (c) { if (c.key === key && c.level === lv) same = c; });
+        if (!same) { same = { level: lv, text: b.text, key: key, children: [], items: [], callout: [], page: b.page, parent: parent }; parent.children.push(same); }
+        stack.push(same); node = same;
+        return;
+      }
+      var path = crumb(node), sectionTitle = path.length ? path[path.length - 1] : '';
       sentences(b.unit).forEach(function (s) {
         var sp = spans(s), sc = score(s, sp);
         var keep = lowEmphasis ? (UNIT.test(s.text) || s.ink) : sc >= 2;
         sp.forEach(function (x) { allSpans.push({ text: x.text, section: sectionTitle, numeric: /\d/.test(x.text) }); });
         if (!keep) return;
-        ensure();
-        if (cur.items.length < 10) cur.items.push({ s: s, spans: sp });
+        s.path = path; s.topic = topic(node);
+        if (node.items.length < 14) node.items.push({ s: s, spans: sp });
         var numSpans = sp.filter(function (x) { return /\d/.test(x.text); }).map(function (x) { return x.text; });
         if (!numSpans.length && UNIT.test(s.text) && (lowEmphasis || sc >= 3)) numSpans = s.text.split(/,\s*|(?:이며|이고|하고|하며)\s/).filter(function (c) { return UNIT.test(c); }).map(function (c) { return c.trim(); }).slice(0, 2);
-        numSpans.forEach(function (n) { if (cur.callout.indexOf(n) < 0) { cur.callout.push(n); numbers.push({ section: sectionTitle, text: n, page: s.page }); } });
+        numSpans.forEach(function (n) { if (node.callout.indexOf(n) < 0) { node.callout.push(n); numbers.push({ section: sectionTitle, text: n, page: s.page }); } });
         sp.forEach(function (x) { if (termLike(x.text) && x.text.length < s.text.length * 0.7) cand.push({ s: s, span: x, section: sectionTitle, score: sc + (x.hl ? 2 : 0) }); });
       });
     });
-    // 내용이 없는 제목은 뺀다 (원본의 '문제' 부분 등)
-    var pruned = [];
-    outline.forEach(function (b, i) {
-      if (b.kind === 'points') { pruned.push(b); return; }
-      var lv = +b.kind.charAt(1), has = false;
-      for (var j = i + 1; j < outline.length; j++) { var n = outline[j]; if (n.kind === 'points') { has = true; break; } if (+n.kind.charAt(1) <= lv) break; }
-      if (has) pruned.push(b);
-    });
-    outline = pruned;
+    // 나무 → 순서대로 펼친 목록 (내용 없는 제목은 뺀다)
+    var outline = [];
+    function has(n) { return n.items.length > 0 || n.children.some(has); }
+    function walk(n) {
+      if (n.level) { if (!has(n)) return; outline.push({ kind: 'h' + Math.min(3, n.level), text: n.text, page: n.page }); }
+      if (n.items.length) outline.push({ kind: 'points', items: n.items, callout: n.callout });
+      n.children.forEach(walk);
+    }
+    walk(root);
     var questions = makeQuestions(cand, allSpans, nQ, r);
     var h1s = outline.filter(function (o) { return o.kind === 'h1'; }).map(function (o) { return o.text; });
-    return { title: opt.title || doc.title, subtitle: h1s.slice(0, 4), outline: outline, numbers: numbers, questions: questions, marked: a.questions.filter(function (q) { return q.marked; }), sourceQuestions: a.questions.length, lowEmphasis: lowEmphasis };
+    var m = { title: opt.title || doc.title, subtitle: h1s.slice(0, 4), outline: outline, numbers: numbers, questions: questions, marked: a.questions.filter(function (q) { return q.marked; }), sourceQuestions: a.questions.length, lowEmphasis: lowEmphasis };
+    m.cards = makeCards(m, root, allSpans, r);
+    return m;
+  }
+
+  // ---------- 플래시카드 ----------
+  function cardId(t) { return hash(t).toString(36); }
+  function makeCards(m, root, pool, r) {
+    var cards = [], seen = {};
+    function add(c) { var id = cardId(c.type + c.front); if (seen[id]) return; seen[id] = 1; c.id = id; cards.push(c); }
+    function visit(n) {
+      var path = [], tp = '';
+      for (var x = n; x && x.level; x = x.parent) { path.unshift(x.text); if (x.level === 2) tp = x.text; else if (x.level === 1 && !tp) tp = x.text; }
+      tp = tp || '기타';
+      n.items.forEach(function (it) {
+        var s = it.s, sp = it.spans.filter(function (x) { return termLike(x.text) && x.text.length < s.text.length * 0.7; });
+        // 용어 카드: "A는/은/이란 ~" 처럼 강조된 용어로 시작하는 문장
+        var def = /^(.{2,24}?)(?:은|는|이란|란|이라 함은|:)\s+(.{6,})$/.exec(s.text);
+        if (def && it.spans.some(function (x) { return x.start === 0 || s.text.indexOf(x.text) === 0; }) && termLike(def[1].replace(TRIM, ''))) {
+          add({ type: '용어', path: path, topic: tp, page: s.page, front: def[1].replace(TRIM, ''), prompt: '무엇인가요?', back: s.text, answer: def[1].replace(TRIM, '') });
+        }
+        // 빈칸 카드: 형광펜 우선, 수치는 '수치' 카드
+        sp.sort(function (x, y) { return (y.hl - x.hl) || (y.text.length - x.text.length); });
+        sp.slice(0, 2).forEach(function (x) {
+          var blank = s.text.slice(0, x.start) + '［ ? ］' + s.text.slice(x.start + x.text.length);
+          add({ type: /\d/.test(x.text) ? '수치' : '빈칸', path: path, topic: tp, page: s.page, front: blank, prompt: '빈칸에 들어갈 말은?', back: s.text, answer: x.text, hl: x.hl, ink: s.ink });
+        });
+        if (!sp.length && (s.ink || UNIT.test(s.text))) add({ type: '요점', path: path, topic: tp, page: s.page, front: (path[path.length - 1] || '핵심 내용') + ' — 기억나는 내용은?', prompt: '떠올린 뒤 뒤집어 보세요', back: s.text, answer: '' });
+      });
+      n.children.forEach(visit);
+    }
+    visit(root);
+    m.questions.forEach(function (q) {
+      add({ type: '문제', path: q.path || [], topic: q.topic || '기타', page: q.page, front: q.stem + '\n' + q.quote, options: q.type === 'mcq' ? q.options : ['O', 'X'], prompt: '정답을 골라 보세요', answerIndex: q.type === 'mcq' ? q.answer : (q.answer === 'O' ? 0 : 1), answer: q.type === 'mcq' ? CIRCLE[q.answer] + ' ' + q.answerText : q.answer + ' · ' + q.answerText, back: q.source });
+    });
+    m.marked.forEach(function (q) {
+      add({ type: '표시한 문항', path: q.section ? [q.section] : [], topic: '표시한 문항', page: q.page, front: q.no + '. ' + q.stem, options: q.options.map(function (o) { return o.text; }), marks: q.options.map(function (o) { return o.ink; }), prompt: '원본에서 펜으로 표시한 문항이에요', answer: '', back: '정답은 교재·정답표로 확인하세요. ✎ 표시는 원본에 체크·동그라미가 있던 보기예요.' });
+    });
+    return cards;
   }
 
   // 숫자 바꾸기 (오답 보기 · 틀린 OX 문장용)
@@ -119,7 +172,9 @@
       nv = dec ? nv.toFixed(dec) : String(Math.round(nv >= 20 ? Math.round(nv / 5) * 5 : nv));
       if (nv === n) continue;
       var k = -1, rep = text.replace(/(^|[^A-Za-z0-9.])(\d+(?:\.\d+)?)(?![A-Za-z]*\d)/g, function (m, pre, num) { k++; return k === idx ? pre + nv : m; });
-      if (rep !== text && out.indexOf(rep) < 0) out.push(rep);
+      // 범위(24~28)는 앞이 뒤보다 작아야 한다
+      var badRange = false; rep.replace(/(\d+(?:\.\d+)?)\s*~\s*(\d+(?:\.\d+)?)/g, function (m, x, y) { if (parseFloat(x) >= parseFloat(y)) badRange = true; return m; });
+      if (!badRange && rep !== text && out.indexOf(rep) < 0) out.push(rep);
     }
     return out;
   }
@@ -152,10 +207,10 @@
       var blank = s.slice(0, ans.start) + '(          )' + s.slice(ans.start + ans.text.length);
       if (ds.length >= 4 && i % 4 !== 3) {
         var opts = shuffle([ans.text].concat(ds), r);
-        out.push({ type: 'mcq', section: c.section, page: c.s.page, stem: '다음 설명의 빈칸에 들어갈 내용으로 옳은 것은?', quote: blank, options: opts, answer: opts.indexOf(ans.text), answerText: ans.text, source: s });
+        out.push({ type: 'mcq', path: c.s.path, topic: c.s.topic, section: c.section, page: c.s.page, stem: '다음 설명의 빈칸에 들어갈 내용으로 옳은 것은?', quote: blank, options: opts, answer: opts.indexOf(ans.text), answerText: ans.text, source: s });
       } else {
         var wrong = ds[0] && r() < 0.55, stmt = wrong ? s.slice(0, ans.start) + ds[0] + s.slice(ans.start + ans.text.length) : s;
-        out.push({ type: 'ox', section: c.section, page: c.s.page, stem: '다음 설명이 옳으면 O, 틀리면 X를 고르시오.', quote: stmt, answer: wrong ? 'X' : 'O', answerText: wrong ? ans.text + ' (틀린 부분: ' + ds[0] + ')' : '옳은 설명', source: s });
+        out.push({ type: 'ox', path: c.s.path, topic: c.s.topic, section: c.section, page: c.s.page, stem: '다음 설명이 옳으면 O, 틀리면 X를 고르시오.', quote: stmt, answer: wrong ? 'X' : 'O', answerText: wrong ? ans.text + ' (틀린 부분: ' + ds[0] + ')' : '옳은 설명', source: s });
       }
     });
     return out;
@@ -260,5 +315,5 @@
       '규칙: 아래 내용에 없는 사실은 지어내지 말 것. 마크다운 표 대신 줄글로 쓸 것.\n\n[학습 내용]\n' + pts.join('\n');
   }
 
-  root.Study = { build: build, html: html, prompt: prompt, analyse: analyse, sentences: sentences, spans: spans };
+  root.Study = { build: build, html: html, prompt: prompt, analyse: analyse, sentences: sentences, spans: spans, headKey: headKey };
 })(typeof window !== 'undefined' ? window : globalThis);

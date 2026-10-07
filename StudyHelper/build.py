@@ -10,7 +10,7 @@ for f in order:
     tags.append('<script>\n' + js + '\n</script>')
 html = open(os.path.join(web, 'index.html'), encoding='utf-8').read().replace('<!--SCRIPTS-->', '\n'.join(tags))
 os.makedirs(os.path.join(here, 'dist'), exist_ok=True)
-out = os.path.join(here, 'dist', '학습정리도우미.html')
+out = os.path.join(here, 'dist', '플래시카드.html')
 open(out, 'w', encoding='utf-8').write(html)
 assets = os.path.join(here, 'android', 'assets')
 os.makedirs(assets, exist_ok=True)

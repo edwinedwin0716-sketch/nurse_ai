@@ -3,82 +3,154 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>학습 정리 도우미</title>
+<title>플래시카드 학습</title>
 <style>
-:root{--bg:#f2f2f7;--card:#fff;--text:#1c1c1e;--sub:#8e8e93;--sep:#e5e5ea;--accent:#007aff;--fill:#e9e9ee;--brand:#7b1f3c}
-@media (prefers-color-scheme:dark){:root{--bg:#000;--card:#1c1c1e;--text:#f2f2f7;--sep:#38383a;--accent:#0a84ff;--fill:#2c2c2e}}
+:root{--bg:#f2f2f7;--card:#fff;--text:#1c1c1e;--sub:#8e8e93;--sep:#e5e5ea;--accent:#007aff;--fill:#e9e9ee;--brand:#7b1f3c;--red:#ff3b30;--orange:#ff9500;--green:#34c759;--hl:#fff3a0}
+@media (prefers-color-scheme:dark){:root{--bg:#000;--card:#1c1c1e;--text:#f2f2f7;--sep:#38383a;--accent:#0a84ff;--fill:#2c2c2e;--brand:#ff8fb1;--hl:#5c5216}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"SF Pro Text","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",Roboto,sans-serif;font-size:16px}
-.app{max-width:980px;margin:0 auto;padding:22px 16px 40px}
-h1{font-size:32px;font-weight:800;letter-spacing:-.5px;margin:0}
-.lead{color:var(--sub);margin:6px 2px 0;font-size:14.5px}
-.section{color:var(--sub);font-size:13px;font-weight:600;margin:22px 4px 8px}
+button{font:inherit;cursor:pointer}
+.view{display:none;max-width:760px;margin:0 auto;padding:20px 16px 40px;min-height:100vh}
+.view.on{display:block}
+h1{font-size:32px;font-weight:800;letter-spacing:-.5px;margin:6px 0 0}
+.lead{color:var(--sub);margin:6px 2px 0;font-size:14.5px;line-height:1.5}
+.section{color:var(--sub);font-size:13px;font-weight:600;margin:24px 4px 8px;display:flex;justify-content:space-between;align-items:center}
 .card{background:var(--card);border-radius:14px;overflow:hidden}
-.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:34px 16px;border:2px dashed #c7c7cc;border-radius:14px;background:var(--card);text-align:center;cursor:pointer}
-.drop.over{border-color:var(--accent);background:rgba(0,122,255,.06)}
-.drop .ic{font-size:40px}.drop b{font-size:17px}.drop small{color:var(--sub)}
+.newbtn{display:flex;align-items:center;gap:14px;width:100%;background:var(--card);border:0;border-radius:14px;padding:16px;margin-top:18px;text-align:left;color:var(--text)}
+.newbtn .plus{width:44px;height:44px;border-radius:12px;background:var(--accent);color:#fff;font-size:28px;display:flex;align-items:center;justify-content:center;flex:none}
+.newbtn b{display:block;font-size:17px}.newbtn small{color:var(--sub)}
+.deck{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--sep)}
+.deck:last-child{border-bottom:0}
+.ring{width:46px;height:46px;flex:none}
+.deck .info{flex:1;min-width:0}.deck .info b{display:block;font-size:16.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deck .info small{color:var(--sub);font-size:13px}
+.deck .go{border:0;background:var(--accent);color:#fff;border-radius:16px;padding:7px 14px;font-weight:600;font-size:14px}
+.deck .more{border:0;background:var(--fill);color:var(--sub);border-radius:15px;width:32px;height:32px;font-size:16px;flex:none}
+.empty{color:var(--sub);text-align:center;padding:30px 16px;font-size:15px;line-height:1.6}
+.drop{display:flex;flex-direction:column;align-items:center;gap:8px;padding:30px 16px;border:2px dashed #c7c7cc;border-radius:14px;background:var(--card);text-align:center;cursor:pointer}
+.drop.over{border-color:var(--accent)}.drop .ic{font-size:38px}.drop b{font-size:17px}.drop small{color:var(--sub)}
 .field{padding:11px 16px;border-bottom:1px solid var(--sep);display:flex;align-items:center;gap:12px}
-.field:last-child{border-bottom:0}
-.field label{flex:none;width:92px;color:var(--text);font-size:15px}
+.field:last-child{border-bottom:0}.field label{flex:none;width:86px;font-size:15px}
 .field input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--text);font:inherit;font-size:16px;text-align:right}
 .seg{display:flex;background:var(--fill);border-radius:9px;padding:2px;flex:1}
-.seg button{flex:1;border:0;background:transparent;color:var(--text);font:inherit;font-size:14px;padding:6px 8px;border-radius:7px}
+.seg button{flex:1;border:0;background:transparent;color:var(--text);font-size:14px;padding:6px 8px;border-radius:7px;white-space:nowrap}
 .seg button.on{background:var(--card);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.12)}
-.big{display:block;width:100%;margin-top:18px;padding:15px;border-radius:14px;border:0;background:var(--accent);color:#fff;font:inherit;font-size:17px;font-weight:700}
-.big:disabled{opacity:.45}
-.progress{margin-top:14px;display:none}
-.progress .bar{height:6px;border-radius:3px;background:var(--fill);overflow:hidden}
-.progress .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
-.progress p{color:var(--sub);font-size:13.5px;margin:8px 2px 0}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
-.chip{background:var(--card);border-radius:16px;padding:7px 12px;font-size:13.5px}
-.chip b{color:var(--brand)}
-.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.pill{border:0;border-radius:20px;padding:10px 16px;font:inherit;font-size:15px;font-weight:600;background:var(--fill);color:var(--accent);cursor:pointer}
-.pill.primary{background:var(--accent);color:#fff}
-.preview{margin-top:14px;background:#fff;border-radius:14px;overflow:hidden;height:75vh}
-.preview iframe{width:100%;height:100%;border:0;background:#fff}
-.note{color:var(--sub);font-size:12.5px;margin:12px 4px 0;line-height:1.5}
+.big{display:block;width:100%;margin-top:18px;padding:15px;border-radius:14px;border:0;background:var(--accent);color:#fff;font-size:17px;font-weight:700}
+.big:disabled{opacity:.45}.big.ghost{background:var(--fill);color:var(--accent)}
+.progress{margin-top:14px;display:none}.progress .bar{height:6px;border-radius:3px;background:var(--fill);overflow:hidden}
+.progress .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}.progress p{color:var(--sub);font-size:13.5px;margin:8px 2px 0}
 .warn{background:#fff4e5;color:#8a4b00;border-radius:12px;padding:10px 14px;margin-top:12px;font-size:14px;display:none}
-.toast{pointer-events:none;position:fixed;left:50%;bottom:40px;transform:translateX(-50%);background:rgba(30,30,30,.92);color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .2s;z-index:20;max-width:86%;text-align:center}
+.back{border:0;background:none;color:var(--accent);font-size:17px;padding:4px 0;display:flex;align-items:center;gap:4px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.count{color:var(--sub);font-size:14px;font-variant-numeric:tabular-nums}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 2px;margin-top:12px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:0;background:var(--card);color:var(--text);border-radius:16px;padding:7px 13px;font-size:13.5px}
+.chip.on{background:var(--text);color:var(--bg);font-weight:700}
+.meter{height:4px;border-radius:2px;background:var(--fill);margin-top:12px;overflow:hidden}.meter i{display:block;height:100%;background:var(--green);width:0;transition:width .25s}
+.stage{perspective:1400px;margin-top:16px}
+.flip{position:relative;min-height:56vh;transition:transform .45s cubic-bezier(.2,.7,.2,1);transform-style:preserve-3d}
+.flip.flipped{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;background:var(--card);border-radius:20px;box-shadow:0 8px 30px rgba(0,0,0,.08);padding:22px 20px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;overflow:auto}
+.face.backside{transform:rotateY(180deg)}
+.badge{align-self:flex-start;font-size:12px;font-weight:700;padding:3px 9px;border-radius:9px;background:rgba(123,31,60,.1);color:var(--brand)}
+.crumb{color:var(--sub);font-size:12.5px;margin-top:8px}
+.qtext{font-size:21px;line-height:1.6;font-weight:600;margin:auto 0;padding:18px 0;white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere}
+.qtext.small{font-size:17px}
+.blank{display:inline-block;min-width:72px;padding:0 8px;border-radius:8px;background:rgba(0,122,255,.12);color:var(--accent);text-align:center}
+.hint{color:var(--sub);font-size:13px;text-align:center}
+.ans{font-size:24px;font-weight:800;color:var(--brand);margin-top:16px;word-break:keep-all}
+.full{font-size:16px;line-height:1.7;margin-top:14px;word-break:keep-all}
+.full b{color:var(--brand)}.full mark{background:var(--hl);color:inherit}
+.opts{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.opt{border:1px solid var(--sep);background:var(--card);color:var(--text);border-radius:12px;padding:11px 14px;text-align:left;font-size:15.5px}
+.opt.right{border-color:var(--green);background:rgba(52,199,89,.12)}.opt.wrong{border-color:var(--red);background:rgba(255,59,48,.1)}
+.opt.inked::before{content:'✎ ';color:#d62b2b}
+.rate{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:16px}
+.rate button{border:0;border-radius:14px;padding:14px 6px;font-size:16px;font-weight:700;color:#fff}
+.rate button:disabled{opacity:.35}
+.r1{background:var(--red)}.r2{background:var(--orange)}.r3{background:var(--green)}
+.rate small{display:block;font-weight:500;font-size:11.5px;opacity:.85;margin-top:2px}
+.tip{color:var(--sub);font-size:12.5px;text-align:center;margin-top:10px}
+.summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:20px}
+.summary div{background:var(--card);border-radius:14px;padding:16px;text-align:center}.summary b{display:block;font-size:28px}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:10}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-width:760px;margin:0 auto;background:var(--bg);border-radius:16px 16px 0 0;padding:8px 16px calc(24px + env(safe-area-inset-bottom));transform:translateY(110%);transition:transform .25s;z-index:11}
+.sheet.open{transform:none}.sheet .grab{width:40px;height:5px;border-radius:3px;background:#c7c7cc;margin:4px auto 12px}
+.sheet h2{margin:0 4px 10px;font-size:19px}
+.menu button{display:block;width:100%;border:0;border-bottom:1px solid var(--sep);background:var(--card);color:var(--accent);text-align:left;padding:15px 16px;font-size:16px}
+.menu button:last-child{border-bottom:0}.menu .danger{color:var(--red)}
+.toast{pointer-events:none;position:fixed;left:50%;bottom:40px;transform:translateX(-50%);background:rgba(30,30,30,.92);color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .2s;z-index:30;max-width:86%;text-align:center}
 .toast.show{opacity:1}
-#result{display:none}
 </style>
 </head>
 <body>
-<div class="app">
-  <h1>학습 정리 도우미</h1>
-  <p class="lead">형광펜·강조 글씨·필기한 부분을 찾아 요점정리와 문제를 만들어 줘요. 인터넷 없이 이 기기 안에서만 처리해요.</p>
 
+<!-- 목록 -->
+<section class="view on" id="v-home">
+  <h1>플래시카드</h1>
+  <p class="lead">형광펜·강조 글씨·필기한 부분으로 카드를 만들어 외워요. 인터넷 없이 이 기기 안에서만 처리해요.</p>
+  <button class="newbtn" onclick="go('v-make')"><span class="plus">＋</span><span><b>파일로 카드 만들기</b><small>PDF(필기) · PPTX · DOCX · HWPX</small></span></button>
+  <div class="section">내 카드 묶음</div>
+  <div class="card" id="decks"></div>
+</section>
+
+<!-- 만들기 -->
+<section class="view" id="v-make">
+  <div class="top"><button class="back" onclick="go('v-home')">‹ 목록</button></div>
+  <h1>카드 만들기</h1>
   <div class="section">파일</div>
-  <label class="drop" id="drop">
-    <span class="ic">📄</span>
-    <b id="fileLabel">파일 올리기</b>
-    <small>PDF (굿노트·노트 필기 포함) · PPTX · DOCX · HWPX</small>
-    <input type="file" id="file" accept=".pdf,.pptx,.docx,.hwpx,.hwp,.ppt,.doc,application/pdf" hidden>
-  </label>
-
+  <label class="drop" id="drop"><span class="ic">📄</span><b id="fileLabel">파일 올리기</b><small>굿노트·삼성노트 필기 PDF · 강의자료 PDF · PPTX · DOCX · HWPX</small>
+    <input type="file" id="file" accept=".pdf,.pptx,.docx,.hwpx,.hwp,.ppt,.doc,application/pdf" hidden></label>
   <div class="section">설정</div>
   <div class="card">
-    <div class="field"><label>제목</label><input id="title" placeholder="파일 이름으로 자동 입력"></div>
-    <div class="field"><label>문제 수</label><div class="seg" id="qn"><button data-v="10">10</button><button data-v="20" class="on">20</button><button data-v="30">30</button><button data-v="50">50</button></div></div>
+    <div class="field"><label>이름</label><input id="title" placeholder="파일 이름으로 자동 입력"></div>
+    <div class="field"><label>문제 카드</label><div class="seg" id="qn"><button data-v="0">없음</button><button data-v="10">10</button><button data-v="20" class="on">20</button><button data-v="40">40</button></div></div>
   </div>
-  <button class="big" id="go" disabled>정리 시작</button>
-  <div class="progress" id="progress"><div class="bar"><i id="bar"></i></div><p id="ptext">읽는 중…</p></div>
+  <button class="big" id="make" disabled>카드 만들기</button>
+  <div class="progress" id="progress"><div class="bar"><i id="pbar"></i></div><p id="ptext">읽는 중…</p></div>
   <div class="warn" id="warn"></div>
+</section>
 
-  <div id="result">
-    <div class="section">결과</div>
-    <div class="chips" id="chips"></div>
-    <div class="toolbar">
-      <button class="pill primary" onclick="saveDoc()">Word로 저장</button>
-      <button class="pill" onclick="saveHtml()">웹 페이지로 저장</button>
-      <button class="pill" onclick="printDoc()">PDF·인쇄</button>
-      <button class="pill" onclick="sendAi('chatgpt')">ChatGPT로 사례문제 만들기</button>
-      <button class="pill" onclick="sendAi('claude')">Claude로</button>
+<!-- 학습 -->
+<section class="view" id="v-study">
+  <div class="top"><button class="back" onclick="endStudy()">‹ 목록</button><span class="count" id="count"></span></div>
+  <div class="chips" id="topics"></div>
+  <div class="seg" id="mode" style="margin-top:10px"><button data-v="due" class="on">오늘 학습</button><button data-v="wrong">틀린 카드</button><button data-v="all">전체 섞기</button></div>
+  <div class="meter"><i id="meter"></i></div>
+  <div class="stage" id="stage">
+    <div class="flip" id="flip">
+      <div class="face" id="front"></div>
+      <div class="face backside" id="backface"></div>
     </div>
-    <div class="preview"><iframe id="frame" title="미리보기"></iframe></div>
-    <p class="note">사례기반 문제와 문장형 요약은 AI가 있어야 만들 수 있어서, 버튼을 누르면 정리한 내용을 복사해 ChatGPT·Claude 앱(구독 그대로, API 키 필요 없음)에 붙여넣을 수 있게 해 드려요.</p>
+  </div>
+  <div class="rate">
+    <button class="r1" id="b1" onclick="rate(1)">모름<small>곧 다시</small></button>
+    <button class="r2" id="b2" onclick="rate(2)">애매<small>조금 뒤</small></button>
+    <button class="r3" id="b3" onclick="rate(3)">알아요<small>나중에</small></button>
+  </div>
+  <p class="tip">카드를 누르면 뒤집혀요 · 왼쪽으로 밀면 모름, 오른쪽으로 밀면 알아요 · 키보드: Space 뒤집기, 1·2·3 채점</p>
+</section>
+
+<!-- 끝 -->
+<section class="view" id="v-done">
+  <div class="top"><button class="back" onclick="go('v-home')">‹ 목록</button></div>
+  <h1>잘했어요! 🎉</h1>
+  <p class="lead" id="doneText"></p>
+  <div class="summary"><div><b id="s3" style="color:var(--green)">0</b>알아요</div><div><b id="s2" style="color:var(--orange)">0</b>애매</div><div><b id="s1" style="color:var(--red)">0</b>모름</div></div>
+  <button class="big" onclick="restart('wrong')">틀린 카드 다시 보기</button>
+  <button class="big ghost" onclick="restart('all')">전체 다시 섞어서</button>
+</section>
+
+<div class="sheet-bg" id="sheetBg" onclick="closeMenu()"></div>
+<div class="sheet" id="sheet"><div class="grab"></div><h2 id="menuTitle"></h2>
+  <div class="card menu">
+    <button onclick="menuAct('study')">학습하기</button>
+    <button onclick="menuAct('doc')">학습지로 저장 (Word)</button>
+    <button onclick="menuAct('print')">학습지 PDF·인쇄</button>
+    <button onclick="menuAct('ai')">ChatGPT로 사례문제 만들기</button>
+    <button onclick="menuAct('reset')">진도 초기화</button>
+    <button class="danger" onclick="menuAct('delete')">카드 묶음 삭제</button>
   </div>
 </div>
 <div class="toast" id="toast"></div>
