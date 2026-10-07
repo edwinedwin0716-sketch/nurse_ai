@@ -402,7 +402,7 @@ function Get-Nrs($text) {
 function New-NursingProcess($subjective,$objective,$medical,$choices,[datetime]$date) {
     $sb=New-Object Text.StringBuilder
     $line={param($t) [void]$sb.AppendLine($t)}
-    $md=$date.ToString('M/d')
+    $md=$date.ToString('M/d',[Globalization.CultureInfo]::InvariantCulture)
     & $line '■ 사정'
     & $line ''
     & $line '주관적 자료'
@@ -505,7 +505,7 @@ function New-WorkbookModel($subjective,$objective,$medical,$choices,[datetime]$d
 }
 function ConvertTo-WorkbookText($m){
     $sb=New-Object Text.StringBuilder;$w={param($x) [void]$sb.AppendLine($x)}
-    $md=$m.date.ToString('M/d')
+    $md=$m.date.ToString('M/d',[Globalization.CultureInfo]::InvariantCulture)
     & $w '■ 1. 간호사정';& $w ''
     & $w '주관적 자료';$i=0;foreach($x in $m.subjective){$i++;& $w "$i. $x"};if($i -eq 0){& $w '1. "(대상자가 직접 한 말)"'}
     & $w '';& $w '객관적 자료';$i=0;foreach($x in $m.objective){$i++;& $w "$i. $x"};if($i -eq 0){& $w '1. (V/S, 검사 결과, 관찰 내용, 투여된 약물)'}
@@ -544,7 +544,7 @@ function ConvertTo-WorkbookText($m){
 }
 function Get-SoapieRows($m){
     $rows=@();if($m.diags.Count -eq 0){return $rows}
-    $d=$m.diags[0];$md=$m.date.ToString('M/d')
+    $d=$m.diags[0];$md=$m.date.ToString('M/d',[Globalization.CultureInfo]::InvariantCulture)
     $s=@($m.subjective|Where-Object {$_ -in $d.cues});if($s.Count -eq 0){$s=@('(이 진단과 관련된 대상자의 호소를 적으세요)')}
     $o=@($d.cues|Where-Object {$_ -notin $m.subjective});if($o.Count -eq 0){$o=@($m.objective)}
     $ther=@($d.plans|Where-Object {$_.kind -ne '진단적'}|Select-Object -First 3|ForEach-Object {$_.done})
@@ -560,7 +560,7 @@ function Get-SoapieRows($m){
 function ConvertTo-WorkbookHtml($m){
     $e={param($x) [System.Net.WebUtility]::HtmlEncode([string]$x)}
     $list={param($items,$empty) $i=0;$o='';foreach($x in $items){$i++;$o+="$i. $(& $e $x)<br>"};if($i -eq 0){$o="<span class=hint>$(& $e $empty)</span>"};$o}
-    $md=$m.date.ToString('M/d')
+    $md=$m.date.ToString('M/d',[Globalization.CultureInfo]::InvariantCulture)
     $h=New-Object Text.StringBuilder;$a={param($x) [void]$h.Append($x)}
     & $a @'
 <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>간호과정 워크북</title>
