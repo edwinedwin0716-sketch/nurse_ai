@@ -13,7 +13,7 @@ if(-not($Check -or $SelfTest)){
 $script:settingsPath=Join-Path $env:MYSPACE_DATA_DIR 'settings.json'
 $script:settings=[pscustomobject]@{key='';model='gemini-2.5-flash';privacyOk=$false;cover=$null}
 if(Test-Path -LiteralPath $script:settingsPath){
-    try{$saved=Get-Content -LiteralPath $script:settingsPath -Raw -Encoding UTF8|ConvertFrom-Json;foreach($p in 'key','model','privacyOk','cover'){if($null -ne $saved.$p){$script:settings.$p=$saved.$p}}}catch{}
+    try{$saved=Get-Content -LiteralPath $script:settingsPath -Raw -Encoding UTF8|ConvertFrom-Json;foreach($p in 'key','model','privacyOk','cover','privacyExtOk'){if($null -ne $saved.$p){$script:settings.$p=$saved.$p}}}catch{}
 }
 function Save-Settings {
     $json=$script:settings|ConvertTo-Json
@@ -302,6 +302,36 @@ function Finish-Polish {
 }
 
 
+# ---------- ChatGPT·Claude로 보내기 (구독 그대로 사용, API 키 필요 없음) ----------
+$script:external=$null
+function Send-ToAi($name,$url) {
+    if(-not $output.Text.Trim()){Build-Document;if(-not $output.Text.Trim()){return}}
+    if(-not $script:settings.privacyExtOk){
+        $answer=[Windows.Forms.MessageBox]::Show("입력한 자료와 초안을 $name 사이트에 붙여넣어 보내게 돼요.`r`n환자 이름, 등록번호, 생년월일 같은 개인정보는 넣지 마세요.`r`n`r`n계속할까요?",'개인정보 확인','YesNo','Warning')
+        if($answer -ne 'Yes'){return}
+        $script:settings|Add-Member -NotePropertyName privacyExtOk -NotePropertyValue $true -Force;Save-Settings
+    }
+    $text=Get-Prompt $output.Text
+    [Windows.Forms.Clipboard]::SetText($text)
+    $script:external=@{name=$name;sent=$text}
+    [Windows.Forms.MessageBox]::Show("요청문을 복사했어요. $name 사이트가 브라우저에서 열려요.`r`n`r`n1. 입력창에 Ctrl+V (붙여넣기) → 보내기`r`n2. 답변 아래 '복사' 버튼 누르기`r`n3. 이 창으로 돌아오기`r`n`r`n돌아오면 복사한 답변을 가져올지 물어볼게요.",'간호과정 도우미')|Out-Null
+    Start-Process $url
+    Set-Status "$name 사이트에 붙여넣고, 답변을 복사한 뒤 돌아오세요."
+}
+function Test-External {
+    $ext=$script:external;if(-not $ext){return}
+    $t='';try{$t=[Windows.Forms.Clipboard]::GetText()}catch{}
+    if(-not $t -or $t -eq $ext.sent -or $t -eq $script:lastImported){return}
+    if(-not($t.Length -gt 150 -and ($t.Contains('■') -or ($t.Contains('간호진단') -and $t.Contains('목표'))))){return}
+    $script:lastImported=$t
+    if([Windows.Forms.MessageBox]::Show("$($ext.name) 답변을 찾았어요.`r`n결과 화면에 가져올까요? ('되돌리기'로 원래대로 돌릴 수 있어요)",'간호과정 도우미','YesNo') -eq 'Yes'){
+        $script:before=$output.Text;$script:model=$null;$script:external=$null
+        $clean=$t -replace '(?m)^```[a-z]*\s*$','' -replace '\*\*','' -replace '(?m)^#+\s*',''
+        Show-Document $clean.Trim();$undo.Visible=$true
+        Set-Status "$($ext.name)로 다듬은 결과를 가져왔어요 · 교재로 꼭 확인하세요."
+    }
+}
+
 # ---------- 창 ----------
 $tip=New-Object Windows.Forms.ToolTip
 $form=New-Object Windows.Forms.Form
@@ -357,10 +387,10 @@ $formatTabs=New-Object Segmented;$formatTabs.Location=New-Object Drawing.Point(0
 $tip.SetToolTip($formatTabs,'제출 양식: 학교 보고서 표 (사정 / 간호계획 및 수행 / 합리적 근거 / 간호평가, A4 · 표지)   B4 워크북: 간호과정 별책 워크북 순서 (간호사정 → 간호진단 → 간호계획 → 수행·평가 → 간호기록)')
 $tools=New-Object Windows.Forms.FlowLayoutPanel;$tools.Dock='Right';$tools.AutoSize=$true;$tools.WrapContents=$false;$tools.BackColor=[Theme]::Back;$tools.Padding=New-Object Windows.Forms.Padding(0,2,0,0)
 $progress=New-Object Windows.Forms.ProgressBar;$progress.Style='Marquee';$progress.Width=90;$progress.Height=6;$progress.Margin=New-Object Windows.Forms.Padding(0,16,10,0);$progress.Visible=$false
-$polish=New-Pill '✨ 제미나이로 다듬기' $true;$undo=New-Pill '되돌리기';$undo.Visible=$false;$copy=New-Pill '복사';$save=New-Pill '저장'
+$polish=New-Pill '✨ 제미나이로 다듬기' $true;$gptButton=New-Pill 'ChatGPT로';$claudeButton=New-Pill 'Claude로';$undo=New-Pill '되돌리기';$undo.Visible=$false;$copy=New-Pill '복사';$save=New-Pill '저장'
 $settingsButton=New-Object RoundButton;$settingsButton.Glyph=[string][char]0xE713;$settingsButton.Margin=New-Object Windows.Forms.Padding(0,1,0,0)
-$tip.SetToolTip($polish,'입력 자료에 맞게 목표·근거를 구체적으로 다듬어요 (API 키 필요)');$tip.SetToolTip($settingsButton,'제미나이 설정')
-$tools.Controls.AddRange(@($progress,$polish,$undo,$copy,$save,$settingsButton))
+$tip.SetToolTip($polish,'입력 자료에 맞게 목표·근거를 구체적으로 다듬어요 (API 키 필요)');$tip.SetToolTip($gptButton,'ChatGPT(플러스 구독 그대로)로 다듬기 · API 키 필요 없음');$tip.SetToolTip($claudeButton,'Claude(구독 그대로)로 다듬기 · API 키 필요 없음');$tip.SetToolTip($settingsButton,'제미나이 설정')
+$tools.Controls.AddRange(@($progress,$polish,$gptButton,$claudeButton,$undo,$copy,$save,$settingsButton))
 $toolbar.Controls.AddRange(@($formatTabs,$tools))
 $gap=New-Object Windows.Forms.Panel;$gap.Dock='Top';$gap.Height=12;$gap.BackColor=[Theme]::Back
 $paper=New-Object Card;$paper.Dock='Fill';$paper.Padding=New-Object Windows.Forms.Padding(26,20,10,16);$paper.Radius=16
@@ -392,6 +422,9 @@ $originBox.Add_TextChanged({if(-not $script:loading -and $script:selected){$scri
 $build.Add_Click({Build-Document})
 $formatTabs.Add_SelectedChanged({if(@(Get-Checked).Count -gt 0 -and ($sData.Text -or $oData.Text)){Build-Document}})
 $polish.Add_Click({Start-Polish})
+$gptButton.Add_Click({Send-ToAi 'ChatGPT' 'https://chatgpt.com/'})
+$claudeButton.Add_Click({Send-ToAi 'Claude' 'https://claude.ai/new'})
+$form.Add_Activated({if($script:external){$form.BeginInvoke([Action]{Test-External})|Out-Null}})
 $undo.Add_Click({if($script:before){$script:model=$null;Show-Document $script:before;$undo.Visible=$false;Set-Status '다듬기 전으로 되돌렸어요.'}})
 $copy.Add_Click({if($output.Text){[Windows.Forms.Clipboard]::SetText($output.Text);Set-Status '복사했어요. Word·한글에 붙여넣으세요.'}})
 $save.Add_Click({Save-Document})

@@ -106,6 +106,36 @@ public class MainActivity extends Activity {
             } catch (Exception e) { return ""; }
         }
 
+        // 클립보드의 글 전체 (외부 AI 답변 가져오기용, 화면에서 사용자에게 먼저 묻는다)
+        @JavascriptInterface
+        public String clipboardText() {
+            try {
+                ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                if (!cm.hasPrimaryClip() || cm.getPrimaryClip().getItemCount() == 0) return "";
+                CharSequence t = cm.getPrimaryClip().getItemAt(0).coerceToText(MainActivity.this);
+                return t == null ? "" : t.toString();
+            } catch (Exception e) { return ""; }
+        }
+
+        // ChatGPT·Claude 앱으로 요청문 보내기: 앱에 공유 → 앱 실행 → 웹 순서로 시도
+        @JavascriptInterface
+        public String openAi(String pkg, String text, String webUrl) {
+            copy(text);
+            try {
+                Intent send = new Intent(Intent.ACTION_SEND);
+                send.setType("text/plain");
+                send.setPackage(pkg);
+                send.putExtra(Intent.EXTRA_TEXT, text);
+                if (send.resolveActivity(getPackageManager()) != null) { startActivity(send); return "shared"; }
+            } catch (Exception e) { }
+            try {
+                Intent launch = getPackageManager().getLaunchIntentForPackage(pkg);
+                if (launch != null) { startActivity(launch); return "opened"; }
+            } catch (Exception e) { }
+            MainActivity.this.openUrl(webUrl);
+            return "web";
+        }
+
         @JavascriptInterface
         public void share(String title, String text) {
             Intent i = new Intent(Intent.ACTION_SEND);

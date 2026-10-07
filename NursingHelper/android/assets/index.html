@@ -110,6 +110,8 @@ textarea.edit{width:calc(100% - 32px);margin:12px 16px 0;min-height:60vh;border:
   <div class="seg" id="fmt"><button data-v="report" class="on">제출 양식</button><button data-v="b4">B4 워크북</button><button data-v="basic">기본</button></div>
   <div class="toolbar">
     <button class="pill primary" id="polish" onclick="polish()">✨ 제미나이로 다듬기</button>
+    <button class="pill" onclick="sendToAi('chatgpt')">ChatGPT로 다듬기</button>
+    <button class="pill" onclick="sendToAi('claude')">Claude로 다듬기</button>
     <button class="pill" id="undo" style="display:none" onclick="undo()">되돌리기</button>
     <button class="pill" id="editBtn" onclick="toggleEdit()">편집</button>
     <button class="pill" onclick="copyText()">복사</button>

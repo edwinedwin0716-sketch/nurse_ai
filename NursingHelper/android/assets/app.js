@@ -209,6 +209,7 @@
     openUrl('https://aistudio.google.com/apikey');
   };
   window.onResumeApp = function () {
+    if (checkExternal()) return;
     if (!bridge || !bridge.clipboardKey) return;
     var found = bridge.clipboardKey();
     if (!found || found === store('gemini_key')) { if (state.waitingKey) { state.waitingKey = false; toast('복사한 키를 찾지 못했어요. 키 옆 ‘복사’를 누르고 돌아와 주세요'); } return; }
@@ -266,6 +267,40 @@
       alert(msg);
     }).then(function () { state.busy = false; btn.disabled = false; btn.textContent = '✨ 제미나이로 다듬기'; });
   };
+  // ---------- ChatGPT·Claude 앱으로 보내기 (구독 그대로 사용, API 키 필요 없음) ----------
+  var AI = {
+    chatgpt: { name: 'ChatGPT', pkg: 'com.openai.chatgpt', web: 'https://chatgpt.com/' },
+    claude: { name: 'Claude', pkg: 'com.anthropic.claude', web: 'https://claude.ai/new' }
+  };
+  function looksLikeDoc(t) { return t && t.length > 150 && (t.indexOf('■') >= 0 || (t.indexOf('간호진단') >= 0 && t.indexOf('목표') >= 0)); }
+  function cleanAnswer(t) { return t.replace(/^```[a-z]*\s*$/gm, '').replace(/\*\*/g, '').replace(/^#+\s*/gm, '').trim(); }
+  window.sendToAi = function (which) {
+    var ai = AI[which];
+    if (!current()) { build(false); if (!state.text) return; }
+    if (store('privacy_ext_ok') !== '1') {
+      if (!confirm('입력한 자료와 초안이 ' + ai.name + ' 앱으로 전송돼요.\n환자 이름, 등록번호, 생년월일 같은 개인정보는 넣지 마세요.\n\n계속할까요?')) return;
+      store('privacy_ext_ok', '1');
+    }
+    var text = prompt(state.text);
+    state.external = { name: ai.name, sent: text, at: Date.now() };
+    alert(ai.name + ' 앱이 열려요.\n\n1. 입력창에 요청문이 없으면 길게 눌러 ‘붙여넣기’ (이미 복사돼 있어요)\n2. 보내기\n3. 답변 아래 ‘복사’ 버튼 누르기\n4. 이 앱으로 돌아오기\n\n돌아오면 복사한 답변을 가져올지 물어볼게요.');
+    if (bridge && bridge.openAi) bridge.openAi(ai.pkg, text, ai.web);
+    else { try { navigator.clipboard.writeText(text); } catch (e) {} window.open(ai.web); }
+  };
+  function checkExternal() {
+    var ext = state.external; if (!ext || !bridge || !bridge.clipboardText) return false;
+    var t = bridge.clipboardText();
+    if (!t || t === ext.sent || t === state.lastImported) return false;
+    if (!looksLikeDoc(t)) { toast(ext.name + ' 답변을 복사한 뒤 돌아오면 가져올게요'); return true; }
+    state.lastImported = t;
+    setTimeout(function () {
+      if (confirm(ext.name + ' 답변을 찾았어요.\n결과 화면에 가져올까요? (‘되돌리기’로 원래대로 돌릴 수 있어요)')) {
+        state.before = state.text; state.text = cleanAnswer(t) + '\n'; state.model = null; state.external = null;
+        $('undo').style.display = ''; go('p-out'); renderDoc(); toast(ext.name + '로 다듬은 결과를 가져왔어요 · 교재로 꼭 확인하세요');
+      }
+    }, 300);
+    return true;
+  }
   window.undo = function () { if (state.before) { state.text = state.before; state.before = null; $('undo').style.display = 'none'; renderDoc(); toast('되돌렸어요'); } };
 
   renderList();
