@@ -1,0 +1,51 @@
+name: Build APK
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android 16 (API 36) SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.14.3
+
+      - name: Build
+        run: |
+          gradle assembleRelease --stacktrace
+          mkdir -p out
+          cp app/build/outputs/apk/release/app-release.apk out/DetoxLauncher.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DetoxLauncher-apk
+          path: out/DetoxLauncher.apk
+
+      # 휴대폰에서 바로 받을 수 있도록 GitHub Releases 에도 올림
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ github.run_number }}
+          name: 디톡스 런처 (빌드 ${{ github.run_number }})
+          target_commitish: ${{ github.sha }}
+          body: |
+            안드로이드 16용 디지털 디톡스 런처.
+            아래 DetoxLauncher.apk 를 휴대폰에서 받아 설치하세요.
+          files: out/DetoxLauncher.apk

@@ -131,7 +131,7 @@ class LauncherState(private val context: Context) {
         restoreDndIfNeeded()
     }
 
-    /** 집중 모드가 끝났는데 우리가 켜 방해 금지가 남아 있으면 끔 */
+    /** 집중 모드가 끝났는데 우리가 켠 방해 금지가 남아 있으면 끔 */
     fun checkFocusExpired() {
         if (focusUntil != 0L && !isFocusActive()) stopFocus()
     }
