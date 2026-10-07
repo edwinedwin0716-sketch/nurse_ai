@@ -11,9 +11,9 @@ if(-not($Check -or $SelfTest)){
 }
 [System.Windows.Forms.Application]::EnableVisualStyles()
 $script:settingsPath=Join-Path $env:MYSPACE_DATA_DIR 'settings.json'
-$script:settings=[pscustomobject]@{key='';model='gemini-2.5-flash';privacyOk=$false}
+$script:settings=[pscustomobject]@{key='';model='gemini-2.5-flash';privacyOk=$false;cover=$null}
 if(Test-Path -LiteralPath $script:settingsPath){
-    try{$saved=Get-Content -LiteralPath $script:settingsPath -Raw -Encoding UTF8|ConvertFrom-Json;foreach($p in 'key','model','privacyOk'){if($null -ne $saved.$p){$script:settings.$p=$saved.$p}}}catch{}
+    try{$saved=Get-Content -LiteralPath $script:settingsPath -Raw -Encoding UTF8|ConvertFrom-Json;foreach($p in 'key','model','privacyOk','cover'){if($null -ne $saved.$p){$script:settings.$p=$saved.$p}}}catch{}
 }
 function Save-Settings {
     $json=$script:settings|ConvertTo-Json
@@ -120,6 +120,7 @@ function Show-Document($text) {
     foreach($ln in ($text -split "`n")){
         $len=$ln.Length
         if($ln.StartsWith('■')){$output.Select($pos,$len);$output.SelectionFont=[Theme]::UI(14,$true);$output.SelectionColor=[Theme]::Accent}
+        elseif($ln -match '^(\[.+\]$|– (계획|수행) –$)'){$output.Select($pos,$len);$output.SelectionFont=[Theme]::UI(10.5,$true)}
         elseif($ln -match '^(진단 \d+ :|간호진단 \d+ :|\d순위:|단서묶음 \d|장기목표$|단기목표$|진단적 |치료적 |교육적 |주관적 자료|객관적 자료|자료조직|간호문제|간호수행$|간호중재|단기목표 평가|장기목표 평가|우선순위의 근거|관련\(위험\)|간호진단 진술|간호평가)'){
             $output.Select($pos,$len);$output.SelectionFont=[Theme]::UI(10.5,$true)
             if($ln -match '^(진단 \d+ :|간호진단 \d+ :)'){$output.SelectionColor=[Theme]::Accent}
@@ -134,7 +135,12 @@ function Build-Document {
     $chosen=@(Get-Checked)
     if($chosen.Count -eq 0){Suggest;$chosen=@(Get-Checked)}
     if($chosen.Count -eq 0){[Windows.Forms.MessageBox]::Show('간호진단을 하나 이상 체크하세요.','간호과정 도우미')|Out-Null;return}
-    if($formatTabs.Selected -eq 'B4 워크북'){
+    if($formatTabs.Selected -eq '제출 양식'){
+        $script:model=New-WorkbookModel $sData.Text $oData.Text $dxBox.Text $chosen $datePicker.Value
+        $script:format='report'
+        Show-Document (ConvertTo-ReportText $script:model)
+    } elseif($formatTabs.Selected -eq 'B4 워크북'){
+        $script:format='workbook'
         $script:model=New-WorkbookModel $sData.Text $oData.Text $dxBox.Text $chosen $datePicker.Value
         Show-Document (ConvertTo-WorkbookText $script:model)
     } else {
@@ -152,14 +158,39 @@ function ConvertTo-SimpleHtml($text) {
     }
     return "<html><head><meta charset=`"utf-8`"><style>@page Section1{size:364mm 257mm;mso-page-orientation:landscape;margin:14mm 16mm}div.Section1{page:Section1}body{font-family:'맑은 고딕',sans-serif;font-size:10.5pt}h1{font-size:14pt;color:#0a7f8c;margin:12pt 0 4pt}p{margin:0 0 2pt}</style></head><body><div class=Section1>$body</div></body></html>"
 }
+# 제출 양식 표지 (이 PC에만 저장)
+function Get-Cover {
+    $c=$script:settings.cover
+    $d=New-Object Windows.Forms.Form;$d.Text='표지';$d.ClientSize=New-Object Drawing.Size(460,400);$d.StartPosition='CenterParent'
+    $d.FormBorderStyle='FixedDialog';$d.MaximizeBox=$false;$d.MinimizeBox=$false;$d.BackColor=[Theme]::Back;$d.Font=[Theme]::UI(9.5,$false)
+    $title=New-Text '표지 정보' 14 $true;$title.Location=New-Object Drawing.Point(20,14)
+    $f1=New-Field '예) 2026-1 여성건강간호학Ⅰ' 1;$f2=New-Field '예) 산후출혈 간호과정' 1;$f3=New-Field '예) C-7조 (학번 이름, …)' 1;$f4=New-Field '예) ○○대학교 간호학과' 1
+    if($c){$f1.Text=$c.subject;$f2.Text=$c.title;$f3.Text=$c.author;$f4.Text=$c.school}
+    $card=New-FormCard 420 @(@('과목',$f1),@('제목',$f2),@('제출자',$f3),@('학교·학과',$f4));$card.Location=New-Object Drawing.Point(20,50)
+    $note=New-Text '이 정보는 이 PC에만 저장돼요.' 8.5 $false ([Theme]::Secondary);$note.Location=New-Object Drawing.Point(24,($card.Bottom+8))
+    $ok=New-Pill '표지 넣고 저장' $true;$ok.Location=New-Object Drawing.Point(20,($note.Bottom+14))
+    $skip=New-Pill '표지 없이 저장';$skip.Location=New-Object Drawing.Point(($ok.Right+8),$ok.Top)
+    $ok.Add_Click({$d.DialogResult='OK';$d.Close()});$skip.Add_Click({$d.DialogResult='Ignore';$d.Close()})
+    $d.Controls.AddRange(@($title,$card,$note,$ok,$skip))
+    $r=$d.ShowDialog($form);$cover=$null
+    if($r -eq 'OK'){
+        $script:settings.cover=[pscustomobject]@{subject=$f1.Text.Trim();title=$f2.Text.Trim();author=$f3.Text.Trim();school=$f4.Text.Trim()};Save-Settings
+        $cover=@{subject=$f1.Text.Trim();title=$f2.Text.Trim();author=$f3.Text.Trim();school=$f4.Text.Trim();date=$datePicker.Value.ToString('yyyy년 M월 d일',[Globalization.CultureInfo]::InvariantCulture)}
+    }
+    $d.Dispose()
+    if($r -eq 'Cancel'){return 'cancel'}
+    return $cover
+}
 function Save-Document {
     if(-not $output.Text.Trim()){return}
     $dialog=New-Object Windows.Forms.SaveFileDialog
-    $dialog.Filter='Word 문서 · B4 가로 (*.doc)|*.doc|웹 페이지 · 한글/브라우저에서 열기·인쇄 (*.html)|*.html|서식 있는 문서 (*.rtf)|*.rtf|텍스트 (*.txt)|*.txt'
+    $dialog.Filter='Word 문서 (*.doc)|*.doc|웹 페이지 · 한글/브라우저에서 열기·인쇄 (*.html)|*.html|서식 있는 문서 (*.rtf)|*.rtf|텍스트 (*.txt)|*.txt'
     $dialog.FileName="간호과정_$($datePicker.Value.ToString('yyyyMMdd'))"
     if($dialog.ShowDialog($form) -eq 'OK'){
         $path=$dialog.FileName;$ext=[IO.Path]::GetExtension($path).ToLower()
-        if($ext -in @('.doc','.html','.htm')){$html=if($script:model){ConvertTo-WorkbookHtml $script:model}else{ConvertTo-SimpleHtml $output.Text};[IO.File]::WriteAllText($path,$html,[Text.UTF8Encoding]::new($true))}
+        if($ext -in @('.doc','.html','.htm')){
+            if($script:model -and $script:format -eq 'report'){$cover=Get-Cover;if($cover -eq 'cancel'){$dialog.Dispose();return};$html=ConvertTo-ReportHtml $script:model $cover}
+            elseif($script:model){$html=ConvertTo-WorkbookHtml $script:model}else{$html=ConvertTo-SimpleHtml $output.Text};[IO.File]::WriteAllText($path,$html,[Text.UTF8Encoding]::new($true))}
         elseif($ext -eq '.txt'){[IO.File]::WriteAllText($path,$output.Text.Replace("`n","`r`n"),[Text.UTF8Encoding]::new($true))}
         else{$output.SaveFile($path,'RichText')}
         Set-Status "저장했어요: $path"
@@ -322,8 +353,8 @@ $left.Controls.AddRange(@($title,$sub,(New-Section '대상자 자료'),$dataCard
 # 오른쪽: 형식 선택 + 결과
 $right=New-Object Windows.Forms.Panel;$right.Dock='Fill';$right.Padding=New-Object Windows.Forms.Padding(12,20,24,8);$right.BackColor=[Theme]::Back
 $toolbar=New-Object Windows.Forms.Panel;$toolbar.Dock='Top';$toolbar.Height=44;$toolbar.BackColor=[Theme]::Back
-$formatTabs=New-Object Segmented;$formatTabs.Location=New-Object Drawing.Point(0,2);$formatTabs.SetItems([string[]]@('B4 워크북','기본 형식'),'B4 워크북')
-$tip.SetToolTip($formatTabs,'B4 워크북: 간호과정 별책 워크북 순서 (간호사정 → 간호진단 → 간호계획 → 수행·평가 → 간호기록)')
+$formatTabs=New-Object Segmented;$formatTabs.Location=New-Object Drawing.Point(0,2);$formatTabs.SetItems([string[]]@('제출 양식','B4 워크북','기본 형식'),'제출 양식')
+$tip.SetToolTip($formatTabs,'제출 양식: 학교 보고서 표 (사정 / 간호계획 및 수행 / 합리적 근거 / 간호평가, A4 · 표지)   B4 워크북: 간호과정 별책 워크북 순서 (간호사정 → 간호진단 → 간호계획 → 수행·평가 → 간호기록)')
 $tools=New-Object Windows.Forms.FlowLayoutPanel;$tools.Dock='Right';$tools.AutoSize=$true;$tools.WrapContents=$false;$tools.BackColor=[Theme]::Back;$tools.Padding=New-Object Windows.Forms.Padding(0,2,0,0)
 $progress=New-Object Windows.Forms.ProgressBar;$progress.Style='Marquee';$progress.Width=90;$progress.Height=6;$progress.Margin=New-Object Windows.Forms.Padding(0,16,10,0);$progress.Visible=$false
 $polish=New-Pill '✨ 제미나이로 다듬기' $true;$undo=New-Pill '되돌리기';$undo.Visible=$false;$copy=New-Pill '복사';$save=New-Pill '저장'
@@ -350,7 +381,7 @@ function Load-Sample {
     Suggest
 }
 function Show-Welcome {
-    Show-Document "■ 시작하기`n`n1. 왼쪽에 주관적·객관적 자료를 한 줄에 하나씩 넣으세요.`n2. ‘진단 추천’을 누르면 맞는 간호진단에 체크돼요. 위에서부터 우선순위예요.`n3. 진단을 눌러 원인(관련 요인)을 고치고 ‘틀 만들기’를 누르세요.`n`n· 위쪽에서 B4 워크북 / 기본 형식을 고를 수 있어요.`n· 결과는 여기서 바로 고칠 수 있어요.`n· 저장 → Word(.doc)를 고르면 B4 가로 표 양식으로 저장돼요.`n· ‘예시 불러오기’로 바로 사용법을 볼 수 있어요."
+    Show-Document "■ 시작하기`n`n1. 왼쪽에 주관적·객관적 자료를 한 줄에 하나씩 넣으세요.`n2. ‘진단 추천’을 누르면 맞는 간호진단에 체크돼요. 위에서부터 우선순위예요.`n3. 진단을 눌러 원인(관련 요인)을 고치고 ‘틀 만들기’를 누르세요.`n`n· 위쪽에서 제출 양식 / B4 워크북 / 기본 형식을 고를 수 있어요.`n· 결과는 여기서 바로 고칠 수 있어요.`n· 저장 → Word(.doc)를 고르면 표 양식으로 저장돼요. 제출 양식은 표지도 넣을 수 있어요.`n· ‘예시 불러오기’로 바로 사용법을 볼 수 있어요."
 }
 $suggestButton.Add_Click({Suggest})
 $sampleButton.Add_Click({Load-Sample})

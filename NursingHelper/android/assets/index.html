@@ -107,7 +107,7 @@ textarea.edit{width:calc(100% - 32px);margin:12px 16px 0;min-height:60vh;border:
 <!-- 3. 결과 -->
 <section class="page" id="p-out">
   <header><h1>결과</h1></header>
-  <div class="seg" id="fmt"><button data-v="b4" class="on">B4 워크북</button><button data-v="basic">기본 형식</button></div>
+  <div class="seg" id="fmt"><button data-v="report" class="on">제출 양식</button><button data-v="b4">B4 워크북</button><button data-v="basic">기본</button></div>
   <div class="toolbar">
     <button class="pill primary" id="polish" onclick="polish()">✨ 제미나이로 다듬기</button>
     <button class="pill" id="undo" style="display:none" onclick="undo()">되돌리기</button>
@@ -128,7 +128,7 @@ textarea.edit{width:calc(100% - 32px);margin:12px 16px 0;min-height:60vh;border:
   <button data-p="p-out"><span class="i">▤</span>결과</button>
 </nav>
 
-<div class="sheet-bg" id="sheetBg" onclick="closeSettings()"></div>
+<div class="sheet-bg" id="sheetBg" onclick="closeSheets()"></div>
 <div class="sheet" id="sheet">
   <div class="grab"></div>
   <h2>제미나이 설정</h2>
@@ -140,6 +140,18 @@ textarea.edit{width:calc(100% - 32px);margin:12px 16px 0;min-height:60vh;border:
   <button class="big" onclick="issueKey()">🔑 키 발급하기 (무료)</button>
   <p class="note">발급 페이지에서 키를 <b>복사</b>하고 돌아오면, 앱이 사용할지 물어본 뒤 자동으로 넣어 드려요.<br>키는 이 휴대폰의 앱 안에만 저장되고, 다듬기를 누를 때만 Google로 전송돼요.</p>
   <div class="row-btns"><button class="pill primary" onclick="saveSettings()">저장</button></div>
+</div>
+<div class="sheet" id="coverSheet">
+  <div class="grab"></div>
+  <h2>표지 정보</h2>
+  <div class="card" style="margin-top:12px">
+    <div class="field"><label>과목</label><input id="cv1" placeholder="예) 2026-1 여성건강간호학Ⅰ"></div>
+    <div class="field"><label>제목</label><input id="cv2" placeholder="예) 산후출혈 간호과정"></div>
+    <div class="field"><label>제출자</label><input id="cv3" placeholder="예) C-7조 (학번 이름, …)"></div>
+    <div class="field"><label>학교·학과</label><input id="cv4" placeholder="예) ○○대학교 간호학과"></div>
+  </div>
+  <p class="note">이 정보는 이 휴대폰에만 저장돼요.</p>
+  <div class="row-btns"><button class="pill primary" onclick="coverDone(true)">표지 넣고 저장</button><button class="pill" onclick="coverDone(false)">표지 없이</button></div>
 </div>
 <div class="toast" id="toast"></div>
 

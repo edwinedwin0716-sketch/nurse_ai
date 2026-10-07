@@ -258,9 +258,86 @@
       "body{font-family:'Malgun Gothic','Noto Sans KR',sans-serif;font-size:10.5pt}h1{font-size:14pt;color:#0a7f8c;margin:12pt 0 4pt}p{margin:0 0 2pt}</style></head><body><div class=Section1>" + body + '</div></body></html>';
   }
 
+  // 제출 양식 (사정 / 간호계획 및 수행 / 합리적 근거 / 간호평가)
+  var VITAL = /(\bBP\b|혈압|\bP\s*\d|\bPR\b|맥박|\bR\s*\d|\bRR\b|호흡수|\bBT\b|체온|V\/S|SpO2|산소포화도)/i;
+  var CIRCLED = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳';
+  function circled(n) { return n >= 1 && n <= 20 ? CIRCLED.charAt(n - 1) : '(' + n + ')'; }
+  var DONE = [['돕는다.', '도움'], ['둔다.', '둠'], ['올린다.', '올림'], ['줄인다.', '줄임'], ['만든다.', '만듦'], ['지킨다.', '지킴'], ['피한다.', '피함']];
+  function toDone(sentence) {
+    var s = sentence.trim();
+    for (var i = 0; i < DONE.length; i++) if (s.slice(-DONE[i][0].length) === DONE[i][0]) return s.slice(0, s.length - DONE[i][0].length) + DONE[i][1];
+    if (s.slice(-3) === '한다.') return s.slice(0, s.length - 3) + '함';
+    return s.replace(/\.+$/, '');
+  }
+  function reportSections(m) {
+    return m.diags.map(function (d) {
+      var s = m.subjective.filter(function (x) { return d.cues.indexOf(x) >= 0; }); if (!s.length) s = m.subjective.slice();
+      var o = m.objective.filter(function (x) { return d.cues.indexOf(x) >= 0 || VITAL.test(x); }); if (!o.length) o = m.objective.slice();
+      var groups = [], n = 0;
+      [['진단적', '진단적 지시'], ['치료적', '치료적 지시'], ['교육적', '교육적 지시']].forEach(function (k) {
+        var items = d.plans.filter(function (p) { return p.kind === k[0]; }).map(function (p) { n++; return { no: circled(n), plan: p.plan, why: p.why, done: toDone(p.plan) }; });
+        if (items.length) groups.push({ title: k[1], items: items });
+      });
+      return { d: d, s: s, o: o, groups: groups };
+    });
+  }
+  function reportText(m) {
+    var out = [], w = function (x) { out.push(x); }, dd = md(m.date);
+    reportSections(m).forEach(function (sec, k) {
+      var d = sec.d;
+      if (k > 0) w('');
+      w('■ 간호진단 ' + (k + 1) + '  ' + d.statement);
+      w(''); w('[사정(자료수집)]');
+      w('주관적 자료 : ' + (sec.s.length ? sec.s.join(', ') : '"(대상자가 직접 한 말)"'));
+      w('객관적 자료 : ' + (sec.o.length ? sec.o.join(', ') : '(V/S, 검사 결과, 관찰 내용)'));
+      w(''); w('[간호계획 및 수행]');
+      w('장기목표: ' + d.long);
+      d.short.forEach(function (g, i) { w((i === 0 ? '단기목표: ' : '          ') + g); });
+      w(''); w('– 계획 –');
+      sec.groups.forEach(function (g) { w('[' + g.title + ']'); g.items.forEach(function (it) { w(it.no + it.plan); }); });
+      w(''); w('– 수행 –');
+      var i = 0;
+      sec.groups.forEach(function (g) { g.items.forEach(function (it) { i++; w(i + '. ' + it.done); w('   - ' + dd + ' __:__ (수행 결과·대상자 반응을 적으세요)'); }); });
+      w(''); w('[합리적 근거]');
+      sec.groups.forEach(function (g) { g.items.forEach(function (it) { w(it.no + it.why); w('(참고문헌: 저자 외. (연도). 교재명 제_판 p.__ 출판사 — 확인 후 적으세요)'); }); });
+      w(''); w('[간호평가]');
+      w('장기목표: ' + d.long + ' (달성 / 부분 달성 / 미달성)');
+      d.short.forEach(function (g, i) { w((i === 0 ? '단기목표: ' : '          ') + g + ' (달성 / 부분 달성 / 미달성)'); });
+    });
+    w(''); w('※ 자동으로 만든 틀입니다. 수행 결과와 참고문헌은 직접 채우고, 이론적 근거는 교재로 꼭 확인·수정하세요.');
+    return out.join('\n') + '\n';
+  }
+  function reportHtml(m, cover) {
+    var dd = md(m.date), h = [];
+    h.push('<html><head><meta charset="utf-8"><title>간호과정</title><style>@page{size:210mm 297mm;margin:20mm 18mm}@page Section1{size:210mm 297mm;margin:20mm 18mm}div.Section1{page:Section1}' +
+      "body{font-family:'맑은 고딕','Malgun Gothic','Noto Sans KR',sans-serif;font-size:10.5pt;color:#000;line-height:1.55}table{border-collapse:collapse;width:100%}td{border:1px solid #000;padding:4pt 6pt;vertical-align:top}" +
+      'td.k{width:19%;text-align:center;vertical-align:middle}h2{font-size:12pt;margin:0 0 6pt}.cover{text-align:center;page-break-after:always}.cover .subj{font-size:14pt;text-align:left;margin-top:60pt}' +
+      '.cover .title{font-size:24pt;margin:70pt 0 210pt}.cover .meta{font-size:13pt;line-height:2}.cover .school{font-size:14pt;margin-top:110pt}.blank{color:#c06000}.small{font-size:9pt;color:#555}.pb{page-break-before:always}' +
+      '*{-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body><div class=Section1>');
+    if (cover) h.push('<div class=cover><div class=subj>' + esc(cover.subject) + '</div><div class=title>' + esc(cover.title) + '</div><div class=meta>제출일 : ' + esc(cover.date) + '<br>제출자 : ' + esc(cover.author) + '</div><div class=school>' + esc(cover.school) + '</div></div>');
+    reportSections(m).forEach(function (sec, k) {
+      var d = sec.d;
+      h.push('<h2' + (k > 0 ? ' class=pb' : '') + '>간호진단</h2><table><tr><td colspan=2>간호진단 ' + (k + 1) + ' ' + esc(d.statement) + '</td></tr>');
+      h.push('<tr><td class=k>사정(자료수집)</td><td>주관적 자료<br>: ' + (sec.s.length ? esc(sec.s.join(', ')) : '<span class=blank>"(대상자가 직접 한 말)"</span>') + '<br><br>객관적 자료<br>: ' + (sec.o.length ? esc(sec.o.join(', ')) : '<span class=blank>(V/S, 검사 결과, 관찰 내용)</span>') + '</td></tr>');
+      var goal = '장기목표: ' + esc(d.long) + '<br>' + d.short.map(function (g, i) { return (i === 0 ? '단기목표: ' : '') + esc(g) + '<br>'; }).join('');
+      var plan = sec.groups.map(function (g) { return '[' + esc(g.title) + ']<br>' + g.items.map(function (it) { return it.no + esc(it.plan) + '<br>'; }).join('') + '<br>'; }).join('');
+      var i = 0, done = '';
+      sec.groups.forEach(function (g) { g.items.forEach(function (it) { i++; done += i + '. ' + esc(it.done) + '<br><span class=blank>&nbsp;&nbsp;- ' + dd + ' __:__ (수행 결과·대상자 반응)</span><br>'; }); });
+      h.push('<tr><td class=k>간호계획 및<br>수행</td><td>' + goal + '<br>– 계획 –<br>' + plan + '– 수행 –<br>' + done + '</td></tr>');
+      var why = '';
+      sec.groups.forEach(function (g) { g.items.forEach(function (it) { why += it.no + esc(it.why) + '<br><span class=blank>(참고문헌: 저자 외. (연도). 교재명 제_판 p.__ 출판사)</span><br>'; }); });
+      h.push('<tr><td class=k>합리적 근거</td><td>' + why + '</td></tr>');
+      var ev = '장기목표: ' + esc(d.long) + ' <span class=blank>(달성 / 부분 달성 / 미달성)</span><br>' + d.short.map(function (g, i) { return (i === 0 ? '단기목표: ' : '') + esc(g) + ' <span class=blank>(달성 / 부분 달성 / 미달성)</span><br>'; }).join('');
+      h.push('<tr><td class=k>간호평가</td><td>' + ev + '</td></tr></table>');
+    });
+    h.push('<p class=small>※ 자동으로 만든 틀입니다. 수행 결과와 참고문헌은 직접 채우고, 이론적 근거는 교재로 꼭 확인·수정하세요.</p></div></body></html>');
+    return h.join('');
+  }
+
   root.Nursing = {
     formatDiagnosis: formatDiagnosis, toPast: toPast, splitLines: splitLines, findDiagnoses: findDiagnoses,
     basic: basic, workbookModel: workbookModel, workbookText: workbookText, workbookHtml: workbookHtml, simpleHtml: simpleHtml,
+    reportText: reportText, reportHtml: reportHtml, toDone: toDone,
     sortByPriority: sortByPriority, particle: particle, ro: ro
   };
 })(typeof window !== 'undefined' ? window : globalThis);

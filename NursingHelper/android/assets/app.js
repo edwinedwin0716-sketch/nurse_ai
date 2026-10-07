@@ -111,7 +111,9 @@
     if (!ch.length) { suggest(false); ch = chosen(); }
     if (!ch.length) { toast('간호진단을 하나 이상 체크하세요'); go('p-dx'); return; }
     var s = $('s').value, o = $('o').value, dx = $('dx').value, d = getDate();
-    if (seg('fmt') === 'b4') { state.model = N.workbookModel(s, o, dx, ch, d, false); state.text = N.workbookText(state.model); }
+    state.format = seg('fmt');
+    if (state.format === 'report') { state.model = N.workbookModel(s, o, dx, ch, d, false); state.text = N.reportText(state.model); }
+    else if (state.format === 'b4') { state.model = N.workbookModel(s, o, dx, ch, d, false); state.text = N.workbookText(state.model); }
     else { state.model = null; state.text = N.basic(s, o, dx, ch, d); }
     state.before = null; $('undo').style.display = 'none';
     if (state.editing) toggleEdit();
@@ -119,7 +121,7 @@
     if (moveTo) go('p-out');
   };
   function esc(x) { return x.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-  var SUB = /^(진단 \d+ :|간호진단 \d+ :|\d순위:|단서묶음 \d|장기목표$|단기목표$|진단적 |치료적 |교육적 |주관적 자료|객관적 자료|자료조직|간호문제|간호수행$|간호중재|단기목표 평가|장기목표 평가|우선순위의 근거|관련\(위험\)|간호진단 진술|간호평가)/;
+  var SUB = /^(\[.+\]$|– (계획|수행) –$|진단 \d+ :|간호진단 \d+ :|\d순위:|단서묶음 \d|장기목표$|단기목표$|진단적 |치료적 |교육적 |주관적 자료|객관적 자료|자료조직|간호문제|간호수행$|간호중재|단기목표 평가|장기목표 평가|우선순위의 근거|관련\(위험\)|간호진단 진술|간호평가)/;
   function renderDoc() {
     var box = $('doc');
     if (!state.text) { box.innerHTML = '<div class="empty">자료를 넣고 ‘진단 추천 받기’ → ‘틀 만들기’를 누르세요.</div>'; return; }
@@ -144,7 +146,25 @@
     }
   };
   function current() { if (state.editing) toggleEdit(); return state.text; }
-  function html() { return state.model ? N.workbookHtml(state.model) : N.simpleHtml(state.text); }
+  function html(cover) {
+    if (state.model && state.format === 'report') return N.reportHtml(state.model, cover || null);
+    return state.model ? N.workbookHtml(state.model) : N.simpleHtml(state.text);
+  }
+  // 제출 양식은 저장·인쇄 전에 표지 정보를 묻는다
+  var coverNext = null;
+  function withCover(next) {
+    if (!(state.model && state.format === 'report')) { next(null); return; }
+    var c = {}; try { c = JSON.parse(store('cover') || '{}'); } catch (e) {}
+    $('cv1').value = c.subject || ''; $('cv2').value = c.title || ''; $('cv3').value = c.author || ''; $('cv4').value = c.school || '';
+    coverNext = next; $('sheetBg').style.display = 'block'; setTimeout(function () { $('coverSheet').classList.add('open'); }, 10);
+  }
+  window.coverDone = function (use) {
+    var c = { subject: $('cv1').value.trim(), title: $('cv2').value.trim(), author: $('cv3').value.trim(), school: $('cv4').value.trim() };
+    store('cover', JSON.stringify(c)); closeSheets();
+    var d = getDate(); c.date = d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일';
+    var next = coverNext; coverNext = null; if (next) next(use ? c : null);
+  };
+  window.closeSheets = function () { $('coverSheet').classList.remove('open'); closeSettings(); };
   function fileName(ext) { var d = getDate(); return '간호과정_' + d.getFullYear() + ('0' + (d.getMonth() + 1)).slice(-2) + ('0' + d.getDate()).slice(-2) + ext; }
   window.copyText = function () {
     var t = current(); if (!t) return;
@@ -154,10 +174,16 @@
   window.shareText = function () { var t = current(); if (!t) return; if (bridge) bridge.share('간호과정', t); else if (navigator.share) navigator.share({ text: t }); };
   window.saveDoc = function () {
     if (!current()) return;
-    if (bridge) { toast(bridge.saveFile(fileName('.doc'), 'application/msword', '﻿' + html())); return; }
-    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + html()], { type: 'application/msword' })); a.download = fileName('.doc'); a.click();
+    withCover(function (cv) {
+      var doc = '\ufeff' + html(cv);
+      if (bridge) { toast(bridge.saveFile(fileName('.doc'), 'application/msword', doc)); return; }
+      var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([doc], { type: 'application/msword' })); a.download = fileName('.doc'); a.click();
+    });
   };
-  window.printDoc = function () { if (!current()) return; if (bridge) bridge.print(fileName(''), html()); else { var w = window.open(''); w.document.write(html()); w.print(); } };
+  window.printDoc = function () {
+    if (!current()) return;
+    withCover(function (cv) { var h = html(cv); if (bridge) bridge.print(fileName(''), h, state.format === 'b4'); else { var w = window.open(''); w.document.write(h); w.print(); } });
+  };
   window.openUrl = function (u) { if (bridge) bridge.openUrl(u); else window.open(u); };
 
   // ---------- 제미나이 ----------
@@ -245,7 +271,7 @@
   renderList();
   // 안드로이드 뒤로가기: 결과 → 진단 → 자료
   window.onBack = function () {
-    if ($('sheet').classList.contains('open')) { closeSettings(); return true; }
+    if ($('sheet').classList.contains('open') || $('coverSheet').classList.contains('open')) { closeSheets(); return true; }
     var on = document.querySelector('.page.on').id;
     if (on === 'p-out') { go('p-dx'); return true; }
     if (on === 'p-dx') { go('p-data'); return true; }

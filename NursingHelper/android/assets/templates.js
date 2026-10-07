@@ -193,7 +193,7 @@ window.TEMPLATES = {
     "priority": 2,
     "reason": "순환과 생명 유지에 직결되는 생리적 문제로 빨리 교정하지 않으면 쇼크로 진행할 수 있다",
     "evalData": "시간당 소변량, I/O, 체중, 피부 탄력·점막 상태, V/S, 전해질·BUN 결과",
-    "keywords": "탈수|dehydration|구토|vomit|설사|diarrhea|못 ?마시|수분 ?섭취 ?저하|소변량 ?감소|핍뇨|oliguria|점막 ?건조|피부 ?탄력|turgor|갈증|BUN|Hct|NPO|금식",
+    "keywords": "탈수|dehydration|출혈량|실혈|출혈|hemorrhage|\\bPPH\\b|저혈압|빈맥|구토|vomit|설사|diarrhea|못 ?마시|수분 ?섭취 ?저하|소변량 ?감소|핍뇨|oliguria|점막 ?건조|피부 ?탄력|turgor|갈증|BUN|Hct|NPO|금식",
     "cause": "구토와 설사로 인한 수분 손실",
     "long": "대상자는 퇴원 시 적절한 체액 균형을 유지할 것이다.",
     "short": [

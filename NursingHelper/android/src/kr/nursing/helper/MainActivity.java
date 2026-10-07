@@ -148,9 +148,9 @@ public class MainActivity extends Activity {
             }
         }
 
-        // B4 가로로 인쇄하거나 'PDF로 저장'
+        // 인쇄하거나 'PDF로 저장' (B4 워크북은 B4 가로, 제출 양식은 A4 세로)
         @JavascriptInterface
-        public void print(final String name, final String html) {
+        public void print(final String name, final String html, final boolean landscape) {
             runOnUiThread(new Runnable() { @Override public void run() {
                 printView = new WebView(MainActivity.this);
                 printView.setWebViewClient(new WebViewClient() {
@@ -158,7 +158,7 @@ public class MainActivity extends Activity {
                     public void onPageFinished(WebView view, String url) {
                         PrintManager pm = (PrintManager) getSystemService(Context.PRINT_SERVICE);
                         PrintAttributes attrs = new PrintAttributes.Builder()
-                                .setMediaSize(PrintAttributes.MediaSize.ISO_B4.asLandscape())
+                                .setMediaSize(landscape ? PrintAttributes.MediaSize.ISO_B4.asLandscape() : PrintAttributes.MediaSize.ISO_A4)
                                 .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
                                 .build();
                         pm.print(name, view.createPrintDocumentAdapter(name), attrs);

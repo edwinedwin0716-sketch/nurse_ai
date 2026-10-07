@@ -91,7 +91,7 @@ $script:Templates = [ordered]@{
     priority = 2
     reason = '순환과 생명 유지에 직결되는 생리적 문제로 빨리 교정하지 않으면 쇼크로 진행할 수 있다'
     evalData = '시간당 소변량, I/O, 체중, 피부 탄력·점막 상태, V/S, 전해질·BUN 결과'
-    keywords = '탈수|dehydration|구토|vomit|설사|diarrhea|못 ?마시|수분 ?섭취 ?저하|소변량 ?감소|핍뇨|oliguria|점막 ?건조|피부 ?탄력|turgor|갈증|BUN|Hct|NPO|금식'
+    keywords = '탈수|dehydration|출혈량|실혈|출혈|hemorrhage|\bPPH\b|저혈압|빈맥|구토|vomit|설사|diarrhea|못 ?마시|수분 ?섭취 ?저하|소변량 ?감소|핍뇨|oliguria|점막 ?건조|피부 ?탄력|turgor|갈증|BUN|Hct|NPO|금식'
     cause = '구토와 설사로 인한 수분 손실'
     long = '대상자는 퇴원 시 적절한 체액 균형을 유지할 것이다.'
     short = @('대상자는 2일 내 시간당 소변량이 0.5mL/kg 이상 유지될 것이다.','대상자는 3일 내 피부 탄력과 점막 상태가 정상으로 회복될 것이다.')
@@ -623,6 +623,106 @@ td.k{background:#12a7b8;color:#fff;font-weight:bold;width:15%;text-align:center;
     return $h.ToString()
 }
 
+# ---------- 제출 양식 (학교 간호과정 보고서: 사정 / 간호계획 및 수행 / 합리적 근거 / 간호평가) ----------
+$script:VitalSigns='(?i)(\bBP\b|혈압|\bP\s*\d|\bPR\b|맥박|\bR\s*\d|\bRR\b|호흡수|\bBT\b|체온|V/S|SpO2|산소포화도)'
+$script:Circled='①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'
+function Get-Circled($n){if($n -ge 1 -and $n -le 20){return [string]$script:Circled[$n-1]};return "($n)"}
+# 계획 문장(~한다.)을 수행 기록(~함)으로 바꾼다
+function ConvertTo-Done($sentence) {
+    $s=$sentence.Trim()
+    foreach($pair in @(@('돕는다.','도움'),@('둔다.','둠'),@('올린다.','올림'),@('줄인다.','줄임'),@('만든다.','만듦'),@('지킨다.','지킴'),@('피한다.','피함'))){
+        if($s.EndsWith($pair[0])){return $s.Substring(0,$s.Length-$pair[0].Length)+$pair[1]}
+    }
+    if($s.EndsWith('한다.')){return $s.Substring(0,$s.Length-3)+'함'}
+    return $s.TrimEnd('.')
+}
+function Get-ReportSections($m) {
+    $out=@()
+    foreach($d in $m.diags){
+        $s=@($m.subjective|Where-Object {$_ -in $d.cues});if($s.Count -eq 0){$s=@($m.subjective)}
+        # 진단 단서 + 활력징후(모든 진단에 공통으로 쓰이는 자료), 원래 순서 유지
+        $o=@($m.objective|Where-Object {($_ -in $d.cues) -or ($_ -match $script:VitalSigns)});if($o.Count -eq 0){$o=@($m.objective)}
+        $groups=@();$n=0
+        foreach($kind in @(@('진단적','진단적 지시'),@('치료적','치료적 지시'),@('교육적','교육적 지시'))){
+            $items=@();foreach($p in @($d.plans|Where-Object {$_.kind -eq $kind[0]})){$n++;$items+=[pscustomobject]@{no=(Get-Circled $n);plan=$p.plan;why=$p.why;done=(ConvertTo-Done $p.plan)}}
+            if($items.Count){$groups+=[pscustomobject]@{title=$kind[1];items=$items}}
+        }
+        $out+=[pscustomobject]@{d=$d;s=$s;o=$o;groups=$groups}
+    }
+    return $out
+}
+function ConvertTo-ReportText($m) {
+    $sb=New-Object Text.StringBuilder;$w={param($x) [void]$sb.AppendLine($x)}
+    $md=$m.date.ToString('M/d',[Globalization.CultureInfo]::InvariantCulture)
+    $k=0
+    foreach($sec in Get-ReportSections $m){$k++;$d=$sec.d
+        if($k -gt 1){& $w ''}
+        & $w "■ 간호진단 $k  $($d.statement)"
+        & $w '';& $w '[사정(자료수집)]'
+        & $w "주관적 자료 : $(if($sec.s.Count){$sec.s -join ', '}else{'"(대상자가 직접 한 말)"'})"
+        & $w "객관적 자료 : $(if($sec.o.Count){$sec.o -join ', '}else{'(V/S, 검사 결과, 관찰 내용)'})"
+        & $w '';& $w '[간호계획 및 수행]'
+        & $w "장기목표: $($d.long)"
+        $i=0;foreach($g in $d.short){$i++;& $w "$(if($i -eq 1){'단기목표: '}else{'          '})$g"}
+        & $w '';& $w '– 계획 –'
+        foreach($g in $sec.groups){& $w "[$($g.title)]";foreach($it in $g.items){& $w "$($it.no)$($it.plan)"}}
+        & $w '';& $w '– 수행 –'
+        $i=0;foreach($g in $sec.groups){foreach($it in $g.items){$i++;& $w "$i. $($it.done)";& $w "   - $md __:__ (수행 결과·대상자 반응을 적으세요)"}}
+        & $w '';& $w '[합리적 근거]'
+        foreach($g in $sec.groups){foreach($it in $g.items){& $w "$($it.no)$($it.why)";& $w '(참고문헌: 저자 외. (연도). 교재명 제_판 p.__ 출판사 — 확인 후 적으세요)'}}
+        & $w '';& $w '[간호평가]'
+        & $w "장기목표: $($d.long) (달성 / 부분 달성 / 미달성)"
+        $i=0;foreach($g in $d.short){$i++;& $w "$(if($i -eq 1){'단기목표: '}else{'          '})$g (달성 / 부분 달성 / 미달성)"}
+    }
+    & $w '';& $w '※ 자동으로 만든 틀입니다. 수행 결과와 참고문헌은 직접 채우고, 이론적 근거는 교재로 꼭 확인·수정하세요.'
+    return $sb.ToString()
+}
+# A4 세로 표 양식 (표지 + 진단별 표)
+function ConvertTo-ReportHtml($m,$cover) {
+    $e={param($x) [System.Net.WebUtility]::HtmlEncode([string]$x)}
+    $md=$m.date.ToString('M/d',[Globalization.CultureInfo]::InvariantCulture)
+    $h=New-Object Text.StringBuilder;$a={param($x) [void]$h.Append($x)}
+    & $a @'
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>간호과정</title>
+<style>
+@page{size:210mm 297mm;margin:20mm 18mm}
+@page Section1{size:210mm 297mm;margin:20mm 18mm}
+div.Section1{page:Section1}
+body{font-family:'맑은 고딕','Malgun Gothic','Noto Sans KR',sans-serif;font-size:10.5pt;color:#000;line-height:1.55}
+table{border-collapse:collapse;width:100%}
+td{border:1px solid #000;padding:4pt 6pt;vertical-align:top}
+td.k{width:19%;text-align:center;vertical-align:middle}
+h2{font-size:12pt;margin:0 0 6pt}
+.cover{text-align:center;page-break-after:always}
+.cover .subj{font-size:14pt;text-align:left;margin-top:60pt}
+.cover .title{font-size:24pt;margin:70pt 0 210pt}
+.cover .meta{font-size:13pt;line-height:2}
+.cover .school{font-size:14pt;margin-top:110pt}
+.blank{color:#c06000}.small{font-size:9pt;color:#555}
+.pb{page-break-before:always}
+</style></head><body><div class=Section1>
+'@
+    if($cover){
+        & $a "<div class=cover><div class=subj>$(& $e $cover.subject)</div><div class=title>$(& $e $cover.title)</div>"
+        & $a "<div class=meta>제출일 : $(& $e $cover.date)<br>제출자 : $(& $e $cover.author)</div><div class=school>$(& $e $cover.school)</div></div>"
+    }
+    $k=0
+    foreach($sec in Get-ReportSections $m){$k++;$d=$sec.d
+        & $a "<h2$(if($k -gt 1){' class=pb'})>간호진단</h2><table><tr><td colspan=2>간호진단 $k $(& $e $d.statement)</td></tr>"
+        & $a "<tr><td class=k>사정(자료수집)</td><td>주관적 자료<br>: $(if($sec.s.Count){& $e ($sec.s -join ', ')}else{'<span class=blank>"(대상자가 직접 한 말)"</span>'})<br><br>객관적 자료<br>: $(if($sec.o.Count){& $e ($sec.o -join ', ')}else{'<span class=blank>(V/S, 검사 결과, 관찰 내용)</span>'})</td></tr>"
+        $goal="장기목표: $(& $e $d.long)<br>";$i=0;foreach($g in $d.short){$i++;$goal+="$(if($i -eq 1){'단기목표: '})$(& $e $g)<br>"}
+        $plan='';foreach($g in $sec.groups){$plan+="[$(& $e $g.title)]<br>";foreach($it in $g.items){$plan+="$($it.no)$(& $e $it.plan)<br>"};$plan+='<br>'}
+        $done='';$i=0;foreach($g in $sec.groups){foreach($it in $g.items){$i++;$done+="$i. $(& $e $it.done)<br><span class=blank>&nbsp;&nbsp;- $md __:__ (수행 결과·대상자 반응)</span><br>"}}
+        & $a "<tr><td class=k>간호계획 및<br>수행</td><td>$goal<br>– 계획 –<br>$plan– 수행 –<br>$done</td></tr>"
+        $why='';foreach($g in $sec.groups){foreach($it in $g.items){$why+="$($it.no)$(& $e $it.why)<br><span class=blank>(참고문헌: 저자 외. (연도). 교재명 제_판 p.__ 출판사)</span><br>"}}
+        & $a "<tr><td class=k>합리적 근거</td><td>$why</td></tr>"
+        $ev="장기목표: $(& $e $d.long) <span class=blank>(달성 / 부분 달성 / 미달성)</span><br>";$i=0;foreach($g in $d.short){$i++;$ev+="$(if($i -eq 1){'단기목표: '})$(& $e $g) <span class=blank>(달성 / 부분 달성 / 미달성)</span><br>"}
+        & $a "<tr><td class=k>간호평가</td><td>$ev</td></tr></table>"
+    }
+    & $a '<p class=small>※ 자동으로 만든 틀입니다. 수행 결과와 참고문헌은 직접 채우고, 이론적 근거는 교재로 꼭 확인·수정하세요.</p></div></body></html>'
+    return $h.ToString()
+}
+
 function Test-Templates {
     $found=Find-Diagnoses '배가 쥐어짜는 듯이 너무 아파요' "Fever(+)`nNRS : 5/10점`nWBC(20000)`nChilling(+)" 'acute peritonitis'
     if($found[0] -ne '급성 통증'){throw "auto diagnosis failed: $($found -join ',')"}
@@ -639,5 +739,10 @@ function Test-Templates {
     foreach($must in @('■ 1. 간호사정','단서묶음 1','별책 부록 8, p.26','12. 안위 Comfort 영역에 해당하는 자료','우선순위의 근거','간호평가를 위한 자료수집','S : ')){if($wt -notlike "*$must*"){throw "workbook missing: $must"}}
     $html=ConvertTo-WorkbookHtml $m
     if($html -notlike '*size:364mm 257mm*' -or $html -notlike '*단서묶음 2*'){throw 'html failed'}
+    $rt=ConvertTo-ReportText $m
+    foreach($must in @('■ 간호진단 1  복강 내 염증과 관련된 급성 통증','[사정(자료수집)]','– 계획 –','[진단적 지시]','①매 4시간마다 V/S를 사정한다.','1. 매 4시간마다 V/S를 사정함','[합리적 근거]','[간호평가]','(달성 / 부분 달성 / 미달성)')){if($rt -notlike "*$must*"){throw "report missing: $must"}}
+    if((ConvertTo-Done '침상 난간을 항상 올리고 침대 높이를 낮게 유지한다.') -ne '침상 난간을 항상 올리고 침대 높이를 낮게 유지함'){throw 'done failed'}
+    $rh=ConvertTo-ReportHtml $m @{subject='과목';title='제목';date='2026년 4월 3일';author='조';school='학교'}
+    if($rh -notlike '*size:210mm 297mm*' -or $rh -notlike '*class=cover*'){throw 'report html failed'}
     Write-Output 'Template tests passed'
 }
