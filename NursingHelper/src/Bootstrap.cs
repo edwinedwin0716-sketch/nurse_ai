@@ -10,11 +10,11 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("간호과정 도우미")]
 [assembly: AssemblyProduct("간호과정 도우미")]
 [assembly: AssemblyDescription("간호과정(사정·진단·계획·중재·평가) 틀 자동 작성")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.1.0.0")]
+[assembly: AssemblyFileVersion("1.1.0.0")]
 
 static class Bootstrap {
- const string Version = "1.0.0";
+ const string Version = "1.1.0";
  const string Caption = "간호과정 도우미";
  static readonly object logLock = new object();
  static readonly string[] Payload = { "App.ps1", "Templates.ps1", "ModernControls.cs" };
@@ -53,14 +53,14 @@ static class Bootstrap {
      File.Copy(Application.ExecutablePath, installedExe, true);
     CreateShortcut(installedExe, dataDir);
     int code = RunPowerShell(runtime, dataDir, installedExe, true);
-    if (code != 0) { MessageBox.Show("설치 확인 중 문제가 발생했습니다.\n진단 기록: " + Path.Combine(dataDir, "check.log"), Caption); return code; }
+    if (code != 0) { MessageBox.Show("설치 확인 중 문제가 발생했습니다.\n\n" + Tail(Path.Combine(dataDir, "check.log")) + "\n\n진단 기록: " + Path.Combine(dataDir, "check.log") + "\n(이 창을 캡처해서 보내 주세요)", Caption); return code; }
     MessageBox.Show("간호과정 도우미 " + Version + " 설치를 마쳤습니다.\n\n바탕화면의 간호과정 도우미를 더블클릭하세요.", Caption);
     Process.Start(new ProcessStartInfo(installedExe) { UseShellExecute = true, WorkingDirectory = dataDir });
     return 0;
    }
 
    int exit = RunPowerShell(runtime, dataDir, Application.ExecutablePath, check);
-   if (exit != 0) MessageBox.Show("런처 실행에 실패했습니다.\n진단 기록: " + Path.Combine(dataDir, check ? "check.log" : "runtime.log"), Caption);
+   if (exit != 0) { string log = Path.Combine(dataDir, check ? "check.log" : "runtime.log"); MessageBox.Show("실행에 실패했습니다.\n\n" + Tail(log) + "\n\n진단 기록: " + log + "\n(이 창을 캡처해서 보내 주세요)", Caption); }
    return exit;
   } catch (Exception ex) {
    MessageBox.Show(ex.Message, Caption);
@@ -102,6 +102,15 @@ static class Bootstrap {
   string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
   foreach (string name in new[] { "간호과정 도우미.lnk" })
    TryDelete(() => File.Delete(Path.Combine(desktop, name)));
+ }
+
+ // Last lines of a log file, so error dialogs say what went wrong
+ static string Tail(string path) {
+  try {
+   string[] lines = File.ReadAllLines(path, Encoding.UTF8);
+   int start = Math.Max(0, lines.Length - 12);
+   return string.Join("\n", lines, start, lines.Length - start).Trim();
+  } catch { return "(기록을 읽지 못했습니다)"; }
  }
 
  static void TryDelete(Action action) { try { action(); } catch (DirectoryNotFoundException) { } catch (IOException) { } catch (UnauthorizedAccessException) { } }

@@ -2,7 +2,15 @@
 # 각 항목: 계획(plan)과 이론적 근거(why). 중재는 계획 문장을 과거형으로 바꿔 자동 생성한다.
 
 $script:Templates = [ordered]@{
-'급성통증' = @{
+'급성 통증' = @{
+    en = 'Acute pain'
+    domain = '12. 안위 Comfort'
+    cls = '1. 신체적 안위 Physical comfort'
+    page = 26
+    problem = '통증'
+    priority = 3
+    reason = '대상자가 현재 가장 크게 호소하는 실제적 문제로, 수면·활동·식사 같은 다른 기본 욕구를 방해한다'
+    evalData = 'NRS 통증 점수(매 듀티), 비언어적 통증 표현, 진통제 투여 후 반응, 통증 완화 방법을 말로 표현하는지'
     keywords = 'NRS|통증|아파|아프|쥐어짜|찌르|욱신|pain|움켜|웅크|진통|데노간|타이레놀|트라마돌|모르핀|peritonitis|복막염|수술 후|post ?op'
     cause = '복강 내 염증'
     long = '대상자는 퇴원 시 통증을 호소하지 않을 것이다.'
@@ -23,6 +31,14 @@ $script:Templates = [ordered]@{
         @{plan='통증이 심해지거나 양상이 변하면 즉시 알리도록 교육한다.';why='통증 양상의 변화는 합병증의 징후일 수 있어 조기 발견이 필요하다.'})
 }
 '고체온' = @{
+    en = 'Hyperthermia'
+    domain = '11. 안전/보호 Safety/Protection'
+    cls = '6. 체온조절 Thermoregulation'
+    page = 26
+    problem = '발열'
+    priority = 2
+    reason = '체온 조절 실패로 수분 손실과 대사 요구를 늘려 탈수로 이어질 수 있는 생리적 문제이다'
+    evalData = '매 2~4시간 체온, 일평균 체온, 수분 섭취량, I/O, 오한 여부'
     keywords = 'fever|발열|열이|고열|체온|\bBT\b|38\.|39\.|40\.|chill|오한|떨림'
     cause = '감염 과정'
     long = '대상자는 퇴원 시 정상 체온(36.5~37.5℃)을 유지할 것이다.'
@@ -40,7 +56,15 @@ $script:Templates = [ordered]@{
         @{plan='대상자와 보호자에게 발열 시 대처 방법과 수분 섭취의 중요성을 교육한다.';why='스스로 증상을 관리하고 탈수를 예방할 수 있게 한다.'},
         @{plan='체온이 38.5℃ 이상이거나 오한이 심하면 알리도록 교육한다.';why='급격한 체온 상승은 감염 악화의 징후일 수 있어 조기 대처가 필요하다.'})
 }
-'감염위험성' = @{
+'감염의 위험' = @{
+    en = 'Risk for infection'
+    domain = '11. 안전/보호 Safety/Protection'
+    cls = '1. 감염 Infection'
+    page = 23
+    problem = '감염 위험'
+    priority = 5
+    reason = '아직 나타나지 않은 위험 진단이므로 실제적 진단보다 우선순위가 낮지만, 안전 요구로서 예방이 필요하다'
+    evalData = 'WBC·CRP 추이, 체온, 침습 부위의 발적·부종·분비물, 감염 예방 방법 설명 여부'
     keywords = 'WBC|CRP|ESR|염증|감염|infection|수술|incision|절개|카테터|catheter|Foley|\bIV\b|정맥|드레인|drain|상처|wound'
     cause = '침습적 처치'
     long = '대상자는 퇴원 시까지 감염 증상 없이 지낼 것이다.'
@@ -58,8 +82,16 @@ $script:Templates = [ordered]@{
         @{plan='대상자와 보호자에게 손 씻기 방법과 감염 징후를 교육한다.';why='대상자의 참여로 감염 예방 효과를 높이고 이상 징후를 조기에 알릴 수 있다.'},
         @{plan='상처나 삽입 부위를 만지지 않도록 교육한다.';why='손을 통한 미생물 전파를 막는다.'})
 }
-'체액부족' = @{
-    keywords = '탈수|dehydration|구토|vomit|설사|diarrhea|소변량 ?감소|핍뇨|oliguria|점막 ?건조|피부 ?탄력|turgor|갈증|BUN|Hct|NPO|금식'
+'불충분한 체액량' = @{
+    en = 'Inadequate fluid volume'
+    domain = '2. 영양 Nutrition'
+    cls = '5. 수화 Hydration'
+    page = 17
+    problem = '탈수'
+    priority = 2
+    reason = '순환과 생명 유지에 직결되는 생리적 문제로 빨리 교정하지 않으면 쇼크로 진행할 수 있다'
+    evalData = '시간당 소변량, I/O, 체중, 피부 탄력·점막 상태, V/S, 전해질·BUN 결과'
+    keywords = '탈수|dehydration|구토|vomit|설사|diarrhea|못 ?마시|수분 ?섭취 ?저하|소변량 ?감소|핍뇨|oliguria|점막 ?건조|피부 ?탄력|turgor|갈증|BUN|Hct|NPO|금식'
     cause = '구토와 설사로 인한 수분 손실'
     long = '대상자는 퇴원 시 적절한 체액 균형을 유지할 것이다.'
     short = @('대상자는 2일 내 시간당 소변량이 0.5mL/kg 이상 유지될 것이다.','대상자는 3일 내 피부 탄력과 점막 상태가 정상으로 회복될 것이다.')
@@ -77,7 +109,15 @@ $script:Templates = [ordered]@{
         @{plan='대상자와 보호자에게 탈수 징후와 수분 섭취 방법을 교육한다.';why='퇴원 후에도 탈수를 조기에 발견하고 예방할 수 있다.'},
         @{plan='섭취량과 배설량 기록 방법을 교육한다.';why='대상자와 보호자의 참여로 정확한 I/O 측정이 가능하다.'})
 }
-'불안' = @{
+'과도한 불안' = @{
+    en = 'Excessive anxiety'
+    domain = '9. 대처/스트레스 내성 Coping/Stress tolerance'
+    cls = '2. 대처반응 Coping responses'
+    page = 22
+    problem = '불안'
+    priority = 6
+    reason = '심리·정서적 요구로, 생명과 직결된 생리적 요구가 해결된 뒤 다룬다'
+    evalData = '불안 점수(VAS), 언어적·비언어적 불안 표현, V/S, 수면 양상, 불안 감소 방법 수행 여부'
     keywords = '불안|걱정|무서|두려|긴장|초조|anxiety|잠을 못|떨려|수술 전|pre ?op|낯선'
     cause = '질병과 치료 과정에 대한 지식 부족'
     long = '대상자는 퇴원 시 불안이 감소되었음을 말로 표현할 것이다.'
@@ -96,8 +136,16 @@ $script:Templates = [ordered]@{
         @{plan='불안 감소 방법(심호흡, 음악, 이완)을 교육한다.';why='스스로 불안을 조절할 수 있게 한다.'})
 }
 '비효과적 호흡양상' = @{
-    keywords = '호흡곤란|숨이 ?차|숨쉬기|dyspnea|SpO2|산소포화도|\bRR\b|빈호흡|tachypnea|천명|wheez|가래|객담|sputum|기침|cough|폐렴|pneumonia|천식|asthma|COPD|O2'
-    cause = '기도 분비물 증가'
+    en = 'Ineffective breathing pattern'
+    domain = '4. 활동/휴식 Activity/Rest'
+    cls = '4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses'
+    page = 18
+    problem = '호흡 양상 변화'
+    priority = 1
+    reason = '기도·호흡 문제(ABC 원칙의 A·B)로 생명에 직접 영향을 줄 수 있어 가장 먼저 해결해야 한다'
+    evalData = '호흡수·깊이·양상, SpO2, 보조근 사용, 청색증 여부'
+    keywords = '호흡곤란|숨이 ?차|숨쉬기|dyspnea|SpO2|산소포화도|\bRR\b|빈호흡|tachypnea|함몰호흡|retraction|천식|asthma|COPD|산소 ?투여'
+    cause = '폐 확장 감소'
     long = '대상자는 퇴원 시 호흡곤란 없이 정상 호흡 양상을 유지할 것이다.'
     short = @('대상자는 2일 내 SpO2가 95% 이상 유지될 것이다.','대상자는 3일 내 호흡수가 정상 범위로 유지될 것이다.')
     diag = @(
@@ -113,7 +161,15 @@ $script:Templates = [ordered]@{
         @{plan='효과적인 기침과 심호흡 방법을 교육한다.';why='스스로 분비물을 배출하고 폐 확장을 증진할 수 있다.'},
         @{plan='호흡곤란이 심해지면 즉시 알리도록 교육한다.';why='급격한 호흡 상태 악화에 빠르게 대처할 수 있다.'})
 }
-'영양불균형: 신체요구량보다 적음' = @{
+'불충분한 영양섭취' = @{
+    en = 'Inadequate nutritional intake'
+    domain = '2. 영양 Nutrition'
+    cls = '1. 섭취 Ingestion'
+    page = 16
+    problem = '영양 섭취 부족'
+    priority = 4
+    reason = '생리적 요구이지만 즉각적인 생명 위협은 적어 급성 문제를 해결한 뒤 다룬다'
+    evalData = '매 끼니 섭취량(%), 체중, 알부민·단백질 수치'
     keywords = '식욕|식사량|먹지 ?못|체중 ?감소|weight loss|알부민|albumin|오심|nausea|저체중|영양|섭취 ?부족'
     cause = '식욕부진'
     long = '대상자는 퇴원 시 처방된 식이를 80% 이상 섭취할 것이다.'
@@ -129,8 +185,16 @@ $script:Templates = [ordered]@{
     edu = @(
         @{plan='균형 잡힌 식이와 단백질 섭취의 중요성을 교육한다.';why='회복과 상처 치유에 필요한 영양을 스스로 관리할 수 있다.'})
 }
-'낙상위험성' = @{
-    keywords = '낙상|fall|어지러|어지럼|현기증|dizz|보행|휠체어|진정|수면제|고령|노인|침상 ?안정|근력 ?저하'
+'성인 낙상의 위험' = @{
+    en = 'Risk for adult falls'
+    domain = '11. 안전/보호 Safety/Protection'
+    cls = '2. 신체적 손상 Physical injury'
+    page = 24
+    problem = '낙상 위험'
+    priority = 5
+    reason = '아직 일어나지 않은 위험 진단이지만 낙상은 심각한 손상을 일으키므로 안전 요구로서 예방이 필요하다'
+    evalData = '낙상 위험 평가 점수(Morse 등), 낙상 발생 여부, 이동 시 도움 요청 여부'
+    keywords = '낙상|\bfalls?\b|어지러|어지럼|현기증|dizz|보행|휠체어|진정제|수면제|고령|노인|근력 ?저하'
     cause = '어지러움과 근력 저하'
     long = '대상자는 퇴원 시까지 낙상 없이 지낼 것이다.'
     short = @('대상자는 1일 내 낙상 예방 수칙을 두 가지 이상 말로 표현할 것이다.','대상자는 입원 기간 동안 이동 시 도움을 요청할 것이다.')
@@ -145,7 +209,15 @@ $script:Templates = [ordered]@{
     edu = @(
         @{plan='대상자와 보호자에게 낙상 예방 수칙을 교육한다.';why='대상자와 보호자가 함께 참여해야 낙상 예방 효과가 높아진다.'})
 }
-'지식부족' = @{
+'불충분한 건강지식' = @{
+    en = 'Inadequate health knowledge'
+    domain = '5. 지각/인지 Perception/Cognition'
+    cls = '4. 인지 Cognition'
+    page = 19
+    problem = '건강지식 부족'
+    priority = 7
+    reason = '교육으로 해결할 수 있는 문제로, 급성 문제가 안정된 뒤 다루는 것이 효과적이다'
+    evalData = '질병·관리 방법을 말로 설명하는지(teach-back), 교육 내용 실천 여부'
     keywords = '모르겠|몰라|어떻게 ?해야|궁금|처음|교육|이해 ?못|질문'
     cause = '질병과 치료에 대한 정보 부족'
     long = '대상자는 퇴원 시 질병 관리 방법을 정확히 말로 표현할 것이다.'
@@ -160,7 +232,15 @@ $script:Templates = [ordered]@{
         @{plan='질병의 원인, 증상, 치료 과정과 퇴원 후 관리 방법을 교육한다.';why='스스로 건강을 관리하고 재발을 예방할 수 있다.'},
         @{plan='교육 후 대상자가 다시 설명하게 하여(teach-back) 이해 정도를 확인한다.';why='교육 효과를 평가하고 부족한 부분을 보완할 수 있다.'})
 }
-'수면양상장애' = @{
+'비효과적 수면양상' = @{
+    en = 'Ineffective sleep pattern'
+    domain = '4. 활동/휴식 Activity/Rest'
+    cls = '1. 수면/휴식 Sleep/Rest'
+    page = 17
+    problem = '수면 문제'
+    priority = 4
+    reason = '휴식 요구로 회복에 영향을 주지만 즉각적인 생명 위협은 적다'
+    evalData = '야간 수면 시간, 깨는 횟수, 수면의 질에 대한 표현'
     keywords = '잠을|못 ?자|불면|insomnia|자주 ?깨|수면|피곤|밤에'
     cause = '통증과 낯선 병원 환경'
     long = '대상자는 퇴원 시 충분한 수면을 취했다고 말로 표현할 것이다.'
@@ -175,8 +255,16 @@ $script:Templates = [ordered]@{
     edu = @(
         @{plan='수면 위생(카페인 제한, 규칙적인 기상 시간 등)을 교육한다.';why='스스로 수면의 질을 높일 수 있다.'})
 }
-'변비' = @{
-    keywords = '변비|constipation|배변 ?없|대변을 ?못|딱딱한 ?변|복부 ?팽만|가스|장음 ?감소'
+'배변 장애' = @{
+    en = 'Impaired intestinal elimination'
+    domain = '3. 배설/교환 Elimination/Exchange'
+    cls = '2. 위장관계 기능 Gastrointestinal function'
+    page = 17
+    problem = '배변 문제'
+    priority = 4
+    reason = '배설 요구로 불편감을 주지만 즉각적인 생명 위협은 적다'
+    evalData = '배변 횟수·양·성상, 장음, 복부 팽만 여부, 수분 섭취량'
+    keywords = '변비|constipation|배변 ?장애|배변 ?없|대변을 ?못|딱딱한 ?변|복부 ?팽만|가스|장음 ?감소'
     cause = '활동 감소와 수분 섭취 부족'
     long = '대상자는 퇴원 시 규칙적인 배변 양상을 유지할 것이다.'
     short = @('대상자는 3일 내 부드러운 변을 1회 이상 볼 것이다.','대상자는 2일 내 하루 수분 섭취량이 1,500mL 이상 유지될 것이다.')
@@ -189,6 +277,79 @@ $script:Templates = [ordered]@{
         @{plan='처방에 따라 완하제를 투여한다.';why='장운동을 촉진하거나 변을 부드럽게 해 배변을 돕는다.'})
     edu = @(
         @{plan='변비 예방을 위한 식이, 수분, 운동의 중요성을 교육한다.';why='퇴원 후에도 규칙적인 배변을 유지할 수 있다.'})
+}
+
+'비효과적 기도청결' = @{
+    en = 'Ineffective airway clearance'
+    domain = '11. 안전/보호 Safety/Protection'
+    cls = '2. 신체적 손상 Physical injury'
+    page = 24
+    problem = '기도 분비물'
+    priority = 1
+    reason = '기도 개방성 문제(ABC 원칙의 A)로 저산소증과 생명 위협으로 이어질 수 있어 가장 먼저 해결해야 한다'
+    evalData = '호흡음(수포음·천명음), 객담 양상과 배출 여부, SpO2, 호흡수'
+    keywords = '가래|객담|sputum|기침|cough|가르랑|수포음|crackle|rale|천명|wheez|흡인|suction|폐렴|pneumonia|모세기관지염|bronchiolitis|RSV'
+    cause = '기도 분비물 증가'
+    long = '대상자는 퇴원 시 기도 분비물 없이 깨끗한 호흡음을 유지할 것이다.'
+    short = @('대상자는 2일 내 청진 시 수포음이 감소할 것이다.','대상자는 3일 내 효과적으로 기침하여 객담을 배출할 것이다.')
+    diag = @(
+        @{plan='매 4시간마다 호흡음을 청진하고 호흡수, SpO2를 사정한다.';why='비정상 호흡음과 SpO2 저하는 기도 분비물 축적과 저산소증을 나타낸다.'},
+        @{plan='객담의 양, 색, 점도를 사정한다.';why='객담의 양상은 감염 여부와 기도 청결 정도를 나타낸다.'})
+    ther = @(
+        @{plan='반좌위를 취하게 하고 2시간마다 체위를 변경한다.';why='횡격막이 내려가 폐 확장이 쉬워지고, 체위 변경은 분비물 이동을 돕는다.'},
+        @{plan='금기가 아닐 시 수분 섭취를 격려한다.';why='분비물을 묽게 하여 배출을 쉽게 한다.'},
+        @{plan='처방에 따라 네뷸라이저를 적용하고 흉부물리요법(타진, 진동)을 시행한다.';why='기관지를 확장하고 분비물을 느슨하게 하여 배출을 돕는다.'},
+        @{plan='필요 시 무균적으로 흡인한다.';why='스스로 배출하지 못하는 분비물을 제거하여 기도 개방성을 유지한다. 흡인 전후 산소화 상태를 확인한다.'})
+    edu = @(
+        @{plan='효과적인 기침과 심호흡 방법을 교육한다.';why='스스로 분비물을 배출하고 무기폐를 예방할 수 있다.'},
+        @{plan='보호자에게 등 두드리기(타진)와 수분 섭취 방법을 교육한다.';why='보호자가 참여하면 퇴원 후에도 분비물 배출을 도울 수 있다.'})
+}
+'구강점막 통합성 손상' = @{
+    en = 'Impaired oral mucous membrane integrity'
+    domain = '11. 안전/보호 Safety/Protection'
+    cls = '2. 신체적 손상 Physical injury'
+    page = 24
+    problem = '구강점막 손상'
+    priority = 3
+    reason = '입안 통증으로 먹고 마시지 못하게 하여 탈수·영양 문제로 이어질 수 있는 실제적 문제이다'
+    evalData = '구강 병변의 수·크기, 구강 통증 표현, 섭취량, 침 흘림 여부'
+    keywords = '구내염|stomatitis|입안|입 안|구강|수포|궤양|ulcer|침을 ?흘|수족구|hand-foot-and-mouth|HFMD|헤르판지나|herpangina|아구창'
+    cause = '바이러스 감염에 의한 구강 내 수포'
+    long = '대상자는 퇴원 시 구강점막 병변이 호전되어 통증 없이 식사할 것이다.'
+    short = @('대상자는 3일 내 구강 통증을 호소하지 않을 것이다.','대상자는 2일 내 하루 수분 섭취량이 목표량 이상 유지될 것이다.')
+    diag = @(
+        @{plan='매 듀티마다 구강점막 상태(수포, 궤양, 발적, 출혈)를 사정한다.';why='병변의 진행과 회복 정도를 객관적으로 평가할 수 있다.'},
+        @{plan='섭취량과 구강 통증 정도를 사정한다.';why='구강 통증은 섭취 저하와 탈수의 주요 원인이다.'})
+    ther = @(
+        @{plan='식후와 취침 전 미온수나 생리식염수로 부드럽게 구강 간호를 제공한다.';why='구강을 청결히 하여 2차 감염을 예방하고 점막 회복을 돕는다.'},
+        @{plan='차갑고 부드러운 음식과 음료를 제공하고 맵거나 짜고 신 음식을 피한다.';why='자극을 줄여 통증을 감소시키고 섭취량을 늘린다.'},
+        @{plan='처방에 따라 진통·해열제를 식사 전에 투여한다.';why='식사 시 통증을 줄여 섭취를 도울 수 있다.'})
+    edu = @(
+        @{plan='보호자에게 구강 간호 방법과 자극적인 음식을 피해야 하는 이유를 교육한다.';why='보호자가 직접 구강 간호를 하여 회복을 도울 수 있다.'},
+        @{plan='손 씻기와 식기 분리 등 전파 예방 방법을 교육한다.';why='바이러스성 구강 질환은 접촉으로 쉽게 전파된다.'})
+}
+'아동 낙상의 위험' = @{
+    en = 'Risk for child falls'
+    domain = '11. 안전/보호 Safety/Protection'
+    cls = '2. 신체적 손상 Physical injury'
+    page = 24
+    problem = '낙상 위험'
+    priority = 5
+    reason = '아직 일어나지 않은 위험 진단이지만 아동은 발달 특성상 낙상 위험이 높아 안전 요구로서 예방이 필요하다'
+    evalData = '아동 낙상 위험 평가 점수(Humpty Dumpty 등), 낙상 발생 여부, 보호자의 낙상 예방 수칙 이행 여부'
+    keywords = '낙상|\bfalls?\b|침대에서|기어|걸음마|보채|진정|수면제|어지러'
+    cause = '아동의 발달 특성과 낯선 병원 환경'
+    long = '대상자는 퇴원 시까지 낙상 없이 지낼 것이다.'
+    short = @('보호자는 1일 내 낙상 예방 수칙을 두 가지 이상 말로 표현할 것이다.','대상자는 입원 기간 동안 침상 난간을 올린 상태를 유지할 것이다.')
+    diag = @(
+        @{plan='입원 시와 매 듀티마다 아동 낙상 위험 평가도구(Humpty Dumpty 등)로 사정한다.';why='위험 정도를 객관적으로 파악하여 맞춤형 예방 중재를 할 수 있다.'},
+        @{plan='낙상 위험 약물(진정제, 해열·진통제 투여 후 졸림) 투여 여부를 확인한다.';why='약물에 의한 졸림과 어지러움은 낙상 위험을 높인다.'})
+    ther = @(
+        @{plan='침상 난간을 항상 올리고 침대 높이를 낮게 유지한다.';why='아동이 침대에서 떨어지는 것을 막는다.'},
+        @{plan='보호자가 자리를 비울 때 간호사에게 알리도록 한다.';why='아동을 혼자 두는 시간을 줄여 낙상을 예방한다.'},
+        @{plan='미끄럼 방지 신발을 신기고 바닥을 건조하게 유지한다.';why='미끄러짐으로 인한 낙상을 예방한다.'})
+    edu = @(
+        @{plan='보호자에게 낙상 예방 수칙(침상 난간 올리기, 아동 혼자 두지 않기)을 교육한다.';why='아동의 안전은 보호자의 참여가 있어야 효과적으로 지킬 수 있다.'})
 }
 }
 
@@ -302,15 +463,181 @@ function New-NursingProcess($subjective,$objective,$medical,$choices,[datetime]$
     return $sb.ToString()
 }
 
+# ---------- B4 워크북 형식 (간호과정 별책 워크북 순서) ----------
+function Get-Topic($word){return "$word$(Get-Particle $word '은' '는')"}
+function Sort-ByPriority($choices){
+    $i=0;return @($choices | ForEach-Object {$i++;[pscustomobject]@{c=$_;p=$script:Templates[$_.name].priority;i=$i}} | Sort-Object p,i | ForEach-Object {$_.c})
+}
+# 자료 한 줄이 어느 진단의 단서인지 찾는다
+function Get-Clusters($lines,$choices){
+    $clusters=@{}
+    foreach($c in $choices){$clusters[$c.name]=@()}
+    foreach($l in $lines){foreach($c in $choices){if($l -match $script:Templates[$c.name].keywords){$clusters[$c.name]+=$l}}}
+    return $clusters
+}
+function New-WorkbookModel($subjective,$objective,$medical,$choices,[datetime]$date,[bool]$autoSort=$false){
+    if($autoSort){$choices=Sort-ByPriority $choices}
+    $sLines=@(Split-Lines $subjective | ForEach-Object {if($_ -match '^["“]'){$_}else{"`"$_`""}})
+    $oLines=@(Split-Lines $objective)
+    $dx=@(Split-Lines $medical | ForEach-Object {if($_ -match '^Dx'){$_}else{"Dx. $_"}})
+    $all=@($sLines)+@($oLines)+@($dx)
+    $clusters=Get-Clusters $all $choices
+    $nrs=Get-Nrs $objective
+    $diags=@()
+    foreach($c in $choices){
+        $t=$script:Templates[$c.name]
+        $goalNrs=if($nrs -ne $null){[Math]::Max(0,[Math]::Min(2,$nrs-3))}else{2}
+        $short=@($t.short | ForEach-Object {$_.Replace('{nrsGoal}',[string]$goalNrs)})
+        $plans=@()
+        foreach($kind in @(@('진단적','diag'),@('치료적','ther'),@('교육적','edu'))){foreach($pl in $t[$kind[1]]){$plans+=[pscustomobject]@{kind=$kind[0];plan=$pl.plan;why=$pl.why;done=(ConvertTo-Past $pl.plan)}}}
+        $cause=if($c.origin){"$($c.origin)$(Get-Ro $c.origin) 인한 $($c.cause)"}else{$c.cause}
+        $diags+=[pscustomobject]@{name=$c.name;en=$t.en;domain=$t.domain;cls=$t.cls;page=$t.page;problem=$t.problem;reason=$t.reason;
+            statement=(Format-Diagnosis $c.cause $c.name $c.origin);cause=$cause;cues=@($clusters[$c.name]);long=$t.long;short=$short;plans=$plans;evalData=$t.evalData}
+    }
+    $domains=[ordered]@{}
+    foreach($d in $diags){if(-not $domains.Contains($d.domain)){$domains[$d.domain]=@()};foreach($q in $d.cues){if($q -notin $domains[$d.domain]){$domains[$d.domain]+=$q}}}
+    $priority=''
+    if($diags.Count -gt 0){
+        $parts=@();$n=0;foreach($d in $diags){$n++;$parts+="${n}순위 '$($d.name)'$(Get-Particle $d.name '은' '는') $($d.reason)."}
+        $priority=($parts -join ' ')+' 매슬로우의 욕구 단계와 ABC(기도·호흡·순환) 원칙, 실제적 진단을 위험 진단보다 먼저 다루는 원칙에 따라 정하였다.'
+    }
+    return [pscustomobject]@{date=$date;subjective=$sLines;objective=@($oLines)+@($dx);domains=$domains;diags=$diags;priority=$priority}
+}
+function ConvertTo-WorkbookText($m){
+    $sb=New-Object Text.StringBuilder;$w={param($x) [void]$sb.AppendLine($x)}
+    $md=$m.date.ToString('M/d')
+    & $w '■ 1. 간호사정';& $w ''
+    & $w '주관적 자료';$i=0;foreach($x in $m.subjective){$i++;& $w "$i. $x"};if($i -eq 0){& $w '1. "(대상자가 직접 한 말)"'}
+    & $w '';& $w '객관적 자료';$i=0;foreach($x in $m.objective){$i++;& $w "$i. $x"};if($i -eq 0){& $w '1. (V/S, 검사 결과, 관찰 내용, 투여된 약물)'}
+    & $w '';& $w '자료조직(분류) · NANDA-I 분류체계 기준'
+    foreach($k in $m.domains.Keys){$v=@($m.domains[$k]);& $w "▪ $k 영역에 해당하는 자료: $(if($v.Count){$v -join ', '}else{'(해당 자료를 적으세요)'})"}
+    & $w '';& $w '간호문제';$i=0;foreach($d in $m.diags){$i++;& $w "$i. $($d.problem)"}
+    & $w '';& $w '■ 2. 간호진단'
+    $n=0;foreach($d in $m.diags){$n++
+        & $w '';& $w "단서묶음 $n"
+        $i=0;foreach($q in $d.cues){$i++;& $w "$i. $q"};if($i -eq 0){& $w '1. (이 진단의 근거가 되는 자료를 적으세요)'}
+        & $w "▪ 영역: $($d.domain)";& $w "▪ 과: $($d.cls)";& $w "▪ 페이지: 별책 부록 8, p.$($d.page)"
+        & $w "▪ 진단명: $($d.name) ($($d.en))";& $w "▪ 정의: (별책 부록 8, p.$($d.page)의 정의를 옮겨 적으세요)"
+        & $w "관련(위험) 요인: $($d.cause)";& $w "간호진단 진술: $($d.statement)"
+    }
+    & $w '';& $w '■ 3. 간호계획';& $w ''
+    $n=0;foreach($d in $m.diags){$n++;& $w "${n}순위: $($d.statement)"}
+    & $w "우선순위의 근거: $($m.priority)"
+    $n=0;foreach($d in $m.diags){$n++
+        & $w '';& $w "간호진단 $n : $($d.statement)"
+        & $w "▪ 장기목표 : $($d.long)";& $w '▪ 단기목표 :';$i=0;foreach($g in $d.short){$i++;& $w "  $i) $g"}
+        & $w '간호중재 | 이론적 근거';$i=0;foreach($p in $d.plans){$i++;& $w "$i. [$($p.kind)] $($p.plan)";& $w "   → 이론적 근거 : $($p.why)"}
+    }
+    & $w '';& $w '■ 4. 간호수행 및 평가'
+    $n=0;foreach($d in $m.diags){$n++
+        & $w '';& $w "간호진단 $n : $($d.statement)"
+        & $w "▪ 장기목표 : $($d.long)";$i=0;foreach($g in $d.short){$i++;& $w "▪ 단기목표 $i : $g"}
+        & $w '간호수행';$i=0;foreach($p in $d.plans){$i++;& $w "$i. $md __:__ $($p.done) (대상자 반응: )"}
+        & $w "간호평가를 위한 자료수집: $($d.evalData)"
+        & $w '간호평가 진술문:';$i=0;foreach($g in $d.short){$i++;& $w "  단기목표 $i : 대상자는 __/__ (결과 수치) 이므로 달성 / 부분적 달성 / 달성 못함."}
+        & $w '  장기목표 : 대상자는 __/__ (퇴원 시 상태) 이므로 달성 / 부분적 달성 / 달성 못함.'
+    }
+    & $w '';& $w '■ 5. 간호기록 (SOAPIE)'
+    foreach($r in Get-SoapieRows $m){$head=if($r.dx){"$($r.date) $($r.time) [$($r.dx)]"}elseif($r.time){"      $($r.time)"}else{'      '};& $w "$head  $($r.tag) : $($r.text)"}
+    & $w '';& $w '※ 자동으로 만든 틀입니다. 정의는 별책 부록 8을, 이론적 근거와 수치는 교재와 대상자 자료로 꼭 확인·수정하세요.'
+    return $sb.ToString()
+}
+function Get-SoapieRows($m){
+    $rows=@();if($m.diags.Count -eq 0){return $rows}
+    $d=$m.diags[0];$md=$m.date.ToString('M/d')
+    $s=@($m.subjective|Where-Object {$_ -in $d.cues});if($s.Count -eq 0){$s=@('(이 진단과 관련된 대상자의 호소를 적으세요)')}
+    $o=@($d.cues|Where-Object {$_ -notin $m.subjective});if($o.Count -eq 0){$o=@($m.objective)}
+    $ther=@($d.plans|Where-Object {$_.kind -ne '진단적'}|Select-Object -First 3|ForEach-Object {$_.done})
+    $rows+=[pscustomobject]@{date=$md;time='__:__';dx=$d.name;tag='S';text=($s -join ' ')}
+    $rows+=[pscustomobject]@{date='';time='';dx='';tag='O';text=($o -join ', ')}
+    $rows+=[pscustomobject]@{date='';time='';dx='';tag='A';text=$d.statement}
+    $rows+=[pscustomobject]@{date='';time='';dx='';tag='P';text=$d.short[0]}
+    $rows+=[pscustomobject]@{date='';time='';dx='';tag='I';text=($ther -join ' ')}
+    $rows+=[pscustomobject]@{date='';time='__:__';dx='';tag='E';text='(중재 후 대상자 반응을 수치로 적으세요)'}
+    return $rows
+}
+# Word(.doc)·한글·브라우저에서 열리는 B4 가로 표 양식
+function ConvertTo-WorkbookHtml($m){
+    $e={param($x) [System.Net.WebUtility]::HtmlEncode([string]$x)}
+    $list={param($items,$empty) $i=0;$o='';foreach($x in $items){$i++;$o+="$i. $(& $e $x)<br>"};if($i -eq 0){$o="<span class=hint>$(& $e $empty)</span>"};$o}
+    $md=$m.date.ToString('M/d')
+    $h=New-Object Text.StringBuilder;$a={param($x) [void]$h.Append($x)}
+    & $a @'
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>간호과정 워크북</title>
+<style>
+@page Section1{size:364mm 257mm;mso-page-orientation:landscape;margin:14mm 16mm}
+div.Section1{page:Section1}
+body{font-family:'맑은 고딕','Malgun Gothic',sans-serif;font-size:10pt;color:#1d1d1f}
+h1{font-size:15pt;color:#0a7f8c;border-bottom:2px solid #0a9fb0;padding-bottom:3pt;margin:14pt 0 8pt}
+h2{font-size:11.5pt;margin:10pt 0 4pt}
+table{border-collapse:collapse;width:100%;margin-bottom:10pt}
+td,th{border:1px solid #9fd6dd;padding:5pt 7pt;vertical-align:top}
+th{background:#12a7b8;color:#fff;font-weight:bold;text-align:center}
+td.k{background:#12a7b8;color:#fff;font-weight:bold;width:15%;text-align:center;vertical-align:middle}
+.hint{color:#e08600}.blank{color:#e08600}.small{font-size:8.5pt;color:#6e6e73}
+.pb{page-break-before:always}
+</style></head><body><div class=Section1>
+'@
+    & $a '<h1>1. 간호사정</h1><table>'
+    & $a "<tr><td class=k>주관적 자료</td><td>$(& $list $m.subjective '(대상자가 직접 한 말)')</td></tr>"
+    & $a "<tr><td class=k>객관적 자료</td><td>$(& $list $m.objective '(V/S, 검사 결과, 관찰 내용, 투여된 약물)')</td></tr>"
+    $org='';foreach($k in $m.domains.Keys){$v=@($m.domains[$k]);$org+="▪ <b>$(& $e $k)</b> 영역에 해당하는 자료: $(if($v.Count){& $e ($v -join ', ')}else{'<span class=hint>(해당 자료)</span>'})<br>"}
+    & $a "<tr><td class=k>자료조직(분류)</td><td><span class=small>NANDA-I 간호진단 분류체계를 기틀로 조직</span><br>$org</td></tr>"
+    & $a "<tr><td class=k>간호문제</td><td>$(& $list @($m.diags|ForEach-Object {$_.problem}) '')</td></tr></table>"
+    & $a '<h1 class=pb>2. 간호진단</h1>'
+    for($k=0;$k -lt $m.diags.Count;$k+=2){
+        $pair=@($m.diags[$k..([Math]::Min($k+1,$m.diags.Count-1))])
+        & $a '<table><tr><th style="width:15%"></th>';$n=$k;foreach($d in $pair){$n++;& $a "<th>단서묶음 $n</th>"};& $a '</tr>'
+        $row={param($label,$cell) & $a "<tr><td class=k>$label</td>";foreach($d in $pair){& $a "<td>$(& $cell $d)</td>"};& $a '</tr>'}
+        & $row '단서묶음' {param($d) & $list $d.cues '(근거 자료)'}
+        & $row '영역찾기' {param($d) "▪ 영역: $(& $e $d.domain)<br>▪ 과: $(& $e $d.cls)<br>▪ 페이지: 별책 부록 8, p.$($d.page)"}
+        & $row '간호진단명과 정의' {param($d) "▪ 진단명: <b>$(& $e $d.name)</b> ($(& $e $d.en))<br>▪ 정의: <span class=hint>(부록 8, p.$($d.page)의 정의를 옮겨 적으세요)</span>"}
+        & $row '관련(위험) 요인' {param($d) & $e $d.cause}
+        & $row '간호진단 진술' {param($d) "<b>$(& $e $d.statement)</b>"}
+        & $a '</table>'
+    }
+    & $a '<h1 class=pb>3. 간호계획</h1><table><tr><th style="width:15%"></th>'
+    $n=0;foreach($d in $m.diags){$n++;& $a "<th>${n}순위</th>"};& $a '</tr><tr><td class=k>간호진단</td>'
+    foreach($d in $m.diags){& $a "<td>$(& $e $d.statement)</td>"};& $a "</tr><tr><td class=k>우선순위의 근거</td><td colspan=$([Math]::Max(1,$m.diags.Count))>$(& $e $m.priority)</td></tr></table>"
+    $n=0;foreach($d in $m.diags){$n++
+        & $a "<table><tr><td class=k>간호진단 $n</td><td colspan=2><b>$(& $e $d.statement)</b></td></tr>"
+        $sg='';$i=0;foreach($g in $d.short){$i++;$sg+="$i) $(& $e $g)<br>"}
+        & $a "<tr><td class=k>간호목표<br>(기대되는 결과)</td><td colspan=2>▪ 장기목표 : $(& $e $d.long)<br>▪ 단기목표 :<br>$sg</td></tr>"
+        & $a "<tr><th></th><th style=`"width:45%`">간호중재</th><th>이론적 근거</th></tr>"
+        $i=0;foreach($p in $d.plans){$i++;& $a "<tr><td class=k style=`"font-weight:normal`">$(& $e $p.kind)</td><td>$i. $(& $e $p.plan)</td><td>$i. $(& $e $p.why)</td></tr>"}
+        & $a '</table>'
+    }
+    & $a '<h1 class=pb>4. 간호수행 및 평가</h1>'
+    $n=0;foreach($d in $m.diags){$n++
+        $sg='';$i=0;foreach($g in $d.short){$i++;$sg+="$i) $(& $e $g)<br>"}
+        $done='';$i=0;foreach($p in $d.plans){$i++;$done+="$i. <span class=blank>$md __:__</span> $(& $e $p.done) <span class=blank>(대상자 반응: )</span><br>"}
+        $ev='';$i=0;foreach($g in $d.short){$i++;$ev+="단기목표 $i : 대상자는 <span class=blank>__/__ (결과 수치)</span> 이므로 <span class=blank>달성 / 부분적 달성 / 달성 못함</span>.<br>"}
+        $ev+="장기목표 : 대상자는 <span class=blank>__/__ (퇴원 시 상태)</span> 이므로 <span class=blank>달성 / 부분적 달성 / 달성 못함</span>."
+        & $a "<table><tr><td class=k>간호진단 $n</td><td><b>$(& $e $d.statement)</b></td></tr>"
+        & $a "<tr><td class=k>간호목표<br>(기대되는 결과)</td><td>▪ 장기목표 : $(& $e $d.long)<br>▪ 단기목표 :<br>$sg</td></tr>"
+        & $a "<tr><td class=k>간호수행</td><td>$done</td></tr><tr><td class=k>간호평가를 위한<br>자료수집</td><td>$(& $e $d.evalData)</td></tr><tr><td class=k>간호평가 진술문</td><td>$ev</td></tr></table>"
+    }
+    & $a '<h1 class=pb>5. 간호기록지 (SOAPIE)</h1><table><tr><th style="width:8%">날짜</th><th style="width:7%">시간</th><th style="width:15%">간호진단명</th><th style="width:6%">양식</th><th>간호기록</th><th style="width:8%">서명</th></tr>'
+    foreach($r in Get-SoapieRows $m){& $a "<tr><td>$(& $e $r.date)</td><td class=blank>$(& $e $r.time)</td><td>$(& $e $r.dx)</td><td style=`"text-align:center`"><b>$($r.tag)</b></td><td>$(& $e $r.text)</td><td></td></tr>"}
+    & $a '</table><p class=small>※ 자동으로 만든 틀입니다. 진단 정의는 별책 부록 8을, 이론적 근거와 수치는 교재와 대상자 자료로 꼭 확인·수정하세요.</p></div></body></html>'
+    return $h.ToString()
+}
+
 function Test-Templates {
     $found=Find-Diagnoses '배가 쥐어짜는 듯이 너무 아파요' "Fever(+)`nNRS : 5/10점`nWBC(20000)`nChilling(+)" 'acute peritonitis'
-    if($found[0] -ne '급성통증'){throw "auto diagnosis failed: $($found -join ',')"}
+    if($found[0] -ne '급성 통증'){throw "auto diagnosis failed: $($found -join ',')"}
     if('고체온' -notin $found){throw 'fever not detected'}
-    $doc=New-NursingProcess '배가 쥐어짜는 듯이 너무 아파요' "Fever(+)`nNRS : 5/10점" 'acute peritonitis' @(@{name='급성통증';cause='복강 내 염증';origin='날음식 섭취'}) (Get-Date '2021-04-20')
-    foreach($must in @('■ 사정','■ 진단','■ 계획','■ 중재','■ 평가','날음식 섭취로 인한 복강 내 염증과 관련된 급성통증','2점 이하','사정하였다.','4/20 __:__','- Dx. acute peritonitis')){if($doc -notlike "*$must*"){throw "missing: $must"}}
+    $doc=New-NursingProcess '배가 쥐어짜는 듯이 너무 아파요' "Fever(+)`nNRS : 5/10점" 'acute peritonitis' @(@{name='급성 통증';cause='복강 내 염증';origin='날음식 섭취'}) (Get-Date '2021-04-20')
+    foreach($must in @('■ 사정','■ 진단','■ 계획','■ 중재','■ 평가','날음식 섭취로 인한 복강 내 염증과 관련된 급성 통증','2점 이하','사정하였다.','4/20 __:__','- Dx. acute peritonitis')){if($doc -notlike "*$must*"){throw "missing: $must"}}
     if((Format-Diagnosis '감염 과정' '고체온' $null) -ne '감염 과정과 관련된 고체온'){throw 'particle 과 failed'}
     if((Format-Diagnosis '통증' '불안' $null) -ne '통증과 관련된 불안'){throw 'particle failed'}
     if((Format-Diagnosis '피로' '불안' $null) -ne '피로와 관련된 불안'){throw 'particle 와 failed'}
     if((Get-Ro '수술') -ne '로' -or (Get-Ro '감염') -ne '으로' -or (Get-Ro '설사') -ne '로'){throw 'ro failed'}
+    $m=New-WorkbookModel '배가 쥐어짜는 듯이 너무 아파요' "Fever(+)`nNRS : 5/10점`nWBC(20000)" 'acute peritonitis' @(@{name='감염의 위험';cause='침습적 처치';origin=''},@{name='급성 통증';cause='복강 내 염증';origin=''}) (Get-Date '2021-04-20') $true
+    if($m.diags[0].name -ne '급성 통증'){throw 'priority sort failed'}
+    $wt=ConvertTo-WorkbookText $m
+    foreach($must in @('■ 1. 간호사정','단서묶음 1','별책 부록 8, p.26','12. 안위 Comfort 영역에 해당하는 자료','우선순위의 근거','간호평가를 위한 자료수집','S : ')){if($wt -notlike "*$must*"){throw "workbook missing: $must"}}
+    $html=ConvertTo-WorkbookHtml $m
+    if($html -notlike '*size:364mm 257mm*' -or $html -notlike '*단서묶음 2*'){throw 'html failed'}
     Write-Output 'Template tests passed'
 }

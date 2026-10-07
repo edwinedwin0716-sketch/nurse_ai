@@ -177,6 +177,61 @@ public class AppleMenuRenderer : ToolStripProfessionalRenderer {
  public static void Apply(ToolStrip strip){strip.Renderer=new AppleMenuRenderer();strip.Font=Theme.UI(9.5f,false);strip.Padding=new Padding(2,4,2,4);strip.ShowItemToolTips=false;}
 }
 
+
+// Rounded filled / outlined button (iOS style)
+public class PillButton : SoftControl {
+ public bool Primary {get;set;}
+ bool down;
+ public PillButton(){Height=34;Font=Theme.UI(9.5f,false);}
+ public void FitWidth(){using(var f=Theme.UI(9.5f,Primary))Width=TextRenderer.MeasureText(Text,f).Width+34;}
+ protected override void OnMouseDown(MouseEventArgs e){down=true;Invalidate();base.OnMouseDown(e);}
+ protected override void OnMouseUp(MouseEventArgs e){down=false;Invalidate();base.OnMouseUp(e);}
+ protected override void OnEnabledChanged(EventArgs e){Invalidate();base.OnEnabledChanged(e);}
+ protected override void OnPaint(PaintEventArgs e){var g=e.Graphics;Ui.Smooth(g);g.Clear(ParentBack);
+  var r=new Rectangle(0,0,Width-1,Height-1);Color fill,text;
+  if(Primary){fill=Enabled?(down?ControlPaint.Dark(Theme.Accent,0.1f):(hover?ControlPaint.Light(Theme.Accent,0.15f):Theme.Accent)):Theme.Separator;text=Color.White;}
+  else{fill=down?Theme.Separator:(hover?Theme.Hover:Theme.Segment);text=Enabled?Theme.Accent:Theme.Secondary;}
+  Ui.Fill(g,r,Height/2,fill);
+  using(var f=Theme.UI(9.5f,Primary))TextRenderer.DrawText(g,Text,f,r,text,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix|TextFormatFlags.NoPadding);
+ }
+}
+
+// White rounded card on the grey window background
+public class Card : Panel {
+ public int Radius=14;
+ public Card(){SetStyle(ControlStyles.OptimizedDoubleBuffer|ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.ResizeRedraw,true);BackColor=Theme.Surface;Padding=new Padding(16,12,16,12);}
+ protected override void OnPaint(PaintEventArgs e){var g=e.Graphics;Ui.Smooth(g);g.Clear(Parent!=null?Parent.BackColor:Theme.Back);
+  using(var p=Ui.Round(new Rectangle(0,0,Width-1,Height-1),Radius)){using(var b=new SolidBrush(Theme.Surface))g.FillPath(b,p);using(var pen=new Pen(Color.FromArgb(18,0,0,0)))g.DrawPath(pen,p);}
+ }
+}
+
+// Thin separator line inside cards
+public class Hairline : Control {
+ public Hairline(){Height=1;SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint,true);}
+ protected override void OnPaint(PaintEventArgs e){e.Graphics.Clear(Theme.Separator);}
+}
+
+// iOS-style checklist row: round check, title, optional badge
+public class CheckRow : SoftControl {
+ public bool Checked {get;set;}
+ public bool Selected {get;set;}
+ public string Badge {get;set;}
+ public string Detail {get;set;}
+ public event EventHandler CheckedChanged;
+ public CheckRow(){Height=40;}
+ protected override void OnMouseClick(MouseEventArgs e){if(e.X<44||!Checked){Checked=!Checked;if(CheckedChanged!=null)CheckedChanged(this,EventArgs.Empty);}base.OnMouseClick(e);Invalidate();}
+ protected override void OnPaint(PaintEventArgs e){var g=e.Graphics;Ui.Smooth(g);g.Clear(ParentBack);
+  if(Selected)Ui.Fill(g,new Rectangle(0,1,Width-1,Height-3),10,Color.FromArgb(Theme.Dark?60:28,Theme.Accent));
+  else if(hover)Ui.Fill(g,new Rectangle(0,1,Width-1,Height-3),10,Theme.Hover);
+  var c=new Rectangle(12,(Height-20)/2,20,20);
+  if(Checked){using(var b=new SolidBrush(Theme.Accent))g.FillEllipse(b,c);using(var pen=new Pen(Color.White,2f)){g.DrawLines(pen,new[]{new Point(c.X+5,c.Y+10),new Point(c.X+9,c.Y+14),new Point(c.X+15,c.Y+6)});}}
+  else using(var pen=new Pen(Theme.Separator,1.6f))g.DrawEllipse(pen,c);
+  int x=44;
+  using(var f=Theme.UI(10,Checked)){TextRenderer.DrawText(g,Text,f,new Rectangle(x,0,Width-x-90,Height),Theme.Text,TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.SingleLine|TextFormatFlags.NoPrefix);}
+  if(!string.IsNullOrEmpty(Badge)){using(var f=Theme.UI(8,true)){var sz=TextRenderer.MeasureText(Badge,f);var r=new Rectangle(Width-sz.Width-24,(Height-20)/2,sz.Width+14,20);Ui.Fill(g,r,10,Color.FromArgb(40,52,199,89));TextRenderer.DrawText(g,Badge,f,r,Color.FromArgb(36,138,61),TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPadding);}}
+ }
+}
+
 // Half-filled circle: the "opacity" symbol next to the slider
 public class OpacityGlyph : SoftControl {
  public OpacityGlyph(){Size=new Size(24,32);Cursor=Cursors.Default;}

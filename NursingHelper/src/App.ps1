@@ -29,96 +29,159 @@ function Set-ApiKey($plain) {
     $script:settings.key=[Convert]::ToBase64String([Security.Cryptography.ProtectedData]::Protect([Text.Encoding]::UTF8.GetBytes($plain),$null,'CurrentUser'))
 }
 
+
 # ---------- 공통 UI 도우미 ----------
-function New-Label($text,$size=9.5,$bold=$false,$color=$null) {
-    $l=New-Object Windows.Forms.Label;$l.Text=$text;$l.AutoSize=$true;$l.Font=[Theme]::UI($size,$bold)
-    $l.ForeColor=if($color){$color}else{[Theme]::Text};$l.Margin=New-Object Windows.Forms.Padding(0,10,0,4);return $l
+function New-Text($text,$size=9.5,$bold=$false,$color=$null) {
+    $l=New-Object Windows.Forms.Label;$l.Text=$text;$l.AutoSize=$true;$l.Font=[Theme]::UI($size,$bold);$l.BackColor=[Drawing.Color]::Transparent
+    $l.ForeColor=if($color){$color}else{[Theme]::Text};return $l
 }
-function New-Input($height,$hint) {
-    $t=New-Object Windows.Forms.TextBox;$t.Multiline=($height -gt 30);$t.Width=356;$t.Height=$height
-    $t.BorderStyle='FixedSingle';$t.Font=[Theme]::UI(10,$false);$t.BackColor=[Theme]::Surface;$t.ForeColor=[Theme]::Text
-    if($t.Multiline){$t.ScrollBars='Vertical';$t.AcceptsReturn=$true}
+function New-Section($text) {$l=New-Text $text 9 $true ([Theme]::Secondary);$l.Margin=New-Object Windows.Forms.Padding(6,16,0,6);return $l}
+function New-Pill($text,$primary=$false) {$b=New-Object PillButton;$b.Text=$text;$b.Primary=$primary;$b.FitWidth();$b.Margin=New-Object Windows.Forms.Padding(0,0,8,0);return $b}
+function New-Field($hint,$lines) {
+    $t=New-Object Windows.Forms.TextBox;$t.BorderStyle='None';$t.Font=[Theme]::UI(10.5,$false);$t.BackColor=[Theme]::Surface;$t.ForeColor=[Theme]::Text
+    if($lines -gt 1){$t.Multiline=$true;$t.ScrollBars='Vertical';$t.AcceptsReturn=$true;$t.Height=20*$lines}
     $tip.SetToolTip($t,$hint);return $t
 }
-function New-Button($text,$primary=$false,$width=0) {
-    $b=New-Object Windows.Forms.Button;$b.Text=$text;$b.FlatStyle='Flat';$b.Height=36;$b.Font=[Theme]::UI(9.5,$primary)
-    $b.AutoSize=($width -eq 0);if($width){$b.Width=$width};$b.Cursor=[Windows.Forms.Cursors]::Hand;$b.Margin=New-Object Windows.Forms.Padding(0,0,8,0)
-    $b.FlatAppearance.BorderSize=if($primary){0}else{1};$b.FlatAppearance.BorderColor=[Theme]::Separator
-    $b.BackColor=if($primary){[Theme]::Accent}else{[Theme]::Surface};$b.ForeColor=if($primary){[Drawing.Color]::White}else{[Theme]::Text}
-    $b.Padding=New-Object Windows.Forms.Padding(10,0,10,0);return $b
+# 카드 안에 '제목 + 입력칸'을 위에서 아래로 쌓는다
+function New-FormCard($width,$rows) {
+    $card=New-Object Card;$card.Width=$width;$card.Margin=New-Object Windows.Forms.Padding(0,0,0,0)
+    $y=12;$first=$true
+    foreach($r in $rows){
+        if(-not $first){$line=New-Object Hairline;$line.SetBounds(16,$y,$width-32,1);$card.Controls.Add($line);$y+=10}
+        $first=$false
+        $label=New-Text $r[0] 8.5 $true ([Theme]::Secondary);$label.Location=New-Object Drawing.Point(16,$y);$card.Controls.Add($label);$y+=20
+        $r[1].SetBounds(16,$y,$width-32,$r[1].Height);$card.Controls.Add($r[1]);$y+=$r[1].Height+10
+    }
+    $card.Height=$y+4;return $card
 }
 function Set-Status($text) {$status.Text=$text;[Windows.Forms.Application]::DoEvents()}
 
 # ---------- 진단 선택 ----------
 $script:choices=[ordered]@{}   # 진단명 -> @{cause; origin}
-function Refresh-Diagnoses($suggested) {
-    $diagList.BeginUpdate();$diagList.Items.Clear()
+$script:rows=@()
+$script:selected=$null
+function Select-Row($row) {
+    foreach($r in $script:rows){$r.Selected=($r -eq $row);$r.Invalidate()}
+    $script:selected=$row
+    if($row){$c=$script:choices[$row.Tag];$script:loading=$true;$causeBox.Text=$c.cause;$originBox.Text=$c.origin;$script:loading=$false;$causeTitle.Text="원인 (관련 요인) · $($row.Tag)"}
+}
+function Refresh-Diagnoses($suggested,$keepChecked=$false) {
+    $checked=@($script:rows|Where-Object {$_.Checked}|ForEach-Object {$_.Tag})
+    $diagList.SuspendLayout()
+    foreach($r in $script:rows){$r.Dispose()};$diagList.Controls.Clear();$script:rows=@()
     $order=@($suggested)+@($script:Templates.Keys|Where-Object {$_ -notin $suggested})
     foreach($name in $order){
         if(-not $script:choices.Contains($name)){$script:choices[$name]=@{cause=$script:Templates[$name].cause;origin=''}}
-        $label=if($name -in $suggested){"$name   · 추천"}else{$name}
-        [void]$diagList.Items.Add($label,($name -in $suggested))
+        $row=New-Object CheckRow;$row.Text=$name;$row.Tag=$name;$row.Width=$diagCard.Width-$diagCard.Padding.Horizontal-22;$row.Margin=New-Object Windows.Forms.Padding(0)
+        $row.Checked=if($keepChecked){$name -in $checked}else{$name -in $suggested}
+        if($name -in $suggested){$row.Badge='추천'}
+        $tip.SetToolTip($row,"$($script:Templates[$name].en)  ·  $($script:Templates[$name].domain)  ·  별책 부록 8 p.$($script:Templates[$name].page)")
+        $row.Add_Click({Select-Row $this})
+        $diagList.Controls.Add($row);$script:rows+=$row
     }
-    $diagList.EndUpdate()
-    if($diagList.Items.Count -gt 0){$diagList.SelectedIndex=0}
+    $diagList.ResumeLayout()
+    if($script:rows.Count){Select-Row $script:rows[0]}
 }
-function Get-ItemName($label){return ($label -replace '\s+· 추천$','')}
+function Move-Selected($delta) {
+    $row=$script:selected;if(-not $row){return}
+    $i=[array]::IndexOf($script:rows,$row);$j=$i+$delta
+    if($j -lt 0 -or $j -ge $script:rows.Count){return}
+    $list=[Collections.ArrayList]@($script:rows);$list.RemoveAt($i);$list.Insert($j,$row);$script:rows=@($list)
+    $diagList.Controls.SetChildIndex($row,$j);$diagList.ScrollControlIntoView($row)
+}
+function Sort-Rows {
+    $list=@($script:rows|Sort-Object @{e={-not $_.Checked}},@{e={$script:Templates[$_.Tag].priority}})
+    for($i=0;$i -lt $list.Count;$i++){$diagList.Controls.SetChildIndex($list[$i],$i)}
+    $script:rows=$list
+    Set-Status '체크한 진단을 ABC(기도·호흡·순환) → 생리적 → 안전 → 심리 → 교육 순서로 정렬했어요.'
+}
 function Get-Checked {
     $result=@()
-    foreach($label in $diagList.CheckedItems){$name=Get-ItemName $label;$c=$script:choices[$name];$result+=@{name=$name;cause=$c.cause;origin=$c.origin}}
+    foreach($r in $script:rows){if($r.Checked){$c=$script:choices[$r.Tag];$result+=@{name=$r.Tag;cause=$c.cause;origin=$c.origin}}}
     return $result
 }
 function Suggest {
     $found=Find-Diagnoses $sData.Text $oData.Text $dxBox.Text
-    Refresh-Diagnoses @($found|Select-Object -First 3)
+    if($ageBox.SelectedIndex -eq 0){$found=@($found|ForEach-Object {if($_ -eq '성인 낙상의 위험'){'아동 낙상의 위험'}else{$_}}|Select-Object -Unique)}
+    else{$found=@($found|Where-Object {$_ -ne '아동 낙상의 위험'})}
+    $top=@($found|Select-Object -First 3)
+    Refresh-Diagnoses $top
     if($found.Count -eq 0){Set-Status '자료에서 추천할 진단을 찾지 못했어요. 목록에서 직접 체크하세요.'}
-    else{Set-Status "추천 진단: $((@($found|Select-Object -First 3)) -join ', ')  ·  원인(관련 요인)을 대상자에 맞게 고치세요."}
+    else{Set-Status "추천 진단: $($top -join ', ')  ·  원인(관련 요인)을 대상자에 맞게 고치세요."}
 }
 
 # ---------- 결과 표시 ----------
 function Show-Document($text) {
+    $script:rendering=$true
     $text=$text -replace "`r`n","`n"
     $output.Text=$text
     $output.SelectAll();$output.SelectionFont=[Theme]::UI(10.5,$false);$output.SelectionColor=[Theme]::Text
     $pos=0
     foreach($ln in ($text -split "`n")){
         $len=$ln.Length
-        if($ln -match '^(■|진단 \d+ :|장기목표|단기목표|진단적 |치료적 |교육적 |주관적 자료|객관적 자료|단기목표 평가|장기목표 평가)'){
-            $output.Select($pos,$len)
-            $output.SelectionFont=if($ln.StartsWith('■')){[Theme]::UI(13,$true)}else{[Theme]::UI(10.5,$true)}
-            if($ln.StartsWith('■') -or $ln -match '^진단 \d+ :'){$output.SelectionColor=[Theme]::Accent}
-        } elseif($ln -match '^\s*이론적 근거') {
-            $output.Select($pos,$len);$output.SelectionColor=[Theme]::Secondary
-        } elseif($ln -match '__:__|__/__|\(.*적으세요\)') {
-            $output.Select($pos,$len);$output.SelectionColor=[Drawing.Color]::FromArgb(255,149,0)
-        }
+        if($ln.StartsWith('■')){$output.Select($pos,$len);$output.SelectionFont=[Theme]::UI(14,$true);$output.SelectionColor=[Theme]::Accent}
+        elseif($ln -match '^(진단 \d+ :|간호진단 \d+ :|\d순위:|단서묶음 \d|장기목표$|단기목표$|진단적 |치료적 |교육적 |주관적 자료|객관적 자료|자료조직|간호문제|간호수행$|간호중재|단기목표 평가|장기목표 평가|우선순위의 근거|관련\(위험\)|간호진단 진술|간호평가)'){
+            $output.Select($pos,$len);$output.SelectionFont=[Theme]::UI(10.5,$true)
+            if($ln -match '^(진단 \d+ :|간호진단 \d+ :)'){$output.SelectionColor=[Theme]::Accent}
+        } elseif($ln -match '이론적 근거') {$output.Select($pos,$len);$output.SelectionColor=[Theme]::Secondary}
+        if($ln -match '__:__|__/__|적으세요\)|대상자 반응: \)'){$output.Select($pos,$len);$output.SelectionColor=[Drawing.Color]::FromArgb(230,126,0)}
         $pos+=$len+1
     }
     $output.Select(0,0);$output.ScrollToCaret()
+    $script:rendering=$false
 }
 function Build-Document {
     $chosen=@(Get-Checked)
     if($chosen.Count -eq 0){Suggest;$chosen=@(Get-Checked)}
-    if($chosen.Count -eq 0){[Windows.Forms.MessageBox]::Show('간호진단을 하나 이상 체크하세요.','간호과정 도우미');return}
-    Show-Document (New-NursingProcess $sData.Text $oData.Text $dxBox.Text $chosen $datePicker.Value)
-    Set-Status "틀을 만들었어요 · 진단 $($chosen.Count)개  ·  주황색 칸을 채우거나 ‘제미나이로 다듬기’를 눌러 보세요."
+    if($chosen.Count -eq 0){[Windows.Forms.MessageBox]::Show('간호진단을 하나 이상 체크하세요.','간호과정 도우미')|Out-Null;return}
+    if($formatTabs.Selected -eq 'B4 워크북'){
+        $script:model=New-WorkbookModel $sData.Text $oData.Text $dxBox.Text $chosen $datePicker.Value
+        Show-Document (ConvertTo-WorkbookText $script:model)
+    } else {
+        $script:model=$null
+        Show-Document (New-NursingProcess $sData.Text $oData.Text $dxBox.Text $chosen $datePicker.Value)
+    }
+    $undo.Visible=$false
+    Set-Status "틀을 만들었어요 · 진단 $($chosen.Count)개 · 주황색 부분을 채우거나 ‘제미나이로 다듬기’를 눌러 보세요."
+}
+function ConvertTo-SimpleHtml($text) {
+    $body=New-Object Text.StringBuilder
+    foreach($ln in ($text -replace "`r`n","`n") -split "`n"){
+        $x=[System.Net.WebUtility]::HtmlEncode($ln)
+        if($ln.StartsWith('■')){[void]$body.Append("<h1>$x</h1>")}elseif($ln.Trim() -eq ''){[void]$body.Append('<br>')}else{[void]$body.Append("<p>$x</p>")}
+    }
+    return "<html><head><meta charset=`"utf-8`"><style>@page Section1{size:364mm 257mm;mso-page-orientation:landscape;margin:14mm 16mm}div.Section1{page:Section1}body{font-family:'맑은 고딕',sans-serif;font-size:10.5pt}h1{font-size:14pt;color:#0a7f8c;margin:12pt 0 4pt}p{margin:0 0 2pt}</style></head><body><div class=Section1>$body</div></body></html>"
+}
+function Save-Document {
+    if(-not $output.Text.Trim()){return}
+    $dialog=New-Object Windows.Forms.SaveFileDialog
+    $dialog.Filter='Word 문서 · B4 가로 (*.doc)|*.doc|웹 페이지 · 한글/브라우저에서 열기·인쇄 (*.html)|*.html|서식 있는 문서 (*.rtf)|*.rtf|텍스트 (*.txt)|*.txt'
+    $dialog.FileName="간호과정_$($datePicker.Value.ToString('yyyyMMdd'))"
+    if($dialog.ShowDialog($form) -eq 'OK'){
+        $path=$dialog.FileName;$ext=[IO.Path]::GetExtension($path).ToLower()
+        if($ext -in @('.doc','.html','.htm')){$html=if($script:model){ConvertTo-WorkbookHtml $script:model}else{ConvertTo-SimpleHtml $output.Text};[IO.File]::WriteAllText($path,$html,[Text.UTF8Encoding]::new($true))}
+        elseif($ext -eq '.txt'){[IO.File]::WriteAllText($path,$output.Text.Replace("`n","`r`n"),[Text.UTF8Encoding]::new($true))}
+        else{$output.SaveFile($path,'RichText')}
+        Set-Status "저장했어요: $path"
+        if([Windows.Forms.MessageBox]::Show("저장했어요. 지금 열어 볼까요?`r`n$path",'간호과정 도우미','YesNo') -eq 'Yes'){Start-Process $path}
+    }
+    $dialog.Dispose()
 }
 
 # ---------- 제미나이 다듬기 ----------
 $script:job=$null
 function Open-Settings {
-    $d=New-Object Windows.Forms.Form;$d.Text='제미나이 설정';$d.Size=New-Object Drawing.Size(470,300);$d.StartPosition='CenterParent'
+    $d=New-Object Windows.Forms.Form;$d.Text='제미나이 설정';$d.ClientSize=New-Object Drawing.Size(460,300);$d.StartPosition='CenterParent'
     $d.FormBorderStyle='FixedDialog';$d.MaximizeBox=$false;$d.MinimizeBox=$false;$d.BackColor=[Theme]::Back;$d.Font=[Theme]::UI(9.5,$false)
-    $panel=New-Object Windows.Forms.FlowLayoutPanel;$panel.Dock='Fill';$panel.FlowDirection='TopDown';$panel.Padding=New-Object Windows.Forms.Padding(20,12,20,12);$panel.WrapContents=$false
-    $keyBox=New-Input 26 'Google AI Studio에서 받은 API 키';$keyBox.UseSystemPasswordChar=$true;$keyBox.Width=410;$keyBox.Text=Get-ApiKey
-    $modelBox=New-Input 26 '사용할 제미나이 모델 이름';$modelBox.Width=410;$modelBox.Text=$script:settings.model
-    $note=New-Label "키는 이 PC의 Windows 계정으로 암호화해서 저장돼요. GitHub나 다른 곳에 올라가지 않아요.`r`n키 발급: aistudio.google.com → Get API key" 8.5 $false ([Theme]::Secondary)
-    $row=New-Object Windows.Forms.FlowLayoutPanel;$row.AutoSize=$true;$row.Margin=New-Object Windows.Forms.Padding(0,14,0,0)
-    $ok=New-Button '저장' $true 90;$ok.DialogResult='OK';$link=New-Button '키 발급 페이지 열기'
-    $link.Add_Click({Start-Process 'https://aistudio.google.com/apikey'})
-    $row.Controls.AddRange(@($ok,$link))
-    $panel.Controls.AddRange(@((New-Label 'API 키' 9.5 $true),$keyBox,(New-Label '모델' 9.5 $true),$modelBox,$note,$row))
-    $d.Controls.Add($panel);$d.AcceptButton=$ok
+    $title=New-Text '제미나이 설정' 14 $true;$title.Location=New-Object Drawing.Point(20,16)
+    $keyBox=New-Field 'Google AI Studio에서 받은 API 키' 1;$keyBox.UseSystemPasswordChar=$true;$keyBox.Text=Get-ApiKey
+    $modelBox=New-Field '사용할 제미나이 모델 이름' 1;$modelBox.Text=$script:settings.model
+    $card=New-FormCard 420 @(@('API 키',$keyBox),@('모델',$modelBox));$card.Location=New-Object Drawing.Point(20,54)
+    $note=New-Text "키는 이 PC의 Windows 계정으로 암호화해서 저장돼요. GitHub나 다른 곳에 올라가지 않아요." 8.5 $false ([Theme]::Secondary);$note.Location=New-Object Drawing.Point(24,($card.Bottom+10))
+    $ok=New-Pill '저장' $true;$ok.Location=New-Object Drawing.Point(20,($note.Bottom+18))
+    $link=New-Pill '키 발급 페이지 열기';$link.Location=New-Object Drawing.Point(($ok.Right+8),$ok.Top)
+    $ok.Add_Click({$d.DialogResult='OK';$d.Close()});$link.Add_Click({Start-Process 'https://aistudio.google.com/apikey'})
+    $d.Controls.AddRange(@($title,$card,$note,$ok,$link))
     if($d.ShowDialog($form) -eq 'OK'){
         Set-ApiKey $keyBox.Text.Trim()
         $script:settings.model=if($modelBox.Text.Trim()){$modelBox.Text.Trim()}else{'gemini-2.5-flash'}
@@ -179,19 +242,19 @@ function Start-Polish {
         }
     }).AddArgument($key).AddArgument($script:settings.model).AddArgument($body)
     $script:job=@{ps=$ps;handle=$ps.BeginInvoke();started=Get-Date}
-    $polish.Enabled=$false;$polish.Text='  다듬는 중…  ';$progress.Visible=$true
+    $polish.Enabled=$false;$polish.Text='다듬는 중…';$polish.Invalidate();$progress.Visible=$true
     Set-Status '제미나이가 다듬는 중이에요 (보통 10~30초)…'
     $poll.Start()
 }
 function Finish-Polish {
     $job=$script:job;if(-not $job -or -not $job.handle.IsCompleted){return}
     $poll.Stop();$script:job=$null
-    $polish.Enabled=$true;$polish.Text='✨ 제미나이로 다듬기';$progress.Visible=$false
+    $polish.Enabled=$true;$polish.Text='✨ 제미나이로 다듬기';$polish.Invalidate();$progress.Visible=$false
     try{$result=$job.ps.EndInvoke($job.handle)|Select-Object -Last 1}catch{$result=@{ok=$false;code=0;text=$_.Exception.Message}}
     $job.ps.Dispose()
     if($result.ok -and $result.text){
         $text=$result.text -replace '(?m)^```[a-z]*\s*$','' -replace '\*\*','' -replace '(?m)^#+\s*',''
-        Show-Document $text.Trim()
+        $script:model=$null;Show-Document $text.Trim()
         $undo.Visible=$true
         Set-Status "제미나이로 다듬었어요 ($([int]((Get-Date)-$job.started).TotalSeconds)초) · 내용을 교재로 꼭 확인하세요. 마음에 안 들면 ‘되돌리기’."
         return
@@ -207,83 +270,106 @@ function Finish-Polish {
     [Windows.Forms.MessageBox]::Show($message,'제미나이 다듬기','OK','Warning')|Out-Null
 }
 
+
 # ---------- 창 ----------
 $tip=New-Object Windows.Forms.ToolTip
 $form=New-Object Windows.Forms.Form
-$form.Text='간호과정 도우미';$form.Size=New-Object Drawing.Size(1240,820);$form.MinimumSize=New-Object Drawing.Size(980,640);$form.StartPosition='CenterScreen'
+$form.Text='간호과정 도우미';$form.Size=New-Object Drawing.Size(1300,860);$form.MinimumSize=New-Object Drawing.Size(1040,660);$form.StartPosition='CenterScreen'
 $form.BackColor=[Theme]::Back;$form.Font=[Theme]::UI(10,$false);$form.KeyPreview=$true
 try{if($env:MYSPACE_EXE -and (Test-Path -LiteralPath $env:MYSPACE_EXE)){$form.Icon=[Drawing.Icon]::ExtractAssociatedIcon($env:MYSPACE_EXE)}}catch{}
+$form.Add_HandleCreated({[Ui]::RoundCorners($form.Handle)|Out-Null})
 
-$left=New-Object Windows.Forms.FlowLayoutPanel;$left.Dock='Left';$left.Width=420;$left.FlowDirection='TopDown';$left.WrapContents=$false;$left.AutoScroll=$true
-$left.Padding=New-Object Windows.Forms.Padding(24,18,12,12);$left.BackColor=[Theme]::Surface
-$title=New-Label '간호과정 도우미' 17 $true;$title.Margin=New-Object Windows.Forms.Padding(0,0,0,0)
-$sub=New-Label '자료를 넣으면 사정 → 진단 → 계획 → 중재 → 평가 틀을 만들어 줘요.' 9 $false ([Theme]::Secondary);$sub.Margin=New-Object Windows.Forms.Padding(0,2,0,6)
-$sData=New-Input 70 '대상자가 직접 한 말 · 한 줄에 하나씩'
-$oData=New-Input 130 'V/S, 검사 결과, 관찰 내용, 이미 투여된 약물 · 한 줄에 하나씩  예) Fever(+), NRS : 5/10점, WBC(20000)'
-$dxBox=New-Input 26 '예) acute peritonitis'
-$datePicker=New-Object Windows.Forms.DateTimePicker;$datePicker.Format='Short';$datePicker.Width=180;$datePicker.Font=[Theme]::UI(10,$false)
-$suggestRow=New-Object Windows.Forms.FlowLayoutPanel;$suggestRow.AutoSize=$true;$suggestRow.Margin=New-Object Windows.Forms.Padding(0,14,0,0)
-$suggestButton=New-Button '진단 추천';$sampleButton=New-Button '예시 불러오기';$clearButton=New-Button '지우기'
-$suggestRow.Controls.AddRange(@($suggestButton,$sampleButton,$clearButton))
-$diagList=New-Object Windows.Forms.CheckedListBox;$diagList.Width=356;$diagList.Height=150;$diagList.CheckOnClick=$true;$diagList.BorderStyle='FixedSingle'
-$diagList.Font=[Theme]::UI(10,$false);$diagList.BackColor=[Theme]::Surface;$diagList.ForeColor=[Theme]::Text
-$causeBox=New-Input 26 '예) 복강 내 염증  →  "복강 내 염증과 관련된 급성통증"'
-$originBox=New-Input 26 '(선택) 예) 날음식 섭취  →  "날음식 섭취로 인한 복강 내 염증과 관련된 급성통증"'
-$causeLabel=New-Label '원인 (관련 요인)' 9.5 $true
-$build=New-Button '틀 만들기' $true 356;$build.Height=44;$build.Font=[Theme]::UI(11,$true);$build.Margin=New-Object Windows.Forms.Padding(0,16,0,0)
-$left.Controls.AddRange(@($title,$sub,(New-Label '주관적 자료' 9.5 $true),$sData,(New-Label '객관적 자료' 9.5 $true),$oData,(New-Label '의학적 진단 (Dx)' 9.5 $true),$dxBox,(New-Label '작성 날짜' 9.5 $true),$datePicker,$suggestRow,(New-Label '간호진단 (우선순위 순서대로 체크)' 9.5 $true),$diagList,$causeLabel,$causeBox,(New-Label '원인의 원인 (방식 2 · 선택)' 9.5 $true),$originBox,$build))
+$cardWidth=392
+$left=New-Object Windows.Forms.FlowLayoutPanel;$left.Dock='Left';$left.Width=440;$left.FlowDirection='TopDown';$left.WrapContents=$false;$left.AutoScroll=$true
+$left.Padding=New-Object Windows.Forms.Padding(24,20,8,20);$left.BackColor=[Theme]::Back
+$left.Add_HandleCreated({[Ui]::ModernScroll($this,$false)})
+$title=New-Text '간호과정 도우미' 20 $true;$title.Margin=New-Object Windows.Forms.Padding(4,0,0,0)
+$sub=New-Text '자료를 넣으면 간호과정의 큰 틀을 만들어 줘요.' 9.5 $false ([Theme]::Secondary);$sub.Margin=New-Object Windows.Forms.Padding(6,2,0,0)
 
-$right=New-Object Windows.Forms.Panel;$right.Dock='Fill';$right.Padding=New-Object Windows.Forms.Padding(20,16,20,10);$right.BackColor=[Theme]::Back
-$toolbar=New-Object Windows.Forms.FlowLayoutPanel;$toolbar.Dock='Top';$toolbar.Height=46;$toolbar.BackColor=[Theme]::Back
-$polish=New-Button '✨ 제미나이로 다듬기' $true;$undo=New-Button '되돌리기';$undo.Visible=$false
-$copy=New-Button '복사';$save=New-Button '저장';$settingsButton=New-Button '설정'
-$progress=New-Object Windows.Forms.ProgressBar;$progress.Style='Marquee';$progress.Width=110;$progress.Height=8;$progress.Margin=New-Object Windows.Forms.Padding(4,14,8,0);$progress.Visible=$false
-$toolbar.Controls.AddRange(@($polish,$progress,$undo,$copy,$save,$settingsButton))
-$card=New-Object Windows.Forms.Panel;$card.Dock='Fill';$card.Padding=New-Object Windows.Forms.Padding(18,14,6,14);$card.BackColor=[Theme]::Surface
+$sData=New-Field '대상자가 직접 한 말 · 한 줄에 하나씩' 3
+$oData=New-Field 'V/S, 검사 결과, 관찰 내용, 이미 투여된 약물 · 한 줄에 하나씩  예) Fever(+), NRS : 5/10점, WBC(20000)' 6
+$dxBox=New-Field '예) acute peritonitis' 1
+$ageBox=New-Object Windows.Forms.ComboBox;$ageBox.DropDownStyle='DropDownList';$ageBox.FlatStyle='Flat';$ageBox.Font=[Theme]::UI(10,$false);$ageBox.Height=26
+[void]$ageBox.Items.AddRange(@('아동 (보호자 포함)','성인'));$ageBox.SelectedIndex=0
+$datePicker=New-Object Windows.Forms.DateTimePicker;$datePicker.Format='Long';$datePicker.Font=[Theme]::UI(10,$false);$datePicker.Height=26
+$dataCard=New-FormCard $cardWidth @(@('주관적 자료',$sData),@('객관적 자료',$oData),@('의학적 진단 (Dx)',$dxBox),@('대상자',$ageBox),@('작성 날짜',$datePicker))
+
+$actionRow=New-Object Windows.Forms.FlowLayoutPanel;$actionRow.AutoSize=$true;$actionRow.BackColor=[Theme]::Back;$actionRow.Margin=New-Object Windows.Forms.Padding(0,12,0,0)
+$suggestButton=New-Pill '진단 추천';$sampleButton=New-Pill '예시 불러오기';$clearButton=New-Pill '지우기'
+$actionRow.Controls.AddRange(@($suggestButton,$sampleButton,$clearButton))
+
+$diagHeader=New-Object Windows.Forms.Panel;$diagHeader.Width=$cardWidth;$diagHeader.Height=40;$diagHeader.BackColor=[Theme]::Back;$diagHeader.Margin=New-Object Windows.Forms.Padding(0,8,0,4)
+$diagTitle=New-Text '간호진단 · 위에서부터 우선순위' 9 $true ([Theme]::Secondary);$diagTitle.Location=New-Object Drawing.Point(6,14)
+$upButton=New-Object RoundButton;$upButton.Glyph=[string][char]0xE70E;$downButton=New-Object RoundButton;$downButton.Glyph=[string][char]0xE70D
+$sortButton=New-Pill '자동 정렬'
+$sortButton.Location=New-Object Drawing.Point(($cardWidth-$sortButton.Width),3);$downButton.Location=New-Object Drawing.Point(($sortButton.Left-38),4);$upButton.Location=New-Object Drawing.Point(($downButton.Left-34),4)
+$tip.SetToolTip($upButton,'선택한 진단을 위로');$tip.SetToolTip($downButton,'선택한 진단을 아래로');$tip.SetToolTip($sortButton,'체크한 진단을 ABC·매슬로우 순서로 정렬')
+$diagHeader.Controls.AddRange(@($diagTitle,$upButton,$downButton,$sortButton))
+$diagCard=New-Object Card;$diagCard.Width=$cardWidth;$diagCard.Height=262;$diagCard.Padding=New-Object Windows.Forms.Padding(6,8,4,8)
+$diagList=New-Object Windows.Forms.FlowLayoutPanel;$diagList.Dock='Fill';$diagList.FlowDirection='TopDown';$diagList.WrapContents=$false;$diagList.AutoScroll=$true;$diagList.BackColor=[Theme]::Surface
+$diagList.Add_HandleCreated({[Ui]::ModernScroll($this,$false)})
+$diagCard.Controls.Add($diagList)
+
+$causeBox=New-Field '예) 복강 내 염증  →  "복강 내 염증과 관련된 급성 통증"' 1
+$originBox=New-Field '(선택) 예) 날음식 섭취  →  "날음식 섭취로 인한 복강 내 염증과 관련된 급성 통증"' 1
+$causeCard=New-FormCard $cardWidth @(@('원인 (관련 요인)',$causeBox),@('원인의 원인 · 방식 2 (선택)',$originBox));$causeCard.Margin=New-Object Windows.Forms.Padding(0,14,0,0)
+$causeTitle=$causeCard.Controls[0]
+
+$build=New-Object PillButton;$build.Text='틀 만들기';$build.Primary=$true;$build.Width=$cardWidth;$build.Height=46;$build.Margin=New-Object Windows.Forms.Padding(0,18,0,0)
+$tip.SetToolTip($build,'Ctrl+Enter')
+$left.Controls.AddRange(@($title,$sub,(New-Section '대상자 자료'),$dataCard,$actionRow,$diagHeader,$diagCard,$causeCard,$build))
+
+# 오른쪽: 형식 선택 + 결과
+$right=New-Object Windows.Forms.Panel;$right.Dock='Fill';$right.Padding=New-Object Windows.Forms.Padding(12,20,24,8);$right.BackColor=[Theme]::Back
+$toolbar=New-Object Windows.Forms.Panel;$toolbar.Dock='Top';$toolbar.Height=44;$toolbar.BackColor=[Theme]::Back
+$formatTabs=New-Object Segmented;$formatTabs.Location=New-Object Drawing.Point(0,2);$formatTabs.SetItems([string[]]@('B4 워크북','기본 형식'),'B4 워크북')
+$tip.SetToolTip($formatTabs,'B4 워크북: 간호과정 별책 워크북 순서 (간호사정 → 간호진단 → 간호계획 → 수행·평가 → 간호기록)')
+$tools=New-Object Windows.Forms.FlowLayoutPanel;$tools.Dock='Right';$tools.AutoSize=$true;$tools.WrapContents=$false;$tools.BackColor=[Theme]::Back;$tools.Padding=New-Object Windows.Forms.Padding(0,2,0,0)
+$progress=New-Object Windows.Forms.ProgressBar;$progress.Style='Marquee';$progress.Width=90;$progress.Height=6;$progress.Margin=New-Object Windows.Forms.Padding(0,16,10,0);$progress.Visible=$false
+$polish=New-Pill '✨ 제미나이로 다듬기' $true;$undo=New-Pill '되돌리기';$undo.Visible=$false;$copy=New-Pill '복사';$save=New-Pill '저장'
+$settingsButton=New-Object RoundButton;$settingsButton.Glyph=[string][char]0xE713;$settingsButton.Margin=New-Object Windows.Forms.Padding(0,1,0,0)
+$tip.SetToolTip($polish,'입력 자료에 맞게 목표·근거를 구체적으로 다듬어요 (API 키 필요)');$tip.SetToolTip($settingsButton,'제미나이 설정')
+$tools.Controls.AddRange(@($progress,$polish,$undo,$copy,$save,$settingsButton))
+$toolbar.Controls.AddRange(@($formatTabs,$tools))
+$gap=New-Object Windows.Forms.Panel;$gap.Dock='Top';$gap.Height=12;$gap.BackColor=[Theme]::Back
+$paper=New-Object Card;$paper.Dock='Fill';$paper.Padding=New-Object Windows.Forms.Padding(26,20,10,16);$paper.Radius=16
 $output=New-Object Windows.Forms.RichTextBox;$output.Dock='Fill';$output.BorderStyle='None';$output.BackColor=[Theme]::Surface;$output.ForeColor=[Theme]::Text;$output.Font=[Theme]::UI(10.5,$false);$output.DetectUrls=$false
-$output.Text="왼쪽에 자료를 넣고 ‘틀 만들기’를 누르세요.`n`n· ‘예시 불러오기’로 사용법을 바로 볼 수 있어요.`n· 결과는 여기서 바로 고칠 수 있어요.`n· 저장은 Word·한글에서 열리는 .rtf 또는 .txt로 할 수 있어요."
-$card.Controls.Add($output)
-$status=New-Object Windows.Forms.Label;$status.Dock='Bottom';$status.Height=28;$status.TextAlign='MiddleLeft';$status.ForeColor=[Theme]::Secondary;$status.Font=[Theme]::UI(9,$false)
-$spacer=New-Object Windows.Forms.Panel;$spacer.Dock='Top';$spacer.Height=8;$spacer.BackColor=[Theme]::Back
-$right.Controls.AddRange(@($card,$spacer,$toolbar,$status))
+$output.Add_HandleCreated({[Ui]::ModernScroll($this,$false)})
+$paper.Controls.Add($output)
+$status=New-Object Windows.Forms.Label;$status.Dock='Bottom';$status.Height=30;$status.TextAlign='MiddleLeft';$status.ForeColor=[Theme]::Secondary;$status.Font=[Theme]::UI(9,$false);$status.Padding=New-Object Windows.Forms.Padding(6,0,0,0)
+$right.Controls.AddRange(@($paper,$gap,$toolbar,$status))
 $form.Controls.AddRange(@($right,$left))
 
 $poll=New-Object Windows.Forms.Timer;$poll.Interval=300;$poll.Add_Tick({Finish-Polish})
 
 # ---------- 이벤트 ----------
-$suggestButton.Add_Click({Suggest})
-$build.Add_Click({Build-Document})
 function Load-Sample {
     $sData.Text='배가 쥐어짜는 듯이 너무 아파요'
     $oData.Text="Fever(+)`r`nNRS : 5/10점`r`n배를 움켜잡은 채 웅크리고 있는 모습 관찰됨`r`nChilling(+)`r`n데노간(+)`r`nWBC(20000)`r`nCRP(4.0)"
-    $dxBox.Text='acute peritonitis'
+    $dxBox.Text='acute peritonitis';$ageBox.SelectedIndex=1
     Suggest
 }
+function Show-Welcome {
+    Show-Document "■ 시작하기`n`n1. 왼쪽에 주관적·객관적 자료를 한 줄에 하나씩 넣으세요.`n2. ‘진단 추천’을 누르면 맞는 간호진단에 체크돼요. 위에서부터 우선순위예요.`n3. 진단을 눌러 원인(관련 요인)을 고치고 ‘틀 만들기’를 누르세요.`n`n· 위쪽에서 B4 워크북 / 기본 형식을 고를 수 있어요.`n· 결과는 여기서 바로 고칠 수 있어요.`n· 저장 → Word(.doc)를 고르면 B4 가로 표 양식으로 저장돼요.`n· ‘예시 불러오기’로 바로 사용법을 볼 수 있어요."
+}
+$suggestButton.Add_Click({Suggest})
 $sampleButton.Add_Click({Load-Sample})
-$clearButton.Add_Click({$sData.Clear();$oData.Clear();$dxBox.Clear();$script:choices=[ordered]@{};Refresh-Diagnoses @();Set-Status ''})
-$diagList.Add_SelectedIndexChanged({
-    if($diagList.SelectedItem){$name=Get-ItemName $diagList.SelectedItem;$c=$script:choices[$name]
-        $script:loading=$true;$causeBox.Text=$c.cause;$originBox.Text=$c.origin;$script:loading=$false
-        $causeLabel.Text="원인 (관련 요인) · $name"}
-})
-$causeBox.Add_TextChanged({if(-not $script:loading -and $diagList.SelectedItem){$script:choices[(Get-ItemName $diagList.SelectedItem)].cause=$causeBox.Text.Trim()}})
-$originBox.Add_TextChanged({if(-not $script:loading -and $diagList.SelectedItem){$script:choices[(Get-ItemName $diagList.SelectedItem)].origin=$originBox.Text.Trim()}})
+$clearButton.Add_Click({$sData.Clear();$oData.Clear();$dxBox.Clear();$script:choices=[ordered]@{};Refresh-Diagnoses @();$script:model=$null;Show-Welcome;Set-Status ''})
+$upButton.Add_Click({Move-Selected -1});$downButton.Add_Click({Move-Selected 1});$sortButton.Add_Click({Sort-Rows})
+$causeBox.Add_TextChanged({if(-not $script:loading -and $script:selected){$script:choices[$script:selected.Tag].cause=$causeBox.Text.Trim()}})
+$originBox.Add_TextChanged({if(-not $script:loading -and $script:selected){$script:choices[$script:selected.Tag].origin=$originBox.Text.Trim()}})
+$build.Add_Click({Build-Document})
+$formatTabs.Add_SelectedChanged({if(@(Get-Checked).Count -gt 0 -and ($sData.Text -or $oData.Text)){Build-Document}})
 $polish.Add_Click({Start-Polish})
-$undo.Add_Click({if($script:before){Show-Document $script:before;$undo.Visible=$false;Set-Status '다듬기 전으로 되돌렸어요.'}})
+$undo.Add_Click({if($script:before){$script:model=$null;Show-Document $script:before;$undo.Visible=$false;Set-Status '다듬기 전으로 되돌렸어요.'}})
 $copy.Add_Click({if($output.Text){[Windows.Forms.Clipboard]::SetText($output.Text);Set-Status '복사했어요. Word·한글에 붙여넣으세요.'}})
-$save.Add_Click({
-    $dialog=New-Object Windows.Forms.SaveFileDialog;$dialog.Filter='Word·한글 문서 (*.rtf)|*.rtf|텍스트 (*.txt)|*.txt';$dialog.FileName="간호과정_$($datePicker.Value.ToString('yyyyMMdd'))"
-    if($dialog.ShowDialog($form) -eq 'OK'){
-        if($dialog.FileName.EndsWith('.txt')){[IO.File]::WriteAllText($dialog.FileName,$output.Text.Replace("`n","`r`n"),[Text.UTF8Encoding]::new($true))}else{$output.SaveFile($dialog.FileName,'RichText')}
-        Set-Status "저장했어요: $($dialog.FileName)"
-    }
-    $dialog.Dispose()
-})
+$save.Add_Click({Save-Document})
 $settingsButton.Add_Click({Open-Settings})
-$form.Add_KeyDown({if($_.Control -and $_.KeyCode -eq 'Return'){Build-Document;$_.Handled=$true}})
-$tip.SetToolTip($build,'Ctrl+Enter');$tip.SetToolTip($polish,'입력 자료에 맞게 목표·근거를 구체적으로 다듬어요 (API 키 필요)')
+$output.Add_TextChanged({if(-not $script:rendering){$script:model=$null}})
+$form.Add_KeyDown({if($_.Control -and $_.KeyCode -eq 'Return'){Build-Document;$_.Handled=$true;$_.SuppressKeyPress=$true}})
 
 Refresh-Diagnoses @()
+Show-Welcome
 if($Check -or $SelfTest){
     Test-Templates
     Load-Sample;Build-Document
