@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>간호과정 도우미</title>
+<style>
+:root{--bg:#f2f2f7;--card:#fff;--text:#1c1c1e;--sub:#8e8e93;--sep:#e5e5ea;--accent:#007aff;--accent2:#0a84ff;--green:#34c759;--orange:#ff9500;--fill:#e9e9ee;--bar:rgba(249,249,251,.92)}
+@media (prefers-color-scheme:dark){:root{--bg:#000;--card:#1c1c1e;--text:#f2f2f7;--sub:#8e8e93;--sep:#38383a;--accent:#0a84ff;--fill:#2c2c2e;--bar:rgba(22,22,24,.92)}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"SF Pro Text","Apple SD Gothic Neo","Noto Sans KR",Roboto,sans-serif;font-size:16px}
+body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+header{padding:18px 20px 6px}
+header h1{font-size:32px;font-weight:800;letter-spacing:-.5px;margin:0}
+header p{margin:4px 0 0;color:var(--sub);font-size:14px}
+.top{display:flex;align-items:center;justify-content:space-between}
+.icon-btn{border:0;background:var(--fill);color:var(--accent);width:36px;height:36px;border-radius:18px;font-size:18px}
+.section{color:var(--sub);font-size:13px;font-weight:600;margin:22px 20px 8px;display:flex;justify-content:space-between;align-items:center}
+.card{background:var(--card);border-radius:14px;margin:0 16px;overflow:hidden}
+.field{padding:10px 16px 12px;border-bottom:1px solid var(--sep)}
+.field:last-child{border-bottom:0}
+.field label{display:block;font-size:12.5px;color:var(--sub);font-weight:600;margin-bottom:4px}
+.field textarea,.field input{width:100%;border:0;outline:0;background:transparent;color:var(--text);font:inherit;font-size:16px;resize:none;padding:0}
+.field textarea::placeholder,.field input::placeholder{color:#c7c7cc}
+.seg{display:flex;background:var(--fill);border-radius:9px;padding:2px;margin:0 16px}
+.seg.inline{margin:0}
+.seg button{flex:1;border:0;background:transparent;color:var(--text);font:inherit;font-size:14px;padding:7px 10px;border-radius:7px}
+.seg button.on{background:var(--card);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.row-btns{display:flex;gap:8px;margin:12px 16px 0;flex-wrap:wrap}
+.pill{border:0;border-radius:20px;padding:10px 16px;font:inherit;font-size:15px;font-weight:600;background:var(--fill);color:var(--accent)}
+.pill.primary{background:var(--accent);color:#fff}
+.pill:disabled{opacity:.5}
+.pill.small{padding:7px 12px;font-size:13.5px}
+.big{scroll-margin-bottom:110px;display:block;width:calc(100% - 32px);margin:18px 16px 0;padding:15px;border-radius:14px;border:0;background:var(--accent);color:#fff;font:inherit;font-size:17px;font-weight:700}
+.dx{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--sep);gap:12px}
+.dx:last-child{border-bottom:0}
+.dx .chk{width:24px;height:24px;border-radius:12px;border:2px solid #c7c7cc;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:900}
+.dx.on .chk{background:var(--accent);border-color:var(--accent)}
+.dx .name{flex:1;min-width:0}
+.dx .name b{display:block;font-size:16px;font-weight:500}
+.dx.on .name b{font-weight:700}
+.dx .name small{display:block;color:var(--sub);font-size:12.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{background:rgba(52,199,89,.16);color:#248a3d;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:10px;flex:none}
+.order{display:flex;flex-direction:column;gap:2px;flex:none}
+.order button{border:0;background:var(--fill);color:var(--sub);width:30px;height:22px;border-radius:6px;font-size:11px}
+.cause{padding:4px 14px 12px 50px;border-bottom:1px solid var(--sep);background:var(--card)}
+.cause input{width:100%;border:0;border-bottom:1px solid var(--sep);background:transparent;color:var(--text);font:inherit;font-size:15px;padding:8px 0;outline:0}
+.cause label{display:block;font-size:12px;color:var(--sub);margin-top:8px}
+.cause .preview{font-size:13px;color:var(--accent);margin-top:8px}
+.doc{background:var(--card);border-radius:14px;margin:12px 16px 0;padding:18px 16px;font-size:14.5px;line-height:1.55;word-break:keep-all;overflow-wrap:anywhere}
+.doc .h{font-size:19px;font-weight:800;color:var(--accent);margin:18px 0 6px}
+.doc .h:first-child{margin-top:0}
+.doc .s{font-weight:700;margin-top:8px}
+.doc .dxh{font-weight:800;color:var(--accent);margin-top:12px}
+.doc .why{color:var(--sub)}
+.doc .blank{color:var(--orange)}
+.doc .gap{height:8px}
+textarea.edit{width:calc(100% - 32px);margin:12px 16px 0;min-height:60vh;border:0;border-radius:14px;padding:16px;font:inherit;font-size:14.5px;line-height:1.5;background:var(--card);color:var(--text);outline:0}
+.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--bar);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--sep);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+.tabs button{flex:1;border:0;background:transparent;color:var(--sub);font:inherit;font-size:11px;padding:8px 0 10px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tabs button .i{font-size:22px;line-height:24px}
+.tabs button.on{color:var(--accent)}
+.toolbar{display:flex;gap:8px;margin:12px 16px 0;overflow-x:auto;padding-bottom:2px}
+.toolbar .pill{flex:none}
+.note{color:var(--sub);font-size:12.5px;margin:10px 20px 0;line-height:1.45}
+.empty{color:var(--sub);text-align:center;padding:40px 20px;font-size:15px;line-height:1.6}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:10}
+.sheet{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-radius:16px 16px 0 0;padding:8px 0 calc(24px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .25s;z-index:11}
+.sheet.open{transform:none}
+.sheet .grab{width:40px;height:5px;border-radius:3px;background:#c7c7cc;margin:4px auto 10px}
+.sheet h2{margin:0 20px 6px;font-size:20px}
+.toast{pointer-events:none;position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:rgba(30,30,30,.92);color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .2s;z-index:20;max-width:86%;text-align:center}
+.toast.show{opacity:1}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;border-radius:50%;animation:r .8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes r{to{transform:rotate(360deg)}}
+.page{display:none}.page.on{display:block}
+</style>
+</head>
+<body>
+
+<!-- 1. 자료 -->
+<section class="page on" id="p-data">
+  <header><div class="top"><h1>간호과정 도우미</h1><button class="icon-btn" onclick="openSettings()" aria-label="설정">⚙︎</button></div>
+  <p>자료를 넣으면 간호과정의 큰 틀을 만들어 줘요.</p></header>
+  <div class="section">대상자 자료</div>
+  <div class="card">
+    <div class="field"><label>주관적 자료</label><textarea id="s" rows="2" placeholder="대상자가 직접 한 말 · 한 줄에 하나씩"></textarea></div>
+    <div class="field"><label>객관적 자료</label><textarea id="o" rows="5" placeholder="V/S, 검사 결과, 관찰, 투여된 약물 · 한 줄에 하나씩&#10;예) Fever(+)&#10;NRS : 5/10점&#10;WBC(20000)"></textarea></div>
+    <div class="field"><label>의학적 진단 (Dx)</label><input id="dx" placeholder="예) acute peritonitis"></div>
+    <div class="field"><label>작성 날짜</label><input id="date" type="date"></div>
+  </div>
+  <div class="section">대상자</div>
+  <div class="seg" id="age"><button data-v="child" class="on">아동 (보호자 포함)</button><button data-v="adult">성인</button></div>
+  <div class="row-btns"><button class="pill" onclick="loadSample()">예시 불러오기</button><button class="pill" onclick="clearAll()">지우기</button></div>
+  <button class="big" onclick="suggest(true)">진단 추천 받기</button>
+  <p class="note">환자 이름·등록번호·생년월일 같은 개인정보는 넣지 마세요.</p>
+</section>
+
+<!-- 2. 진단 -->
+<section class="page" id="p-dx">
+  <header><h1>간호진단</h1><p>위에서부터 우선순위예요. 진단을 눌러 원인을 고치세요.</p></header>
+  <div class="section"><span>NANDA-I 2024–2026</span><button class="pill small" onclick="autoSort()">자동 정렬</button></div>
+  <div class="card" id="dxlist"></div>
+  <button class="big" onclick="build(true)">틀 만들기</button>
+</section>
+
+<!-- 3. 결과 -->
+<section class="page" id="p-out">
+  <header><h1>결과</h1></header>
+  <div class="seg" id="fmt"><button data-v="b4" class="on">B4 워크북</button><button data-v="basic">기본 형식</button></div>
+  <div class="toolbar">
+    <button class="pill primary" id="polish" onclick="polish()">✨ 제미나이로 다듬기</button>
+    <button class="pill" id="undo" style="display:none" onclick="undo()">되돌리기</button>
+    <button class="pill" id="editBtn" onclick="toggleEdit()">편집</button>
+    <button class="pill" onclick="copyText()">복사</button>
+    <button class="pill" onclick="shareText()">공유</button>
+    <button class="pill" onclick="saveDoc()">Word 저장</button>
+    <button class="pill" onclick="printDoc()">PDF·인쇄</button>
+  </div>
+  <div id="doc" class="doc"><div class="empty">자료를 넣고 ‘진단 추천 받기’ → ‘틀 만들기’를 누르세요.</div></div>
+  <textarea id="edit" class="edit" style="display:none"></textarea>
+  <p class="note">자동으로 만든 틀이에요. 진단 정의는 별책 부록 8을, 이론적 근거와 수치는 교재로 꼭 확인하세요.</p>
+</section>
+
+<nav class="tabs">
+  <button class="on" data-p="p-data"><span class="i">✎</span>자료</button>
+  <button data-p="p-dx"><span class="i">☑︎</span>진단</button>
+  <button data-p="p-out"><span class="i">▤</span>결과</button>
+</nav>
+
+<div class="sheet-bg" id="sheetBg" onclick="closeSettings()"></div>
+<div class="sheet" id="sheet">
+  <div class="grab"></div>
+  <h2>제미나이 설정</h2>
+  <div class="section">API 키</div>
+  <div class="card">
+    <div class="field"><label>API 키</label><input id="key" type="password" placeholder="Google AI Studio에서 받은 키" autocomplete="off"></div>
+    <div class="field"><label>모델</label><input id="model" placeholder="gemini-2.5-flash"></div>
+  </div>
+  <button class="big" onclick="issueKey()">🔑 키 발급하기 (무료)</button>
+  <p class="note">발급 페이지에서 키를 <b>복사</b>하고 돌아오면, 앱이 사용할지 물어본 뒤 자동으로 넣어 드려요.<br>키는 이 휴대폰의 앱 안에만 저장되고, 다듬기를 누를 때만 Google로 전송돼요.</p>
+  <div class="row-btns"><button class="pill primary" onclick="saveSettings()">저장</button></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="templates.js"></script>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
