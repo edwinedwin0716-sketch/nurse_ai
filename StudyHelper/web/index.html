@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>학습 정리 도우미</title>
+<style>
+:root{--bg:#f2f2f7;--card:#fff;--text:#1c1c1e;--sub:#8e8e93;--sep:#e5e5ea;--accent:#007aff;--fill:#e9e9ee;--brand:#7b1f3c}
+@media (prefers-color-scheme:dark){:root{--bg:#000;--card:#1c1c1e;--text:#f2f2f7;--sep:#38383a;--accent:#0a84ff;--fill:#2c2c2e}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"SF Pro Text","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",Roboto,sans-serif;font-size:16px}
+.app{max-width:980px;margin:0 auto;padding:22px 16px 40px}
+h1{font-size:32px;font-weight:800;letter-spacing:-.5px;margin:0}
+.lead{color:var(--sub);margin:6px 2px 0;font-size:14.5px}
+.section{color:var(--sub);font-size:13px;font-weight:600;margin:22px 4px 8px}
+.card{background:var(--card);border-radius:14px;overflow:hidden}
+.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:34px 16px;border:2px dashed #c7c7cc;border-radius:14px;background:var(--card);text-align:center;cursor:pointer}
+.drop.over{border-color:var(--accent);background:rgba(0,122,255,.06)}
+.drop .ic{font-size:40px}.drop b{font-size:17px}.drop small{color:var(--sub)}
+.field{padding:11px 16px;border-bottom:1px solid var(--sep);display:flex;align-items:center;gap:12px}
+.field:last-child{border-bottom:0}
+.field label{flex:none;width:92px;color:var(--text);font-size:15px}
+.field input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--text);font:inherit;font-size:16px;text-align:right}
+.seg{display:flex;background:var(--fill);border-radius:9px;padding:2px;flex:1}
+.seg button{flex:1;border:0;background:transparent;color:var(--text);font:inherit;font-size:14px;padding:6px 8px;border-radius:7px}
+.seg button.on{background:var(--card);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.big{display:block;width:100%;margin-top:18px;padding:15px;border-radius:14px;border:0;background:var(--accent);color:#fff;font:inherit;font-size:17px;font-weight:700}
+.big:disabled{opacity:.45}
+.progress{margin-top:14px;display:none}
+.progress .bar{height:6px;border-radius:3px;background:var(--fill);overflow:hidden}
+.progress .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.progress p{color:var(--sub);font-size:13.5px;margin:8px 2px 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.chip{background:var(--card);border-radius:16px;padding:7px 12px;font-size:13.5px}
+.chip b{color:var(--brand)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.pill{border:0;border-radius:20px;padding:10px 16px;font:inherit;font-size:15px;font-weight:600;background:var(--fill);color:var(--accent);cursor:pointer}
+.pill.primary{background:var(--accent);color:#fff}
+.preview{margin-top:14px;background:#fff;border-radius:14px;overflow:hidden;height:75vh}
+.preview iframe{width:100%;height:100%;border:0;background:#fff}
+.note{color:var(--sub);font-size:12.5px;margin:12px 4px 0;line-height:1.5}
+.warn{background:#fff4e5;color:#8a4b00;border-radius:12px;padding:10px 14px;margin-top:12px;font-size:14px;display:none}
+.toast{pointer-events:none;position:fixed;left:50%;bottom:40px;transform:translateX(-50%);background:rgba(30,30,30,.92);color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .2s;z-index:20;max-width:86%;text-align:center}
+.toast.show{opacity:1}
+#result{display:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>학습 정리 도우미</h1>
+  <p class="lead">형광펜·강조 글씨·필기한 부분을 찾아 요점정리와 문제를 만들어 줘요. 인터넷 없이 이 기기 안에서만 처리해요.</p>
+
+  <div class="section">파일</div>
+  <label class="drop" id="drop">
+    <span class="ic">📄</span>
+    <b id="fileLabel">파일 올리기</b>
+    <small>PDF (굿노트·노트 필기 포함) · PPTX · DOCX · HWPX</small>
+    <input type="file" id="file" accept=".pdf,.pptx,.docx,.hwpx,.hwp,.ppt,.doc,application/pdf" hidden>
+  </label>
+
+  <div class="section">설정</div>
+  <div class="card">
+    <div class="field"><label>제목</label><input id="title" placeholder="파일 이름으로 자동 입력"></div>
+    <div class="field"><label>문제 수</label><div class="seg" id="qn"><button data-v="10">10</button><button data-v="20" class="on">20</button><button data-v="30">30</button><button data-v="50">50</button></div></div>
+  </div>
+  <button class="big" id="go" disabled>정리 시작</button>
+  <div class="progress" id="progress"><div class="bar"><i id="bar"></i></div><p id="ptext">읽는 중…</p></div>
+  <div class="warn" id="warn"></div>
+
+  <div id="result">
+    <div class="section">결과</div>
+    <div class="chips" id="chips"></div>
+    <div class="toolbar">
+      <button class="pill primary" onclick="saveDoc()">Word로 저장</button>
+      <button class="pill" onclick="saveHtml()">웹 페이지로 저장</button>
+      <button class="pill" onclick="printDoc()">PDF·인쇄</button>
+      <button class="pill" onclick="sendAi('chatgpt')">ChatGPT로 사례문제 만들기</button>
+      <button class="pill" onclick="sendAi('claude')">Claude로</button>
+    </div>
+    <div class="preview"><iframe id="frame" title="미리보기"></iframe></div>
+    <p class="note">사례기반 문제와 문장형 요약은 AI가 있어야 만들 수 있어서, 버튼을 누르면 정리한 내용을 복사해 ChatGPT·Claude 앱(구독 그대로, API 키 필요 없음)에 붙여넣을 수 있게 해 드려요.</p>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<!--SCRIPTS-->
+</body>
+</html>
