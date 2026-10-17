@@ -43,13 +43,25 @@
 | 🍎 Mac (Apple 실리콘 M1~M4): [`MySpace-mac-AppleSilicon.tar.xz`](MySpaceMac/MySpace-mac-AppleSilicon.tar.xz) | 더블클릭으로 풀기 → `MySpace.app`을 응용 프로그램 폴더로 → 처음 한 번 시스템 설정 › 개인정보 보호 및 보안 › [그래도 열기] |
 | 🍎 Mac (인텔): [`MySpace-mac-Intel.tar.xz`](MySpaceMac/MySpace-mac-Intel.tar.xz) | 위와 같음 |
 
+## 🔍 Spotlight for Windows (`Spotlight/`)
+Mac의 Spotlight와 똑같은 모양의 검색창이에요. **Shift 키를 두 번 빠르게** 누르면 화면 위쪽에 열립니다.
+
+- 앱 · 문서 · 폴더 · Windows 설정(와이파이, 블루투스, 밝기 …) · MySpace 런처 항목 검색
+- 초성 검색(ㅋㅋㅇㅌ → 카카오톡), 계산기(12*3+4 → Enter로 복사), Google · 네이버 검색
+- 오른쪽 미리보기, 자주 여는 항목이 위로, 라이트/다크 자동, 반투명 유리 배경
+- 단축키 바꾸기: Shift 두 번 / Alt + Space / Ctrl + Shift + Space (트레이 아이콘 우클릭)
+
+| 다운로드 | 설치 |
+|---|---|
+| 💻 Windows: [`Spotlight-1.0.zip`](Spotlight/Spotlight-1.0.zip) | 압축 해제 → `Spotlight.exe` 실행 (자동 설치 · 시작 시 자동 실행) |
+
 ## 주의
 - 자동으로 만든 내용입니다. 이론적 근거·문제·해설은 반드시 교재로 확인하세요.
 - 환자 이름·등록번호·생년월일 같은 개인정보는 넣지 마세요.
 - 직접 만든 프로그램이라 Windows·Android에서 보안 경고가 뜰 수 있습니다.
 
 ## 빌드
-- Windows: `NursingHelper/src/build.sh`, `MySpaceLauncher/src/build.sh` (mono-mcs)
+- Windows: `NursingHelper/src/build.sh`, `MySpaceLauncher/src/build.sh`, `Spotlight/src/build.sh` (mono-mcs)
 - Mac: `cd MySpaceMac && npm install && node build/package.js && sh build/slim.sh` (Electron, rcodesign 임시 서명)
 - Android: `*/android/build-apk.sh` (Ubuntu `android-sdk-platform-23 aapt dalvik-exchange apksigner zipalign`)
 - 플래시카드 웹앱 묶기: `python3 StudyHelper/build.py`
