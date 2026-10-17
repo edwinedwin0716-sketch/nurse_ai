@@ -29,12 +29,24 @@
 | 💻 PC: [`Flashcards-PC-2.0.zip`](StudyHelper/Flashcards-PC-2.0.zip) | 압축 해제 → `플래시카드.html` 더블클릭 (크롬·엣지) |
 | 📱 Android: [`StudyHelper.apk`](StudyHelper/StudyHelper.apk) | 설치 후 파일 올리기 또는 다른 앱에서 [공유] |
 
+## 🚀 MySpace 런처 (`MySpaceLauncher/`)
+화면 아래쪽에 뜨는 애플(macOS) 스타일 툴바예요. 자주 쓰는 앱·파일·폴더·웹사이트를 한 곳에서 실행합니다.
+
+- 신호등 창 버튼, 둥근 검색창, 카테고리 탭(즐겨찾기 · AI · 메신저 · 업무 · 게임 · 문서 · 도구)
+- 투명도 조절(30~100%), 라이트/다크 모드, 창 크기 2·3·4줄
+- `Ctrl+Shift+Space`로 어디서나 열기/숨기기, 검색 후 Enter로 바로 실행
+- 바탕화면·시작 메뉴의 새 바로가기와 Steam 게임 자동 추가, 웹사이트 로고 표시
+
+| 다운로드 | 설치 |
+|---|---|
+| 💻 Windows: [`MySpaceLauncher-1.3.zip`](MySpaceLauncher/MySpaceLauncher-1.3.zip) | 압축 해제 → `MySpaceSetup.exe` 실행 |
+
 ## 주의
 - 자동으로 만든 내용입니다. 이론적 근거·문제·해설은 반드시 교재로 확인하세요.
 - 환자 이름·등록번호·생년월일 같은 개인정보는 넣지 마세요.
 - 직접 만든 프로그램이라 Windows·Android에서 보안 경고가 뜰 수 있습니다.
 
 ## 빌드
-- Windows: `NursingHelper/src/build.sh` (mono-mcs)
+- Windows: `NursingHelper/src/build.sh`, `MySpaceLauncher/src/build.sh` (mono-mcs)
 - Android: `*/android/build-apk.sh` (Ubuntu `android-sdk-platform-23 aapt dalvik-exchange apksigner zipalign`)
 - 플래시카드 웹앱 묶기: `python3 StudyHelper/build.py`
