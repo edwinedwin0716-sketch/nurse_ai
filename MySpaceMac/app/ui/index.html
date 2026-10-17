@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<title>MySpace</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell" id="shell">
+  <header>
+    <div class="lights">
+      <button class="light red" id="close" title="종료">×</button>
+      <button class="light yellow" id="min" title="숨기기 (Esc)">–</button>
+      <button class="light green" id="pin" title="항상 위">↑</button>
+    </div>
+    <div class="title">My Space</div>
+    <label class="search"><span class="mag">⌕</span><input id="q" placeholder="검색" spellcheck="false"></label>
+    <div class="grow"></div>
+    <span class="opicon" title="창 투명도"></span>
+    <input type="range" id="opacity" min="30" max="100" step="1" title="창 투명도 (⌘ + 스크롤로도 조절)">
+    <span class="pct" id="pct">100%</span>
+    <button class="round" id="theme" title="라이트/다크 모드">☾</button>
+    <button class="round" id="add" title="추가">＋</button>
+    <button class="round" id="more" title="설정">⋯</button>
+  </header>
+  <nav class="tabs"><div class="seg" id="tabs"></div></nav>
+  <main id="tiles"></main>
+  <footer id="status"></footer>
+</div>
+<div class="modal" id="modal">
+  <div class="dialog">
+    <h3 id="mTitle"></h3>
+    <input id="m1"><input id="m2">
+    <div class="actions"><button id="mCancel">취소</button><button id="mOk" class="primary">확인</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="renderer.js"></script>
+</body>
+</html>

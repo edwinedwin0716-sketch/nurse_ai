@@ -29,7 +29,7 @@
 | 💻 PC: [`Flashcards-PC-2.0.zip`](StudyHelper/Flashcards-PC-2.0.zip) | 압축 해제 → `플래시카드.html` 더블클릭 (크롬·엣지) |
 | 📱 Android: [`StudyHelper.apk`](StudyHelper/StudyHelper.apk) | 설치 후 파일 올리기 또는 다른 앱에서 [공유] |
 
-## 🚀 MySpace 런처 (`MySpaceLauncher/`)
+## 🚀 MySpace 런처 (Windows `MySpaceLauncher/` · Mac `MySpaceMac/`)
 화면 아래쪽에 뜨는 애플(macOS) 스타일 툴바예요. 자주 쓰는 앱·파일·폴더·웹사이트를 한 곳에서 실행합니다.
 
 - 신호등 창 버튼, 둥근 검색창, 카테고리 탭(즐겨찾기 · AI · 메신저 · 업무 · 게임 · 문서 · 도구)
@@ -40,6 +40,8 @@
 | 다운로드 | 설치 |
 |---|---|
 | 💻 Windows: [`MySpaceLauncher-1.3.zip`](MySpaceLauncher/MySpaceLauncher-1.3.zip) | 압축 해제 → `MySpaceSetup.exe` 실행 |
+| 🍎 Mac (Apple 실리콘 M1~M4): [`MySpace-mac-AppleSilicon.tar.xz`](MySpaceMac/MySpace-mac-AppleSilicon.tar.xz) | 더블클릭으로 풀기 → `MySpace.app`을 응용 프로그램 폴더로 → 처음 한 번 시스템 설정 › 개인정보 보호 및 보안 › [그래도 열기] |
+| 🍎 Mac (인텔): [`MySpace-mac-Intel.tar.xz`](MySpaceMac/MySpace-mac-Intel.tar.xz) | 위와 같음 |
 
 ## 주의
 - 자동으로 만든 내용입니다. 이론적 근거·문제·해설은 반드시 교재로 확인하세요.
@@ -48,5 +50,6 @@
 
 ## 빌드
 - Windows: `NursingHelper/src/build.sh`, `MySpaceLauncher/src/build.sh` (mono-mcs)
+- Mac: `cd MySpaceMac && npm install && node build/package.js && sh build/slim.sh` (Electron, rcodesign 임시 서명)
 - Android: `*/android/build-apk.sh` (Ubuntu `android-sdk-platform-23 aapt dalvik-exchange apksigner zipalign`)
 - 플래시카드 웹앱 묶기: `python3 StudyHelper/build.py`
