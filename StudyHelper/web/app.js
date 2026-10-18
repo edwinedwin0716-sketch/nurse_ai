@@ -219,6 +219,10 @@
   function fileName(t, ext) { return t.replace(/[\\/:*?"<>|]+/g, ' ') + '_학습지' + ext; }
   async function download(name, mime, content) {
     if (bridge) { toast(bridge.saveFile(name, mime, content)); return; }
+    // 아이폰·아이패드: 공유 시트로 보내서 '파일에 저장'
+    if (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+      try { var f = new File([content], name, { type: mime }); if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: name }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    }
     // 파일로 연 페이지에서는 브라우저가 다운로드 이름을 무시하므로 '다른 이름으로 저장' 창을 쓴다 (크롬·엣지)
     if (window.showSaveFilePicker) {
       try {
