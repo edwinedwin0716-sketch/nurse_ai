@@ -177,6 +177,7 @@
     withCover(function (cv) {
       var doc = '\ufeff' + html(cv);
       if (bridge) { toast(bridge.saveFile(fileName('.doc'), 'application/msword', doc)); return; }
+      if (shareFile(fileName('.doc'), 'application/msword', doc)) return;
       var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([doc], { type: 'application/msword' })); a.download = fileName('.doc'); a.click();
     });
   };
@@ -184,6 +185,11 @@
     if (!current()) return;
     withCover(function (cv) { var h = html(cv); if (bridge) bridge.print(fileName(''), h, state.format === 'b4'); else { var w = window.open(''); w.document.write(h); w.print(); } });
   };
+  // 아이폰·아이패드: 다운로드 대신 공유 시트(파일에 저장 · 카톡 등)로 보낸다
+  function shareFile(name, mime, content) {
+    if (!(/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))) return false;
+    try { var f = new File([content], name, { type: mime }); if (!navigator.canShare || !navigator.canShare({ files: [f] })) return false; navigator.share({ files: [f], title: name }).catch(function () {}); return true; } catch (e) { return false; }
+  }
   window.openUrl = function (u) { if (bridge) bridge.openUrl(u); else window.open(u); };
 
   // ---------- 제미나이 ----------
@@ -287,9 +293,26 @@
     if (bridge && bridge.openAi) bridge.openAi(ai.pkg, text, ai.web);
     else { try { navigator.clipboard.writeText(text); } catch (e) {} window.open(ai.web); }
   };
-  function checkExternal() {
-    var ext = state.external; if (!ext || !bridge || !bridge.clipboardText) return false;
-    var t = bridge.clipboardText();
+  // 웹앱(PC · Mac · 아이폰): 돌아오면 '답변 붙여넣기' 버튼을 띄운다 (브라우저는 버튼을 눌러야 클립보드를 읽을 수 있음)
+  if (!bridge) document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState !== 'visible' || !state.external) return;
+    var b = $('pasteBar');
+    if (!b) {
+      b = document.createElement('button'); b.id = 'pasteBar'; b.type = 'button';
+      b.style.cssText = 'position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:50;padding:14px 16px;border:0;border-radius:14px;background:#0a84ff;color:#fff;font:600 15px -apple-system,system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.25)';
+      b.onclick = function () {
+        b.remove();
+        if (!navigator.clipboard || !navigator.clipboard.readText) { toast('결과 화면의 ‘편집’을 눌러 직접 붙여넣어 주세요'); return; }
+        navigator.clipboard.readText().then(function (t) { if (state.external) checkExternal(t); }, function () { toast('붙여넣기를 허용해 주세요'); });
+      };
+      document.body.appendChild(b);
+    }
+    b.textContent = '📋 ' + state.external.name + ' 답변 붙여넣기';
+  });
+  function checkExternal(webText) {
+    var ext = state.external; if (!ext) return false;
+    if (webText === undefined && (!bridge || !bridge.clipboardText)) return false;
+    var t = webText !== undefined ? webText : bridge.clipboardText();
     if (!t || t === ext.sent || t === state.lastImported) return false;
     if (!looksLikeDoc(t)) { toast(ext.name + ' 답변을 복사한 뒤 돌아오면 가져올게요'); return true; }
     state.lastImported = t;

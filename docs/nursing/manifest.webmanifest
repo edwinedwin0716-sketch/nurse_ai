@@ -1,0 +1,15 @@
+{
+  "name": "간호과정 도우미",
+  "short_name": "간호과정",
+  "description": "자료를 넣으면 간호진단을 추천하고 간호과정의 큰 틀을 만들어 줘요.",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F2F2F7",
+  "theme_color": "#F2F2F7",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
