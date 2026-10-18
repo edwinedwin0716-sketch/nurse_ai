@@ -1,5 +1,11 @@
 # nurse_ai
 
+> ☕ **Buy a poor nursing student a coffee**
+> 가난한 간호학생이 공부하면서 직접 만든 무료 프로그램이에요. 도움이 됐다면 커피 한 잔(1,000원)으로 응원해 주세요!
+> 👉 **[카카오페이로 1,000원 후원하기](https://qr.kakaopay.com/Ej8Yr8VXm)**
+>
+> 💬 불편한 점이나 바라는 기능은 [Issues](https://github.com/edwinedwin0716-sketch/nurse_ai/issues)에 남겨 주세요.
+
 간호학과 공부용 프로그램 모음입니다. 모두 **인터넷·API 키 없이** 기기 안에서 동작합니다.
 (AI로 다듬기는 선택 기능이며, ChatGPT·Claude 앱에 붙여넣는 방식은 구독 그대로 쓰고 API 키가 필요 없습니다.)
 
@@ -12,7 +18,7 @@
 
 | 다운로드 | 설치 |
 |---|---|
-| 💻 Windows: [`NursingHelper-1.3.zip`](NursingHelper/NursingHelper-1.3.zip) | 압축 해제 → `NursingHelperSetup.exe` 실행 |
+| 💻 Windows: [`NursingHelper-1.4.zip`](NursingHelper/NursingHelper-1.4.zip) | 압축 해제 → `NursingHelperSetup.exe` 실행 |
 | 📱 Android: [`NursingHelper.apk`](NursingHelper/NursingHelper.apk) | 설치 시 "출처를 알 수 없는 앱" 허용 |
 
 ## 🗂️ 플래시카드 학습 (`StudyHelper/`)
@@ -26,7 +32,7 @@
 
 | 다운로드 | 설치 |
 |---|---|
-| 💻 PC: [`Flashcards-PC-2.0.zip`](StudyHelper/Flashcards-PC-2.0.zip) | 압축 해제 → `플래시카드.html` 더블클릭 (크롬·엣지) |
+| 💻 PC: [`Flashcards-PC-2.1.zip`](StudyHelper/Flashcards-PC-2.1.zip) | 압축 해제 → `플래시카드.html` 더블클릭 (크롬·엣지) |
 | 📱 Android: [`StudyHelper.apk`](StudyHelper/StudyHelper.apk) | 설치 후 파일 올리기 또는 다른 앱에서 [공유] |
 
 ## 🚀 MySpace 런처 (Windows `MySpaceLauncher/` · Mac `MySpaceMac/`)
