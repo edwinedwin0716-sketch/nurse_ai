@@ -398,7 +398,12 @@ $output=New-Object Windows.Forms.RichTextBox;$output.Dock='Fill';$output.BorderS
 $output.Add_HandleCreated({[Ui]::ModernScroll($this,$false)})
 $paper.Controls.Add($output)
 $status=New-Object Windows.Forms.Label;$status.Dock='Bottom';$status.Height=30;$status.TextAlign='MiddleLeft';$status.ForeColor=[Theme]::Secondary;$status.Font=[Theme]::UI(9,$false);$status.Padding=New-Object Windows.Forms.Padding(6,0,0,0)
-$right.Controls.AddRange(@($paper,$gap,$toolbar,$status))
+$coffee=New-Object Windows.Forms.LinkLabel;$coffee.Text='☕ Buy a poor nursing student a coffee · 1,000원 응원';$coffee.Dock='Right';$coffee.AutoSize=$false;$coffee.Width=330;$coffee.TextAlign='MiddleRight';$coffee.Font=[Theme]::UI(9,$false);$coffee.LinkColor=[Theme]::Accent;$coffee.ActiveLinkColor=[Theme]::Accent;$coffee.LinkBehavior='HoverUnderline';$coffee.BackColor=[Theme]::Back
+$tip.SetToolTip($coffee,'가난한 간호학생이 만든 무료 프로그램이에요. 도움이 됐다면 카카오페이로 1,000원 응원해 주세요!')
+$coffee.Add_LinkClicked({Start-Process 'https://qr.kakaopay.com/Ej8Yr8VXm'})
+$statusBar=New-Object Windows.Forms.Panel;$statusBar.Dock='Bottom';$statusBar.Height=30;$statusBar.BackColor=[Theme]::Back;$status.Dock='Fill'
+$statusBar.Controls.AddRange(@($status,$coffee))
+$right.Controls.AddRange(@($paper,$gap,$toolbar,$statusBar))
 $form.Controls.AddRange(@($right,$left))
 
 $poll=New-Object Windows.Forms.Timer;$poll.Interval=300;$poll.Add_Tick({Finish-Polish})
