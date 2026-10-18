@@ -9,6 +9,16 @@
 간호학과 공부용 프로그램 모음입니다. 모두 **인터넷·API 키 없이** 기기 안에서 동작합니다.
 (AI로 다듬기는 선택 기능이며, ChatGPT·Claude 앱에 붙여넣는 방식은 구독 그대로 쓰고 API 키가 필요 없습니다.)
 
+## 📥 바로 다운로드
+버튼을 누르면 바로 받아져요. 설치 방법은 아래 각 프로그램 설명에 있어요.
+
+| 프로그램 | 다운로드 |
+|---|---|
+| 🩺 **간호과정 도우미** | [![안드로이드 앱 받기](https://img.shields.io/badge/%EC%95%88%EB%93%9C%EB%A1%9C%EC%9D%B4%EB%93%9C%20%EC%95%B1%20%EB%B0%9B%EA%B8%B0-0F7B6C?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/NursingHelper/NursingHelper.apk) [![Windows 받기](https://img.shields.io/badge/Windows%20%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/NursingHelper/NursingHelper-1.4.zip) |
+| 🗂️ **플래시카드** | [![안드로이드 앱 받기](https://img.shields.io/badge/%EC%95%88%EB%93%9C%EB%A1%9C%EC%9D%B4%EB%93%9C%20%EC%95%B1%20%EB%B0%9B%EA%B8%B0-0F7B6C?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/StudyHelper/StudyHelper.apk) [![PC · Mac 받기](https://img.shields.io/badge/PC%20%C2%B7%20Mac%20%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/StudyHelper/Flashcards-PC-2.1.zip) |
+| 🚀 **MySpace 런처** | [![Windows 받기](https://img.shields.io/badge/Windows%20%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/MySpaceLauncher/MySpaceLauncher-1.3.zip) [![Mac M1~M4 받기](https://img.shields.io/badge/Mac%20M1~M4%20%EB%B0%9B%EA%B8%B0-333333?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/MySpaceMac/MySpace-mac-AppleSilicon.tar.xz) [![Mac 인텔 받기](https://img.shields.io/badge/Mac%20%EC%9D%B8%ED%85%94%20%EB%B0%9B%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/MySpaceMac/MySpace-mac-Intel.tar.xz) |
+| 🔍 **Spotlight** | [![Windows 받기](https://img.shields.io/badge/Windows%20%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/Spotlight/Spotlight-1.0.zip) |
+
 ## 🩺 간호과정 도우미 (`NursingHelper/`)
 주관적·객관적 자료를 넣으면 간호진단을 추천하고 간호과정의 큰 틀을 만들어 줍니다.
 
