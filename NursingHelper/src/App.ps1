@@ -400,7 +400,18 @@ $paper.Controls.Add($output)
 $status=New-Object Windows.Forms.Label;$status.Dock='Bottom';$status.Height=30;$status.TextAlign='MiddleLeft';$status.ForeColor=[Theme]::Secondary;$status.Font=[Theme]::UI(9,$false);$status.Padding=New-Object Windows.Forms.Padding(6,0,0,0)
 $coffee=New-Object Windows.Forms.LinkLabel;$coffee.Text='☕ Buy a poor nursing student a coffee · 1,000원 응원';$coffee.Dock='Right';$coffee.AutoSize=$false;$coffee.Width=330;$coffee.TextAlign='MiddleRight';$coffee.Font=[Theme]::UI(9,$false);$coffee.LinkColor=[Theme]::Accent;$coffee.ActiveLinkColor=[Theme]::Accent;$coffee.LinkBehavior='HoverUnderline';$coffee.BackColor=[Theme]::Back
 $tip.SetToolTip($coffee,'가난한 간호학생이 만든 무료 프로그램이에요. 도움이 됐다면 카카오페이로 1,000원 응원해 주세요!')
-$coffee.Add_LinkClicked({Start-Process 'https://qr.kakaopay.com/Ej8Yr8VXm'})
+# PC에서는 카카오페이 송금 창이 안 열리므로 휴대폰으로 찍을 QR을 보여 준다
+function Show-CoffeeQr {
+    $d=New-Object Windows.Forms.Form;$d.Text='☕ 카카오페이로 1,000원 후원';$d.ClientSize=New-Object Drawing.Size(340,420);$d.StartPosition='CenterParent'
+    $d.FormBorderStyle='FixedDialog';$d.MaximizeBox=$false;$d.MinimizeBox=$false;$d.BackColor=[Drawing.Color]::White;$d.Font=[Theme]::UI(9.5,$false)
+    $bytes=[Convert]::FromBase64String('iVBORw0KGgoAAAANSUhEUgAAARgAAAEYAQAAAACv9dQhAAABJUlEQVR42u2awQrDQAhEh/7/P1vo6qihECj00r7NIUvw9NBxlCjuj4ghhpiPY3ROXs5rfI2H7s+vxsgc9Xqai8wPPsmjyWh8hY9J6Fwrn+Cz+HT2iPx5oz9xMuhoEPrTfKw766F/yWLjZq8pQXmor+ztpULli7Lo/j5/Wp6zh1mi0Z9ov5ypFNXTkhJ8PGbYGGa1UV/V1cv9hF1ikYLPShkNI4T+tOhEe6CYIwZ8hvTM4b1yCj6pODVxJSH0Z/pntQ3ydBHMp8Mrr8qqeZX8iQEomRgQ+qOVO63TMWsP/bmM7zH3ZvDxrbqYB1b0Z+0P5Q5f22jqa+2fe4Cf7OAjrf2Y2xr6c8mfdtGjmcGnHXQsj4j/WUNpLzvSDdG/+H+DGGK+F/MEEsLERDwkFiQAAAAASUVORK5CYII=')
+    $pic=New-Object Windows.Forms.PictureBox;$pic.Image=[Drawing.Image]::FromStream((New-Object IO.MemoryStream(,$bytes)));$pic.SizeMode='CenterImage';$pic.SetBounds(20,16,300,290)
+    $t1=New-Object Windows.Forms.Label;$t1.Text='휴대폰 카메라로 찍어 주세요';$t1.Font=[Theme]::UI(11,$true);$t1.ForeColor=[Drawing.Color]::FromArgb(25,25,25);$t1.TextAlign='MiddleCenter';$t1.SetBounds(10,312,320,26)
+    $t2=New-Object Windows.Forms.Label;$t2.Text="카카오페이 송금 화면이 바로 열려요.`r`n(카톡 → 더보기 → 스캔으로도 돼요)";$t2.ForeColor=[Drawing.Color]::FromArgb(102,102,102);$t2.TextAlign='MiddleCenter';$t2.SetBounds(10,340,320,40)
+    $ok=New-Object Windows.Forms.Button;$ok.Text='닫기';$ok.SetBounds(130,384,80,28);$ok.Add_Click({$d.Close()});$d.AcceptButton=$ok;$d.CancelButton=$ok
+    $d.Controls.AddRange(@($pic,$t1,$t2,$ok));[void]$d.ShowDialog($form);$d.Dispose()
+}
+$coffee.Add_LinkClicked({Show-CoffeeQr})
 $statusBar=New-Object Windows.Forms.Panel;$statusBar.Dock='Bottom';$statusBar.Height=30;$statusBar.BackColor=[Theme]::Back;$status.Dock='Fill'
 $statusBar.Controls.AddRange(@($status,$coffee))
 $right.Controls.AddRange(@($paper,$gap,$toolbar,$statusBar))

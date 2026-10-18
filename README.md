@@ -4,6 +4,8 @@
 > 가난한 간호학생이 공부하면서 직접 만든 무료 프로그램이에요. 도움이 됐다면 커피 한 잔(1,000원)으로 응원해 주세요!
 > 👉 **[카카오페이로 1,000원 후원하기](https://qr.kakaopay.com/Ej8Yr8VXm)**
 >
+> <img src="tools/img/kakaopay-qr.png" width="140" alt="카카오페이 송금 QR"><br>💻 컴퓨터에서는 카카오페이가 안 열려요. 위 QR을 **휴대폰 카메라**로 찍어 주세요.
+>
 > 💬 불편한 점이나 바라는 기능은 [Issues](https://github.com/edwinedwin0716-sketch/nurse_ai/issues)에 남겨 주세요.
 
 간호학과 공부용 프로그램 모음입니다. 모두 **인터넷·API 키 없이** 기기 안에서 동작합니다.
@@ -14,8 +16,8 @@
 
 | 프로그램 | 📱 안드로이드 | 📱 아이폰·아이패드 | 💻 Windows 10/11 | 🍎 Mac |
 |---|---|---|---|---|
-| **🩺 간호과정 도우미** | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/NursingHelper/NursingHelper.apk) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-111111?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/nursing/) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/NursingHelper/NursingHelper-1.4.zip) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/nursing/) |
-| **🗂️ 플래시카드** | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/StudyHelper/StudyHelper.apk) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-111111?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/flashcards/) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/StudyHelper/Flashcards-Windows-2.1.zip) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/flashcards/) |
+| **🩺 간호과정 도우미** | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/NursingHelper/NursingHelper.apk) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-111111?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/nursing/) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/NursingHelper/NursingHelper-1.4.1.zip) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/nursing/) |
+| **🗂️ 플래시카드** | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/StudyHelper/StudyHelper.apk) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-111111?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/flashcards/) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/StudyHelper/Flashcards-Windows-2.1.1.zip) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/flashcards/) |
 | **🍽️ 맛·볼거리** | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/matjip-finder/raw/main/download/Matjip.apk) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-111111?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/matjip-finder/) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/matjip-finder/raw/main/download/Matjip-Windows-1.0.zip) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/matjip-finder/) |
 | **🚀 MySpace 런처** | — | — | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/MySpaceLauncher/MySpaceLauncher-1.3.zip) | [![M1~M4](https://img.shields.io/badge/M1~M4-555555?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/MySpaceMac/MySpace-mac-AppleSilicon.tar.xz) [![인텔](https://img.shields.io/badge/%EC%9D%B8%ED%85%94-555555?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/MySpaceMac/MySpace-mac-Intel.tar.xz) |
 | **🔍 Spotlight** | — | — | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/Spotlight/Spotlight-1.0.zip) | Mac에 기본으로 있어요 |
@@ -32,7 +34,7 @@
 
 | 다운로드 | 설치 |
 |---|---|
-| 💻 Windows: [`NursingHelper-1.4.zip`](NursingHelper/NursingHelper-1.4.zip) | 압축 해제 → `NursingHelperSetup.exe` 실행 |
+| 💻 Windows: [`NursingHelper-1.4.1.zip`](NursingHelper/NursingHelper-1.4.1.zip) | 압축 해제 → `NursingHelperSetup.exe` 실행 |
 | 📱 Android: [`NursingHelper.apk`](NursingHelper/NursingHelper.apk) | 설치 시 "출처를 알 수 없는 앱" 허용 |
 | 📱 아이폰 · 🍎 Mac: [웹앱 열기](https://edwinedwin0716-sketch.github.io/nurse_ai/nursing/) | 사파리 → 홈 화면 / Dock에 추가 |
 
@@ -47,8 +49,8 @@
 
 | 다운로드 | 설치 |
 |---|---|
-| 💻 Windows 10/11: [`Flashcards-Windows-2.1.zip`](StudyHelper/Flashcards-Windows-2.1.zip) | 압축 해제 → `플래시카드.exe` (바탕화면 아이콘 생성, Edge 앱 창) |
-| 🌐 아무 컴퓨터 브라우저: [`Flashcards-PC-2.1.zip`](StudyHelper/Flashcards-PC-2.1.zip) | 압축 해제 → `플래시카드.html` 더블클릭 |
+| 💻 Windows 10/11: [`Flashcards-Windows-2.1.1.zip`](StudyHelper/Flashcards-Windows-2.1.1.zip) | 압축 해제 → `플래시카드.exe` (바탕화면 아이콘 생성, Edge 앱 창) |
+| 🌐 아무 컴퓨터 브라우저: [`Flashcards-PC-2.1.1.zip`](StudyHelper/Flashcards-PC-2.1.1.zip) | 압축 해제 → `플래시카드.html` 더블클릭 |
 | 📱 아이폰 · 🍎 Mac: [웹앱 열기](https://edwinedwin0716-sketch.github.io/nurse_ai/flashcards/) | 사파리 → 홈 화면 / Dock에 추가 |
 | 📱 Android: [`StudyHelper.apk`](StudyHelper/StudyHelper.apk) | 설치 후 파일 올리기 또는 다른 앱에서 [공유] |
 
