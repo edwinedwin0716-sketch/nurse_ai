@@ -8,11 +8,11 @@ using Microsoft.Win32;
 
 [assembly: AssemblyTitle("플래시카드")]
 [assembly: AssemblyProduct("플래시카드")]
-[assembly: AssemblyVersion("2.1.0.0")]
-[assembly: AssemblyFileVersion("2.1.0.0")]
+[assembly: AssemblyVersion("2.1.1.0")]
+[assembly: AssemblyFileVersion("2.1.1.0")]
 
 static class Launcher {
-    const string Version = "2.1.0";
+    const string Version = "2.1.1";
     const string Caption = "플래시카드";
     static string Dir { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Flashcards"); } }
 
