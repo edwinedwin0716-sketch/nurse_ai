@@ -8,7 +8,7 @@
   "priority": 7,
   "reason": "생리적 위기는 아니지만 가족이 치료 요법을 관리하지 못하면 대상자의 질병 조절이 어려워지므로 생리적 문제 해결 후 다룬다",
   "evalData": "가족의 치료 요법 이해 정도, 투약·식이 관리 수행 여부, 가족 내 역할 분담, 돌봄 부담 표현, 이용 가능한 지지 자원",
-  "keywords": "보호자 ?(부재|없|바빠|힘들)|돌볼 사람 (이|)?없|돌봄 부담|간병 (부담|힘들)|가족이 (관리|챙기)지 못|보호자가 (약|식이)|caregiver (burden|strain)|family (management|coping)|독거",
+  "keywords": "보호자 ?(부재|없|바빠|힘들)|돌볼 사람 (이|)?없|돌봄 부담|간병 (부담|힘들)|가족이 (관리|챙기)지 못|보호자가 (약|식이)|caregiver (burden|strain)|family (health )?management",
   "cause": "가족의 돌봄 부담",
   "long": "대상자의 가족은 퇴원 시 대상자의 치료 요법을 가정에서 관리하는 방법을 말로 표현하고 시범 보일 것이다.",
   "short": [
@@ -67,7 +67,7 @@
   "priority": 4,
   "reason": "비만은 당뇨·고혈압·심혈관 질환 등의 위험을 높이는 생리적 영양 문제이나 급성 생명 위협은 아니므로 ABC 이후 기본 생리적 요구로 다룬다",
   "evalData": "체중·BMI·허리둘레 변화, 하루 섭취 열량과 식습관, 신체 활동량, 체중 감량 목표와 실천 방법 표현 여부",
-  "keywords": "비만|obes|BMI ?(3\\d|[4-9]\\d)|BMI.{0,6}(3\\d|[4-9]\\d)|체중 (과다|증가)|허리둘레|복부비만|과식|폭식|야식|고도비만|대사증후군",
+  "keywords": "비만|obes|BMI\\s*[:=]?\\s*(2[5-9]|[3-9]\\d)(\\.\\d+)?\\b|체중 과다|허리둘레|복부비만|과식|폭식|야식|고도비만|대사증후군",
   "cause": "에너지 소비를 초과하는 열량 섭취",
   "long": "대상자는 퇴원 시 체중 감량을 위한 식이와 운동 계획을 말로 표현할 것이다.",
   "short": [
@@ -193,7 +193,7 @@
   "priority": 4,
   "reason": "아직 나타나지 않은 위험 진단이지만 저혈당·고혈당은 의식 저하로 빠르게 진행할 수 있는 대사 문제이므로 생리적 요구로 우선 관리한다",
   "evalData": "식전·취침 전 혈당, HbA1c, 저혈당·고혈당 증상 유무, 식사 섭취량, 인슐린·경구혈당강하제 투여 시간, 저혈당 대처 방법 표현 여부",
-  "keywords": "혈당|BST|FBS|PP2|HbA1c|당화혈색소|glucose|당뇨|DM\\b|diabet|인슐린|insulin|저혈당|hypoglyc|고혈당|hyperglyc|메트포르민|metformin|란투스|휴마로그|노보래피드|식은땀",
+  "keywords": "혈당|BST|FBS|PP2|HbA1c|당화혈색소|glucose|당뇨|\\bDM\\b|diabet|인슐린|insulin|저혈당|hypoglyc|고혈당|hyperglyc|메트포르민|metformin|란투스|휴마로그|노보래피드",
   "cause": "불규칙한 식사와 혈당강하제 투여",
   "long": "대상자는 퇴원 시까지 혈당을 목표 범위 안에서 유지할 것이다.",
   "short": [
@@ -206,7 +206,7 @@
     "why": "정기적인 혈당 측정은 혈당 변동을 조기에 발견하고 투약 조정의 근거가 된다."
    },
    {
-    "plan": "저혈당 증상(식은땀, 떨림, 빈맥, 어지러움, 의식 저하)과 고혈당 증상(다뇨, 다갈, 피로)을 관찰한다.",
+    "plan": "저혈당 증상(식은땀, 떨림, 빈맥, 어지러움, 의식 저하)과 고혈당 증상(다뇨, 다음(갈증), 피로)을 관찰한다.",
     "why": "증상을 빠르게 알아차려야 저혈당 쇼크나 고혈당 위기를 예방할 수 있다."
    },
    {
@@ -252,7 +252,7 @@
   "priority": 2,
   "reason": "체액이 과다하면 폐부종과 심부전 악화로 호흡과 순환에 직접 영향을 주므로 ABC 중 순환 문제로 우선 다룬다",
   "evalData": "매일 같은 시간 체중, I/O, 부종 정도, 폐 수포음·호흡곤란·SpO2, 혈압·경정맥 팽대, 혈청 나트륨·BUN/Cr, 수분·염분 제한 이행 여부",
-  "keywords": "부종|edema|함요|pitting|체중 (증가|늘)|체액 ?(과다|과잉)|fluid overload|hypervolem|폐부종|pulmonary edema|수포음|crackle|rale|경정맥 ?팽대|JVD|심부전|heart failure|CHF|신부전|CKD|투석|라식스|lasix|furosemide|복수|ascites|I/?O ?(불균형|positive)",
+  "keywords": "부종|edema|함요|pitting|체중 (증가|늘)|체액 ?(과다|과잉)|fluid overload|hypervolem|폐부종|pulmonary edema|수포음|crackle|\\brales?\\b|경정맥 ?팽대|JVD|심부전|heart failure|CHF|신부전|CKD|투석|라식스|lasix|furosemide|복수|ascites|I/?O ?(불균형|positive)",
   "cause": "나트륨과 수분의 과다 정체",
   "long": "대상자는 퇴원 시 부종이 감소하고 체액 균형을 유지할 것이다.",
   "short": [
@@ -287,7 +287,7 @@
     "why": "상체를 높이면 정맥 환류가 줄고 횡격막이 내려가 폐 확장과 가스 교환이 좋아진다."
    },
    {
-    "plan": "부종 부위를 심장보다 높이고 2시간마다 체위를 변경하며 피부를 보호한다.",
+    "plan": "금기가 아닐 시 부종이 있는 사지를 거상하고 2시간마다 체위를 변경하며 피부를 보호한다.",
     "why": "부종 부위 거상은 정맥 환류를 돕고, 부종 피부는 손상되기 쉬우므로 압력을 분산해야 한다."
    },
    {
@@ -315,7 +315,7 @@
   "priority": 2,
   "reason": "아직 나타나지 않은 위험 진단이지만 칼륨·나트륨 등의 이상은 부정맥과 의식 변화를 일으킬 수 있어 순환 문제로 우선 관리한다",
   "evalData": "혈청 Na·K·Ca·Mg 수치 추이, 심전도 변화, 근력 저하·경련·저림, 의식 상태, I/O, 이뇨제 등 약물 투여 여부",
-  "keywords": "전해질|electrolyte|나트륨|sodium|Na\\+?\\s?\\d|저나트륨|hyponatrem|고나트륨|칼륨|potassium|K\\+?\\s?\\d|저칼륨|hypokal|고칼륨|hyperkal|칼슘|calcium|마그네슘|magnesium|이뇨제|라식스|lasix|furosemide|구토|설사|SIADH|신부전|투석|KCl|EKG 변화|부정맥",
+  "keywords": "전해질|electrolyte|저나트륨|hyponatrem|고나트륨|hypernatrem|저칼륨|hypokal|고칼륨|hyperkal|(저|고)칼슘|hypocalc|hypercalc|(저|고)마그네슘|hypomagnes|hypermagnes|칼륨 ?보충|이뇨제|라식스|lasix|furosemide|구토|설사|SIADH|신부전|투석|\\bKCl\\b|EKG 변화",
   "cause": "이뇨제 사용과 체액 손실",
   "long": "대상자는 퇴원 시까지 혈청 전해질 수치가 정상 범위를 유지할 것이다.",
   "short": [
@@ -374,7 +374,7 @@
   "priority": 4,
   "reason": "복압성 요실금은 배설 기능의 문제로 피부 손상과 사회적 위축을 일으키지만 생명 위협은 아니므로 ABC 이후 기본 생리적 요구로 다룬다",
   "evalData": "요실금 횟수와 상황(배뇨일지), 패드 사용 개수, 골반저근 운동 수행 여부와 방법, 회음부 피부 상태, 삶의 질 관련 표현",
-  "keywords": "복압성|stress (urinary )?incontinence|SUI|기침할 때 (소변|찔끔)|재채기할 때 (소변|샌)|웃을 때 (소변|샌)|뛸 때 (소변|샌)|무거운 것을? 들 때|소변이 (샌|새)|찔끔|요실금|패드|골반저근|케겔|kegel|다산|질식분만|폐경",
+  "keywords": "복압성|stress (urinary )?incontinence|\\bSUI\\b|기침할 때 (소변|찔끔)|재채기할 때 (소변|샌)|웃을 때 (소변|샌)|뛸 때 (소변|샌)|무거운 것을? 들 때 (소변|샌)|소변이 (샌|새)|요실금|골반저근|케겔|kegel",
   "cause": "골반저근 약화",
   "long": "대상자는 퇴원 시 골반저근 운동을 스스로 실천하고 요실금 횟수가 감소할 것이다.",
   "short": [
@@ -437,7 +437,7 @@
   "priority": 5,
   "reason": "아직 변비가 나타나지 않은 위험 진단이므로 실제적 문제보다 우선순위가 낮지만, 예방하지 않으면 배설 장애와 불편감으로 이어질 수 있다",
   "evalData": "배변 횟수와 양상(브리스톨 대변 척도), 복부 팽만·장음, 하루 수분·섬유질 섭취량, 활동량, 변비 예방 방법 설명 여부",
-  "keywords": "변비|배변 ?곤란|딱딱한 ?변|대변 ?안|며칠째 ?대변|constipation|마약성|opioid|옥시코돈|oxycodone|코데인|codeine|철분제|ferrous|침상 ?안정|bed ?rest|부동|활동 ?감소|수분 ?섭취 ?감소|금식|\\bNPO\\b",
+  "keywords": "변비|배변 ?곤란|딱딱한 ?변|대변 ?안 ?(나|봄|봤)|며칠째 ?대변|constipation|마약성|opioid|옥시코돈|oxycodone|코데인|codeine|철분제|ferrous",
   "cause": "활동 감소와 마약성 진통제 사용",
   "long": "대상자는 퇴원 시까지 변비 없이 규칙적인 배변 양상을 유지할 것이다.",
   "short": [
@@ -505,7 +505,7 @@
   "long": "대상자는 퇴원 시 실내 공기에서 정상 범위의 산소포화도를 유지할 것이다.",
   "short": [
    "대상자는 2일 내 SpO2를 95% 이상(COPD 대상자는 88~92%) 유지할 것이다.",
-   "대상자는 3일 내 ABGA 결과가 정상 범위(PaO2 80~100mmHg, PaCO2 35~45mmHg, pH 7.35~7.45)로 회복될 것이다."
+   "대상자는 3일 내 ABGA 결과가 정상 범위(PaO2 80~100mmHg, PaCO2 35~45mmHg, pH 7.35~7.45) 또는 대상자의 평소 기저 수준으로 회복될 것이다."
   ],
   "diag": [
    {
@@ -524,7 +524,7 @@
   "ther": [
    {
     "plan": "처방에 따라 산소를 투여하고 목표 SpO2에 맞게 유량을 조절한다.",
-    "why": "적절한 산소 공급은 저산소증을 교정하며, 만성 고탄산혈증 대상자는 과다 산소로 호흡 동기가 저하될 수 있어 목표 범위를 지킨다."
+    "why": "적절한 산소 공급은 저산소증을 교정하며, 만성 고탄산혈증 대상자는 과다한 산소 투여로 이산화탄소 정체(고탄산혈증)가 악화될 수 있어 목표 범위를 지킨다."
    },
    {
     "plan": "금기가 아닐 시 반좌위(High Fowler's) 또는 앞으로 기댄 자세를 취하게 한다.",
@@ -563,7 +563,7 @@
   "priority": 4,
   "reason": "걷기 능력의 제한으로 일상생활과 독립성이 떨어지는 기본 생리 욕구 문제로, 호흡·순환 문제보다는 후순위이다",
   "evalData": "보행 거리와 속도, 보행 양상(보폭, 균형), 보조기구 사용 능력, 하지 근력, 보행 중 통증·어지러움, 낙상 여부",
-  "keywords": "보행 ?(장애|곤란|불안정|불가)|걷기 ?(힘들|어렵)|못 ?걷|절뚝|파행|claudication|gait|보행기|walker|지팡이|cane|목발|crutch|하지 ?근력 ?저하|고관절 ?골절|hip fracture|슬관절 ?치환|TKR|TKA|족하수|foot drop",
+  "keywords": "보행 ?(장애|곤란|불안정|불가)|걷기 ?(힘들|어렵)|못 ?걷|절뚝|파행|claudication|\\bgait\\b|보행기|walker|지팡이|\\bcane\\b|목발|crutch|하지 ?근력 ?저하|고관절 ?골절|hip fracture|슬관절 ?치환|\\bTKR\\b|\\bTKA\\b|족하수|foot drop",
   "cause": "하지 근력 저하와 통증",
   "long": "대상자는 퇴원 시 보조기구를 이용하여 안전하게 원하는 거리를 걸을 수 있을 것이다.",
   "short": [
@@ -602,7 +602,7 @@
     "why": "근력과 균형이 향상되면 보행의 안정성과 지구력이 높아진다."
    },
    {
-    "plan": "처방에 따라 보행 30분 전 진통제를 투여한다.",
+    "plan": "처방에 따라 보행 전 진통제를 투여하고 약효가 나타나는 시간에 맞추어 보행하게 한다.",
     "why": "통증을 미리 조절하면 보행 참여가 늘어나 재활이 촉진된다."
    }
   ],
@@ -626,7 +626,7 @@
   "priority": 4,
   "reason": "지속적인 피로는 일상생활과 자가간호 수행을 방해하는 생리적 문제이지만, 생명을 위협하는 문제보다는 후순위이다",
   "evalData": "피로 정도(0~10점 척도), 일상생활 수행 정도, 수면 시간, Hb·Hct, 활동 후 회복 시간, 피로를 표현하는 말",
-  "keywords": "피로|피곤|기운이 ?없|힘이 ?없|무기력|기력 ?저하|fatigue|tired|exhaust|탈진|항암|chemo|방사선 ?치료|radiation|빈혈|anemia|Hb ?[:=]? ?[0-9]\\.|투석|dialysis|CKD|만성 ?신부전",
+  "keywords": "피로|피곤|기운이 ?없|힘이 ?없|무기력|기력 ?저하|fatigue|tired|exhaust|탈진|항암|chemo|빈혈|anemia|Hb ?[:=]? ?[0-9]\\.",
   "cause": "질병 과정과 항암 치료",
   "long": "대상자는 퇴원 시 에너지를 조절하여 원하는 일상생활을 수행할 수 있을 것이다.",
   "short": [
@@ -689,7 +689,7 @@
   "priority": 2,
   "reason": "심장이 신체 요구를 충족할 만큼 혈액을 내보내지 못해 조직 관류가 떨어지는 ABC 중 순환 문제이므로 우선순위가 높다",
   "evalData": "혈압·맥박·리듬(ECG), 소변량(시간당 0.5mL/kg 이상), 말초 맥박과 모세혈관 재충전 시간, 폐 수포음, 체중, 의식 수준, BNP",
-  "keywords": "심부전|heart failure|CHF|HFrEF|EF ?[:=]? ?[1-3]\\d ?%|박출률 ?저하|심박출량|cardiac output|BNP|NT-?proBNP|심근경색|\\bMI\\b|STEMI|NSTEMI|심인성 ?쇼크|cardiogenic|부정맥|arrhythmia|심방세동|\\bAF\\b|a-?fib|S3|경정맥 ?팽대|JVD|수포음|crackle|라식스|furosemide|디곡신|digoxin",
+  "keywords": "심부전|heart failure|CHF|HFrEF|EF ?[:=]? ?[1-3]\\d ?%|박출률 ?저하|심박출량|cardiac output|BNP|NT-?proBNP|심근경색|\\bMI\\b|STEMI|NSTEMI|심인성 ?쇼크|cardiogenic|부정맥|arrhythmia|심방세동|\\bAF\\b|a-?fib|S3 ?(gallop|심음)|경정맥 ?팽대|JVD|수포음|crackle|라식스|furosemide|디곡신|digoxin",
   "cause": "심근 수축력 저하",
   "long": "대상자는 퇴원 시 적절한 심박출량을 유지하여 활력징후가 안정될 것이다.",
   "short": [
@@ -752,7 +752,7 @@
   "priority": 1,
   "reason": "인공호흡기 지지를 줄이는 과정에서 자발 호흡을 유지하지 못하는 호흡 문제로, ABC 중 호흡과 직결되어 최우선이다",
   "evalData": "자발호흡시험(SBT) 중 호흡수·일회호흡량·RSBI, SpO2, 맥박과 혈압 변화, 보조근 사용, 불안·발한, ABGA",
-  "keywords": "이탈|weaning|wean|자발호흡시험|\\bSBT\\b|T-?piece|CPAP ?trial|RSBI|발관|extubat|재삽관|reintubat|PSV|압력 ?보조|장기 ?(인공호흡기|기계환기)|prolonged ventilation",
+  "keywords": "(인공호흡기|기계환기|벤틸레이터|ventilator) ?이탈|weaning|\\bwean|자발호흡시험|\\bSBT\\b|T-?piece|CPAP ?trial|RSBI|발관|extubat|재삽관|reintubat|\\bPSV\\b|압력 ?보조|장기 ?(인공호흡기|기계환기)|prolonged ventilation",
   "cause": "호흡근 약화와 장기간의 기계환기",
   "long": "대상자는 퇴원 시까지 인공호흡기 없이 자발 호흡을 유지할 것이다.",
   "short": [
@@ -815,7 +815,7 @@
   "priority": 5,
   "reason": "아직 뇌 관류 저하가 나타나지 않은 위험 진단이지만, 발생 시 영구적 신경 손상으로 이어질 수 있어 예방과 집중 관찰이 필요하다",
   "evalData": "의식 수준(GCS), 동공 크기와 반응, 사지 근력, 언어 기능, 혈압, 두통·구토 여부, 신경학적 변화",
-  "keywords": "뇌졸중|stroke|CVA|뇌경색|cerebral infarction|뇌출혈|\\bICH\\b|\\bSAH\\b|지주막하|\\bTIA\\b|일과성 ?허혈|뇌동맥류|aneurysm|두부 ?손상|head injury|TBI|뇌부종|\\bICP\\b|두개내압|GCS|경동맥 ?협착|carotid|심방세동|a-?fib|tPA|혈전용해",
+  "keywords": "뇌졸중|stroke|\\bCVA\\b|뇌경색|cerebral infarction|뇌출혈|\\bICH\\b|\\bSAH\\b|지주막하|\\bTIA\\b|일과성 ?허혈|뇌동맥류|cerebral aneurysm|두부 ?손상|head injury|\\bTBI\\b|뇌부종|\\bICP\\b|두개내압|GCS|경동맥 ?협착|carotid stenosis|\\btPA\\b|혈전용해",
   "cause": "뇌혈관 질환",
   "long": "대상자는 퇴원 시까지 신경학적 악화 없이 의식 수준을 유지할 것이다.",
   "short": [
@@ -838,7 +838,7 @@
   ],
   "ther": [
    {
-    "plan": "금기가 아닐 시 침상머리를 30도 올리고 머리와 목을 일직선으로 유지한다.",
+    "plan": "두개내압 상승 위험이 있고 금기가 아닐 시(처방된 체위가 있으면 그에 따라) 침상머리를 30도 올리고 머리와 목을 일직선으로 유지한다.",
     "why": "머리를 올리고 목을 꺾지 않으면 뇌정맥 배출이 원활해져 두개내압이 낮아진다."
    },
    {
@@ -878,11 +878,11 @@
   "priority": 5,
   "reason": "아직 나타나지 않은 위험 진단이지만 혈전이 폐색전으로 진행하면 생명을 위협하므로 안전 요구로서 예방이 필요하다",
   "evalData": "양측 하지 둘레 차이, 종아리 통증·발적·열감, D-dimer, 조기 보행 여부, 항응고제 투여 및 출혈 징후, 예방법 설명 여부",
-  "keywords": "DVT|심부정맥|혈전|thromb|D-dimer|폐색전|pulmonary embol|Wells|헤파린|heparin|enoxaparin|에녹사파린|클렉산|와파린|warfarin|리바록사반|rivaroxaban|압박스타킹|\\bIPC\\b|고관절|슬관절 치환|\\bTKR\\b|\\bTHR\\b|\\bTKA\\b|심방세동|atrial fib|\\bAF\\b|장기 침상",
+  "keywords": "\\bDVT\\b|심부정맥|혈전|thrombosis|thrombus|thromboembol|D-dimer|폐색전|pulmonary embol|Wells|헤파린|heparin|enoxaparin|에녹사파린|클렉산|와파린|warfarin|리바록사반|rivaroxaban|압박스타킹|\\bIPC\\b|고관절 ?(치환|골절)|슬관절 ?치환|\\bTKR\\b|\\bTHR\\b|\\bTKA\\b|심방세동|atrial fib|\\bAF\\b|장기 침상",
   "cause": "장기간의 부동",
   "long": "대상자는 퇴원 시까지 혈전 증상 없이 지낼 것이다.",
   "short": [
-   "대상자는 입원 기간 동안 양측 하지 둘레 차이가 2cm 미만으로 유지될 것이다.",
+   "대상자는 입원 기간 동안 양측 하지 둘레 차이가 3cm 미만으로 유지될 것이다.",
    "대상자는 2일 내 혈전 예방 방법(하지 운동, 수분 섭취 등)을 두 가지 이상 말로 표현할 것이다."
   ],
   "diag": [
@@ -905,7 +905,7 @@
     "why": "종아리 근육의 수축은 정맥혈을 심장 쪽으로 밀어 올려 정맥 정체를 줄인다."
    },
    {
-    "plan": "처방에 따라 압박스타킹이나 간헐적 공기압박기(IPC)를 적용하고 피부 상태를 확인한다.",
+    "plan": "처방에 따라 압박스타킹이나 간헐적 공기압박기(IPC)를 적용하되 이미 혈전이 의심되는 하지에는 적용하지 않고 보고하며, 피부 상태를 확인한다.",
     "why": "외부 압박은 정맥 환류를 촉진하여 혈전 형성을 예방하며, 압박에 의한 피부 손상 여부를 함께 관찰해야 한다."
    },
    {
@@ -917,7 +917,7 @@
     "why": "탈수는 혈액 점도를 높여 혈전 형성을 촉진하므로 적절한 수분 공급이 필요하다."
    },
    {
-    "plan": "무릎 밑에 베개를 받치거나 다리를 꼬지 않도록 한다.",
+    "plan": "무릎 밑에 베개를 받치지 않고 다리를 꼬지 않도록 한다.",
     "why": "슬와부 압박은 정맥 흐름을 방해하여 혈액 정체를 일으킨다."
    }
   ],
@@ -941,11 +941,11 @@
   "priority": 4,
   "reason": "생명을 직접 위협하지는 않지만 옷 입기는 체온 유지와 일상생활 수행에 필요한 기본 생리적 욕구이다",
   "evalData": "옷 입고 벗기 시 스스로 할 수 있는 부분, 단추·지퍼 다루기 가능 여부, 보조기구 사용 여부, 옷 입기에 걸리는 시간",
-  "keywords": "옷 입|옷을 입|옷 갈아|옷을 갈아|옷을 벗|환의|단추|지퍼|양말|신발을 신|dressing self|self-care deficit",
+  "keywords": "옷 입|옷을 입|옷 갈아|옷을 갈아|옷을 벗|단추 ?(채우기|를 못|를 잠그)|신발을 신|dressing (self-care|deficit)|self-care deficit.{0,15}dressing",
   "cause": "상지 근력 저하",
   "long": "대상자는 퇴원 시 최소한의 도움으로 스스로 옷을 입고 벗을 수 있을 것이다.",
   "short": [
-   "대상자는 3일 내 도움을 받아 앞트임 상의를 스스로 입을 것이다.",
+   "대상자는 3일 내 최소한의 도움을 받아 앞트임 상의를 입을 것이다.",
    "대상자는 1주일 내 보조기구를 사용하여 하의와 양말을 스스로 입을 것이다."
   ],
   "diag": [
@@ -1000,7 +1000,7 @@
   "priority": 5,
   "reason": "한쪽 공간과 신체를 인식하지 못해 낙상과 손상의 위험이 높으므로 안전 요구로서 관리가 필요하다",
   "evalData": "무시 측에 대한 인식 정도(선 나누기·그림 그리기 검사), 무시 측 신체 손상 여부, 고개를 돌려 주변을 살피는지, 낙상 발생 여부",
-  "keywords": "편측 ?무시|unilateral neglect|hemi-?neglect|한쪽을 인식|왼쪽을 인식|왼쪽을 못 보|왼쪽 음식을 남|우측 두정엽|right parietal|두정엽|parietal|반맹|hemianopia|좌측 편마비|left hemipleg",
+  "keywords": "편측 ?무시|unilateral neglect|hemi-?neglect|한쪽을 인식|왼쪽을 인식|왼쪽을 못 보|왼쪽 음식을 남|우측 두정엽|right parietal|좌측 편마비|left hemipleg",
   "cause": "우측 대뇌반구 손상",
   "long": "대상자는 퇴원 시 무시 측을 살피는 방법을 사용하여 손상 없이 일상생활을 할 수 있을 것이다.",
   "short": [
@@ -1126,7 +1126,7 @@
   "priority": 6,
   "reason": "생리적·안전 요구는 아니지만 절망감은 치료 참여를 떨어뜨리고 자해 위험과 연결될 수 있어 심리사회적 문제로 관리가 필요하다",
   "evalData": "희망 관련 표현, 치료·일상 활동 참여 정도, 식사·수면 양상, 우울 척도 점수, 자살 사고 유무",
-  "keywords": "절망|희망이 없|희망이 안|소용없|살 이유|살고 싶지|의미가 없|나아질 것 같지|hopeless|무기력|체념|\\bPHQ|말기|terminal|재발",
+  "keywords": "절망|희망이 없|희망이 안|소용없|살 이유가 없|살고 싶지|의미가 없|나아질 것 같지|hopeless|체념|\\bPHQ",
   "cause": "장기간의 질병으로 인한 신체 상태 악화",
   "long": "대상자는 퇴원 시 미래에 대한 희망과 현실적인 목표를 말로 표현할 것이다.",
   "short": [
@@ -1165,7 +1165,7 @@
     "why": "지지 체계와 영적 자원은 삶의 의미와 희망을 찾는 데 도움이 된다."
    },
    {
-    "plan": "자살 위험이 확인되면 즉시 보고하고 주변의 위험한 물건을 치운다.",
+    "plan": "자살 위험이 확인되면 대상자를 혼자 두지 않고 즉시 보고하며 주변의 위험한 물건을 치운다.",
     "why": "자살 위험은 안전을 직접 위협하므로 신속한 보고와 환경 관리가 필요하다."
    }
   ],
@@ -1189,7 +1189,7 @@
   "priority": 6,
   "reason": "생리적·안전 요구는 아니지만 변화된 신체를 받아들이지 못하면 자가간호와 사회생활 참여가 어려워지므로 심리사회적 문제로 관리가 필요하다",
   "evalData": "변화된 신체 부위를 보거나 만지는지, 신체에 대한 표현 내용, 자가간호 참여 정도, 사회적 활동 참여 여부",
-  "keywords": "신체상|body image|외모|흉터|scar|절단|amputat|유방절제|mastectomy|장루|stoma|colostomy|ileostomy|탈모|alopecia|화상|거울을 보지|보기 싫|보기 흉|모습이 싫",
+  "keywords": "신체상|body image|흉터|\\bscars?\\b|절단|amputat|유방절제|mastectomy|장루|stoma|colostomy|ileostomy|탈모|alopecia|거울을 보지|(내|제|자기) ?몸(을|이)? ?보기 (싫|흉)|모습이 싫",
   "cause": "수술로 인한 신체 구조 변화",
   "long": "대상자는 퇴원 시 변화된 신체를 받아들이는 말을 표현할 것이다.",
   "short": [
@@ -1311,7 +1311,7 @@
   "priority": 6,
   "reason": "생리적·안전 욕구가 충족된 뒤 다루는 사랑과 소속의 욕구에 해당하는 심리사회적 문제이다",
   "evalData": "타인과의 대화 빈도와 시간, 집단 활동 참여 여부, 눈맞춤·표정 등 비언어적 반응, 대인관계에 대한 대상자의 표현",
-  "keywords": "위축|철수|고립|혼자 지내|어울리지|대인관계|사회성|눈을 피|눈맞춤|말수가 적|withdraw|isolat|social interaction|자폐|autism|조현병|schizophreni|사회불안|social anxiety",
+  "keywords": "(사회적|대인관계) ?위축|위축된 ?(모습|태도|행동)|혼자 지내|어울리지 (못|않)|대인관계 ?(어려|곤란|문제)|사회성 ?(부족|저하)|눈을 피|말수가 적|social withdrawal|social interaction|자폐|autism|사회불안|social anxiety",
   "cause": "사회적 기술 부족",
   "long": "대상자는 퇴원 시 타인과 편안하게 상호작용하는 모습을 보일 것이다.",
   "short": [
@@ -1374,7 +1374,7 @@
   "priority": 5,
   "reason": "아직 나타나지 않은 위험 진단이지만 모체와 태아 두 생명의 안전과 관련되어 예방이 필요하다",
   "evalData": "태아심음(FHR)과 태동, 혈압·단백뇨, 혈당, 자궁저부 높이, 질 출혈·자궁수축 여부, 위험 징후 설명 여부",
-  "keywords": "임신성 고혈압|전자간증|자간전증|preeclampsia|임신성 당뇨|\\bGDM\\b|gestational|태아심음|\\bFHR\\b|태동|fetal|전치태반|태반 조기박리|placenta|조기진통|preterm labor|자궁내 성장지연|IUGR|NST|양수",
+  "keywords": "임신성 고혈압|전자간증|자간전증|preeclampsia|임신성 당뇨|\\bGDM\\b|gestational|태아심음|\\bFHR\\b|태동|fetal|전치태반|태반 조기박리|placenta|조기진통|preterm labor|자궁내 성장지연|IUGR|\\bNST\\b",
   "cause": "임신 합병증(임신성 고혈압, 임신성 당뇨)",
   "long": "대상자는 분만 시까지 모체와 태아 모두 합병증 없이 임신을 유지할 것이다.",
   "short": [
@@ -1433,7 +1433,7 @@
   "priority": 6,
   "reason": "대상자를 돌보는 가족의 심리사회적 문제로 생리적·안전 문제 해결 후 다루지만 대상자의 회복과 퇴원 계획에 영향을 준다",
   "evalData": "가족의 질병 이해 정도, 돌봄 참여 정도, 피로·스트레스 표현, 가족 간 의사소통 양상, 지원 자원 이용 여부",
-  "keywords": "보호자|간병|caregiver|돌봄 부담|가족이 지쳐|가족 갈등|면회가 없|가족 지지|family|보호자 피로|간병 부담|부양",
+  "keywords": "보호자 ?피로|보호자가 ?지쳐|간병 ?부담|caregiver (burden|strain|stress)|돌봄 부담|가족이 지쳐|가족 갈등|면회가 없|family coping",
   "cause": "장기간의 돌봄으로 인한 가족의 피로와 정보 부족",
   "long": "대상자의 가족은 퇴원 시 대상자를 지지하고 돌보는 방법을 효과적으로 실천할 것이다.",
   "short": [
@@ -1496,7 +1496,7 @@
   "priority": 6,
   "reason": "생리적·안전 요구가 충족된 뒤 다루는 심리사회적 문제이지만 장기화되면 우울과 자해 위험으로 이어질 수 있다",
   "evalData": "상실에 대한 감정 표현, 수면·식사 등 일상 기능, 자책·죄책감 표현, 사회 활동 참여, 자해·자살 생각 여부",
-  "keywords": "사별|사망한|돌아가신|잃은|상실|loss|grief|bereave|비탄|애도|유산|사산|stillbirth|miscarriage|그리워|따라가고 싶|죄책감",
+  "keywords": "사별|사망한|돌아가신|grief|bereave|비탄|애도|자연유산|유산(했|됨|경험|후)|사산|stillbirth|miscarriage|그리워|따라가고 싶|죄책감",
   "cause": "의미 있는 사람의 죽음",
   "long": "대상자는 퇴원 시 상실을 받아들이고 일상생활을 회복할 것이다.",
   "short": [
@@ -1559,7 +1559,7 @@
   "priority": 2,
   "reason": "갑작스러운 고혈압 위기로 뇌출혈과 경련을 일으킬 수 있는 생명을 위협하는 순환 문제이다",
   "evalData": "혈압과 맥박(평소 대비 변화), 두통 호소, 손상 부위 위쪽의 홍조·발한, 방광 팽만·변 매복 여부, 유발 요인 설명 여부",
-  "keywords": "자율신경 반사부전|자율신경 반사이상|autonomic dysreflexia|dysreflexia|척수 손상|척수손상|spinal cord injury|\\bSCI\\b|사지마비|tetrapleg|quadripleg|하반신 마비|parapleg|T6|경수 손상|cervical cord",
+  "keywords": "자율신경 반사부전|자율신경 반사이상|autonomic dysreflexia|dysreflexia|척수 손상|척수손상|spinal cord injury|\\bSCI\\b|사지마비|tetrapleg|quadripleg|하반신 마비|parapleg|\\bT[1-6]\\b ?(이상|위|손상)|경수 손상|cervical cord",
   "cause": "손상 부위 아래의 유해 자극(방광 팽만, 변 매복)",
   "long": "대상자는 퇴원 시 자율신경 반사부전의 유발 요인과 대처 방법을 말하고 실천할 것이다.",
   "short": [
@@ -1622,11 +1622,11 @@
   "priority": 4,
   "reason": "스트레스 반응으로 산소포화도·심박수 변화와 수면·수유 장애가 생겨 영아의 생리적 안정과 성장을 방해한다",
   "evalData": "스트레스 신호(피부색 변화, 손가락 벌림, 하품, 몸을 젖힘), 처치 중 심박수와 SpO2 변화, 수면 시간, 수유 반응, 진정 소요 시간",
-  "keywords": "미숙아|조산아|premature|preterm|이른둥이|\\bNICU\\b|신생아 중환자|재태 주수|gestational age|저체중 출생|\\bLBW\\b|\\bVLBW\\b|스트레스 신호|과자극|overstimulat|무호흡|apnea|서맥|bradycardia",
+  "keywords": "미숙아|조산아|premature|preterm|이른둥이|\\bNICU\\b|신생아 중환자|재태 주수|gestational age|저체중 출생|\\bLBW\\b|\\bVLBW\\b|스트레스 신호|과자극|overstimulat",
   "cause": "미숙한 신경계와 과도한 환경 자극",
   "long": "영아는 퇴원 시 처치와 자극에 안정된 생리적·행동적 반응을 보일 것이다.",
   "short": [
-   "영아는 3일 내 처치 중 SpO2가 90% 이상, 심박수가 정상 범위로 유지될 것이다.",
+   "영아는 3일 내 처치 중 SpO2와 심박수가 처방된 목표 범위 안에서 유지될 것이다.",
    "부모는 1주일 내 영아의 스트레스 신호와 안정 신호를 두 가지 이상 구분하여 말할 것이다."
   ],
   "diag": [
@@ -1685,7 +1685,7 @@
   "priority": 5,
   "reason": "아직 나타나지 않은 위험 진단이므로 실제적 진단보다 우선순위가 낮지만 안전 요구로서 예방이 필요하다",
   "evalData": "수술 부위의 발적·부종·열감·삼출물, 체온, WBC·CRP 추이, 혈당, 배액 양상, 상처 관리 방법 설명 여부",
-  "keywords": "수술 부위|수술부위|절개 부위|incision|surgical site|\\bSSI\\b|봉합|suture|staple|post ?op|POD|수술 후|드레싱|dressing|배액관|JP drain|hemovac|창상|wound",
+  "keywords": "수술 부위|수술부위|절개 부위|incision|surgical site|\\bSSI\\b|봉합|suture|staple|post ?op|\\bPOD\\b|수술 후|드레싱|dressing change|배액관|JP drain|hemovac|창상|wound",
   "cause": "수술로 인한 피부 보호막 손상",
   "long": "대상자는 퇴원 시까지 수술 부위 감염 없이 상처가 치유될 것이다.",
   "short": [
@@ -1716,7 +1716,7 @@
     "why": "적절한 시점의 항생제 투여는 수술 부위의 세균 증식을 막는다."
    },
    {
-    "plan": "배액관의 개방성과 배액 양상을 확인하고 배액 주머니를 삽입 부위보다 낮게 유지한다.",
+    "plan": "배액관의 개방성(음압 배액관은 음압 유지)과 배액 양상을 확인하고 배액 주머니가 삽입 부위보다 높아지지 않게 한다.",
     "why": "원활한 배액은 체액 고임을 막고, 역류를 방지하여 감염을 예방한다."
    },
    {
@@ -1748,7 +1748,7 @@
   "priority": 4,
   "reason": "이미 발생한 실제적인 신체 손상으로, 방치하면 감염과 조직 손상 악화로 이어지므로 생리적 요구로 다룬다",
   "evalData": "상처의 위치·크기·깊이·삼출물·상처 기저부 상태, Braden 점수, 주변 피부 상태, 알부민·영양 상태, 체위 변경 수행 여부",
-  "keywords": "욕창|pressure (ulcer|injury)|bedsore|피부 손상|피부손상|skin integrity|찰과상|abrasion|열상|laceration|화상|burn|발적|궤양|ulcer|Braden|실금 피부염|기저귀 발진|박리|skin tear|당뇨발|diabetic foot",
+  "keywords": "욕창|pressure (ulcer|injury)|bedsore|피부 손상|피부손상|skin integrity|찰과상|abrasion|열상|laceration|화상|\\bburns?\\b|압박 ?궤양|하지 ?궤양|(venous|arterial|diabetic|leg) ulcer|Braden|실금 피부염|기저귀 발진|skin tear|당뇨발|diabetic foot",
   "cause": "지속적인 압력과 부동",
   "long": "대상자는 퇴원 시 손상된 피부가 치유되고 추가 손상이 없을 것이다.",
   "short": [
@@ -1811,7 +1811,7 @@
   "priority": 5,
   "reason": "아직 압박손상이 발생하지 않은 위험 진단이지만, 아동은 피부가 얇고 의료기기 사용이 많아 안전 요구로서 예방이 필요하다",
   "evalData": "Braden Q 점수, 후두부·귀·발뒤꿈치 및 의료기기 접촉 부위의 발적, 체위 변경 수행 여부, 기저귀 부위 피부 상태",
-  "keywords": "Braden ?Q|소아 ?욕창|아동 ?욕창|pediatric pressure|소아 ?중환자|PICU|NICU|진정|sedation|깁스|cast|부목|splint|뇌성마비|cerebral palsy|척수수막류|spina bifida|기관 ?삽관|intubat|산소 ?마스크|NIV",
+  "keywords": "Braden ?Q|소아 ?욕창|아동 ?욕창|소아 ?압박 ?손상|pediatric pressure|소아 ?중환자|\\bPICU\\b|\\bNICU\\b|뇌성마비|cerebral palsy|척수수막류|spina bifida",
   "cause": "의료기기의 지속적인 압박과 움직임 제한",
   "long": "아동은 퇴원 시까지 압박손상 없이 지낼 것이다.",
   "short": [
@@ -1874,7 +1874,7 @@
   "priority": 5,
   "reason": "아직 발생하지 않은 위험 진단이지만, 구획증후군 등이 생기면 사지 기능을 잃을 수 있으므로 안전 요구로서 집중 관찰이 필요하다",
   "evalData": "손상 부위 원위부의 5P(통증, 창백, 맥박, 감각이상, 마비), 모세혈관 재충전 시간, 부종, 피부 온도",
-  "keywords": "골절|fracture|깁스|cast|석고 ?붕대|부목|splint|견인|traction|구획 ?증후군|compartment|외고정|external fixat|정형외과|ORIF|인공 ?관절|arthroplasty|압박 ?붕대|tourniquet|지혈대|저림|numbness|tingling",
+  "keywords": "골절|fracture|깁스|\\bcasts?\\b|석고 ?붕대|부목|splint|견인|\\btraction\\b|구획 ?증후군|compartment syndrome|외고정|external fixat|\\bORIF\\b|인공 ?관절|arthroplasty|압박 ?붕대|tourniquet|지혈대",
   "cause": "골절과 석고붕대로 인한 압박",
   "long": "대상자는 퇴원 시까지 손상 부위 원위부의 정상 감각·운동·순환을 유지할 것이다.",
   "short": [
@@ -1910,7 +1910,7 @@
    },
    {
     "plan": "이상 징후(맥박 소실, 심한 통증, 감각 저하) 발견 시 즉시 의사에게 보고한다.",
-    "why": "구획증후군은 수 시간 내 비가역적 신경·근육 손상을 일으키므로 신속한 감압이 필요하다."
+    "why": "구획증후군은 수 시간 내 비가역적 신경·근육 손상을 일으키므로 신속한 감압(석고 절개, 근막절개술 등)이 필요하다."
    },
    {
     "plan": "금기가 아닐 시 손·발가락의 능동 운동을 격려한다.",
@@ -1937,7 +1937,7 @@
   "priority": 5,
   "reason": "아직 발생하지 않은 위험 진단이지만, 질식은 기도를 막아 생명을 위협하므로 위험 진단 중 가장 먼저 예방해야 한다",
   "evalData": "연하 상태와 식사 중 기침·사레 여부, 주변 환경의 질식 위험 물건 제거 여부, 보호자의 질식 예방 수칙과 응급처치 설명 여부",
-  "keywords": "질식|suffocation|choking|사레|연하 ?곤란|삼킴 ?곤란|dysphagia|흡인|aspiration|이물|foreign body|작은 ?장난감|땅콩|떡|비닐|의식 ?저하|목 ?졸|strangulation",
+  "keywords": "질식|suffocation|choking|사레|연하 ?곤란|삼킴 ?곤란|dysphagia|기도 ?이물|이물 ?(흡인|질식)|foreign body aspiration|작은 ?장난감|목 ?졸|strangulation|엎드려 ?재",
   "cause": "연하 기능 저하와 환경 내 질식 위험 물건",
   "long": "대상자는 퇴원 시까지 질식 사고 없이 지낼 것이다.",
   "short": [
@@ -1946,7 +1946,7 @@
   ],
   "diag": [
    {
-    "plan": "의식 수준, 연하 능력, 구토 반사, 기침 반사를 사정한다.",
+    "plan": "의식 수준, 연하 능력, 구역 반사(gag reflex), 기침 반사를 사정한다.",
     "why": "의식이 떨어지거나 연하·기침 반사가 약하면 음식이나 분비물로 기도가 막힐 위험이 높다."
    },
    {
@@ -1974,6 +1974,10 @@
    {
     "plan": "영유아의 경우 손이 닿는 곳에서 작은 물건과 비닐봉지, 끈을 치운다.",
     "why": "영유아는 물건을 입에 넣는 발달 특성이 있어 환경 정리가 가장 확실한 예방법이다."
+   },
+   {
+    "plan": "영아는 단단하고 평평한 매트리스에 바로 눕혀 재우고 잠자리에 베개, 푹신한 이불, 인형을 두지 않는다.",
+    "why": "엎드려 재우거나 푹신한 침구를 사용하면 코와 입이 막혀 질식과 영아돌연사증후군의 위험이 높아진다."
    }
   ],
   "edu": [
@@ -1996,7 +2000,7 @@
   "priority": 5,
   "reason": "아직 폭력이 발생하지 않은 위험 진단이지만, 대상자와 타인의 신체적 안전을 위협하므로 안전 요구로서 예방이 우선된다",
   "evalData": "공격적 언어·행동 여부, 초조·흥분 정도, 분노를 말로 표현하는지, 폭력 사건 발생 여부",
-  "keywords": "폭력|violen|공격적|aggress|난폭|폭언|욕설|위협|threat|때리|hostil|적대|흥분|agitat|초조|조현병|schizophren|피해망상|paranoi|알코올 ?금단|withdrawal|분노 ?조절",
+  "keywords": "폭력|violen|공격적|aggress|난폭|폭언|욕설|때리|hostil|적대|피해망상|paranoi|알코올 ?금단|alcohol withdrawal|분노 ?조절",
   "cause": "충동 조절 능력 저하",
   "long": "대상자는 퇴원 시 분노를 폭력 없이 말로 표현할 것이다.",
   "short": [
@@ -2023,8 +2027,8 @@
     "why": "과도한 자극은 흥분을 높이고 위험한 물건은 폭력 시 심각한 손상을 일으킨다."
    },
    {
-    "plan": "차분하고 낮은 목소리로 짧고 분명하게 말하며 안전한 거리를 유지한다.",
-    "why": "침착한 태도는 긴장을 낮추고, 출입구 쪽에 서서 거리를 두면 간호사의 안전을 지킬 수 있다."
+    "plan": "차분하고 낮은 목소리로 짧고 분명하게 말하며, 안전한 거리를 두고 간호사가 출입구 가까이 서되 대상자의 출구를 막지 않는다.",
+    "why": "침착한 태도는 긴장을 낮추고, 출입구 쪽에서 거리를 두면 간호사가 안전하게 피할 수 있고, 대상자의 출구를 막지 않으면 위협감을 줄일 수 있다."
    },
    {
     "plan": "분노를 말로 표현하도록 격려하고 신체 활동 등 에너지를 발산할 방법을 제공한다.",
@@ -2035,7 +2039,7 @@
     "why": "약물은 심한 흥분을 빠르게 진정시켜 대상자와 타인의 안전을 지킨다."
    },
    {
-    "plan": "다른 방법이 효과가 없을 때만 병원 지침에 따라 격리나 신체 억제를 시행하고 자주 관찰한다.",
+    "plan": "다른 방법이 효과가 없을 때만 의사의 처방과 병원 지침에 따라 격리나 신체 억제를 시행하고 자주 관찰한다.",
     "why": "억제는 최후의 수단이며 억제 중 순환, 피부, 호흡 상태를 확인해 2차 손상을 예방해야 한다."
    }
   ],
@@ -2118,7 +2122,7 @@
   "priority": 3,
   "reason": "오심은 현재 대상자가 호소하는 불편감으로 식사와 수분 섭취를 방해하여 탈수와 영양 결핍으로 이어질 수 있다",
   "evalData": "오심 정도(0~10점)와 빈도, 구토 횟수와 양, 식이·수분 섭취량, 섭취량·배설량, 항구토제 투여 후 반응",
-  "keywords": "오심|메스꺼|울렁|속이 ?안 ?좋|구역|nausea|구토|vomit|헛구역질|retching|입덧|morning sickness|항암|chemotherapy|CINV|PONV|멀미|motion sickness|온단세트론|ondansetron|조프란|맥페란|metoclopramide",
+  "keywords": "오심|메스꺼|울렁|속이 ?안 ?좋|구역질|구역감|nausea|구토|vomit|헛구역질|retching|입덧|morning sickness|CINV|PONV|멀미|motion sickness|온단세트론|ondansetron|조프란|맥페란|metoclopramide",
   "cause": "항암화학요법의 부작용",
   "long": "대상자는 퇴원 시 오심 없이 식사할 것이다.",
   "short": [
@@ -2181,7 +2185,7 @@
   "priority": 6,
   "reason": "생리적·안전 요구는 충족되었으나 타인과의 관계가 부족하여 사랑과 소속의 욕구가 위협받고 있다",
   "evalData": "타인과 교류하는 횟수와 시간, 외로움 표현 여부, 활동 참여 정도, 지지 체계 이용 여부",
-  "keywords": "고립|isolat|외로|lonel|혼자 ?(살|지내)|독거|living alone|찾아오는 ?사람이 ?없|면회 ?없|대인 ?기피|위축|withdrawn|은둔|사회적 ?지지 ?부족|social support",
+  "keywords": "사회적 ?고립|고립감|social isolation|외로|lonel|혼자 ?(살|지내)|독거|living alone|찾아오는 ?사람이 ?없|면회 ?없|대인 ?기피|withdrawn|은둔|사회적 ?지지 ?부족",
   "cause": "사회적 지지 체계의 부족",
   "long": "대상자는 퇴원 시 지속적으로 교류할 수 있는 사람이나 모임을 한 곳 이상 갖게 될 것이다.",
   "short": [

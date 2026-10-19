@@ -1,0 +1,814 @@
+{
+ "map": {
+  "비효과적 건강자가관리": {
+   "name": "비효과적 건강 자기관리",
+   "en": "Ineffective health self-management",
+   "domain": "1. 건강증진 Health promotion",
+   "cls": "2. 건강관리 Health management",
+   "page": 14,
+   "adapt": false
+  },
+  "비효과적 가족건강자가관리": {
+   "name": "비효과적 가족 건강관리",
+   "en": "Ineffective family health management",
+   "domain": "1. 건강증진 Health promotion",
+   "cls": "2. 건강관리 Health management",
+   "page": 14,
+   "adapt": false
+  },
+  "노쇠 증후군": {
+   "name": "노인 허약증후군",
+   "en": "Elder frailty syndrome",
+   "domain": "1. 건강증진 Health promotion",
+   "cls": "2. 건강관리 Health management",
+   "page": 15,
+   "adapt": false
+  },
+  "비효과적 건강유지행동": {
+   "name": "비효과적 건강유지 행위",
+   "en": "Ineffective health maintenance behaviors",
+   "domain": "1. 건강증진 Health promotion",
+   "cls": "2. 건강관리 Health management",
+   "page": 15,
+   "adapt": false
+  },
+  "비만": {
+   "name": "비효과적 과체중 자기관리",
+   "en": "Ineffective overweight self-management",
+   "domain": "1. 건강증진 Health promotion",
+   "cls": "2. 건강관리 Health management",
+   "page": 15,
+   "adapt": true
+  },
+  "과체중": null,
+  "불안정한 혈당 수치의 위험": {
+   "name": "비효과적 혈당양상 자기관리의 위험",
+   "en": "Risk for ineffective blood glucose pattern self-management",
+   "domain": "1. 건강증진 Health promotion",
+   "cls": "2. 건강관리 Health management",
+   "page": 14,
+   "adapt": true
+  },
+  "비효과적 모유수유": {
+   "name": "비효과적 모유수유",
+   "en": "Ineffective chestfeeding",
+   "domain": "2. 영양 Nutrition",
+   "cls": "1. 섭취 Ingestion",
+   "page": 16,
+   "adapt": false
+  },
+  "불충분한 모유 생산": {
+   "name": "불충분한 모유분비",
+   "en": "Inadequate human milk production",
+   "domain": "2. 영양 Nutrition",
+   "cls": "1. 섭취 Ingestion",
+   "page": 16,
+   "adapt": false
+  },
+  "연하장애": {
+   "name": "연하 장애",
+   "en": "Impaired swallowing",
+   "domain": "2. 영양 Nutrition",
+   "cls": "1. 섭취 Ingestion",
+   "page": 16,
+   "adapt": false
+  },
+  "비효과적 영아 수유역동": {
+   "name": "비효과적 영아 식이 역학관계",
+   "en": "Ineffective infant feeding dynamics",
+   "domain": "2. 영양 Nutrition",
+   "cls": "1. 섭취 Ingestion",
+   "page": 16,
+   "adapt": false
+  },
+  "신생아 고빌리루빈혈증": {
+   "name": "신생아 고빌리루빈혈증",
+   "en": "Neonatal hyperbilirubinemia",
+   "domain": "2. 영양 Nutrition",
+   "cls": "4. 대사 Metabolism",
+   "page": 16,
+   "adapt": false
+  },
+  "간 기능 장애의 위험": null,
+  "과도한 체액량": {
+   "name": "체액량 과다",
+   "en": "Excess fluid volume",
+   "domain": "2. 영양 Nutrition",
+   "cls": "5. 수화 Hydration",
+   "page": 16,
+   "adapt": false
+  },
+  "불충분한 체액량의 위험": {
+   "name": "불충분한 체액량의 위험",
+   "en": "Risk for inadequate fluid volume",
+   "domain": "2. 영양 Nutrition",
+   "cls": "5. 수화 Hydration",
+   "page": 17,
+   "adapt": false
+  },
+  "체액 불균형의 위험": {
+   "name": "체액량 균형 장애의 위험",
+   "en": "Risk for impaired fluid volume balance",
+   "domain": "2. 영양 Nutrition",
+   "cls": "5. 수화 Hydration",
+   "page": 16,
+   "adapt": false
+  },
+  "전해질 불균형의 위험": {
+   "name": "수분-전해질 균형 장애의 위험",
+   "en": "Risk for impaired water-electrolyte balance",
+   "domain": "2. 영양 Nutrition",
+   "cls": "5. 수화 Hydration",
+   "page": 16,
+   "adapt": false
+  },
+  "배뇨 장애": {
+   "name": "배뇨 장애",
+   "en": "Impaired urinary elimination",
+   "domain": "3. 배설/교환 Elimination/Exchange",
+   "cls": "1. 비뇨기계 기능 Urinary function",
+   "page": 17,
+   "adapt": false
+  },
+  "요정체": {
+   "name": "요정체의 위험",
+   "en": "Risk for urinary retention",
+   "domain": "3. 배설/교환 Elimination/Exchange",
+   "cls": "1. 비뇨기계 기능 Urinary function",
+   "page": 17,
+   "adapt": true
+  },
+  "복압성 요실금": {
+   "name": "긴장성 요실금",
+   "en": "Stress urinary incontinence",
+   "domain": "3. 배설/교환 Elimination/Exchange",
+   "cls": "1. 비뇨기계 기능 Urinary function",
+   "page": 17,
+   "adapt": false
+  },
+  "절박성 요실금": {
+   "name": "긴박성 요실금",
+   "en": "Urge urinary incontinence",
+   "domain": "3. 배설/교환 Elimination/Exchange",
+   "cls": "1. 비뇨기계 기능 Urinary function",
+   "page": 17,
+   "adapt": false
+  },
+  "변비": {
+   "name": "만성 기능성 변비",
+   "en": "Chronic functional constipation",
+   "domain": "3. 배설/교환 Elimination/Exchange",
+   "cls": "2. 위장관계 기능 Gastrointestinal function",
+   "page": 17,
+   "adapt": true
+  },
+  "변비의 위험": {
+   "name": "만성 기능성 변비의 위험",
+   "en": "Risk for chronic functional constipation",
+   "domain": "3. 배설/교환 Elimination/Exchange",
+   "cls": "2. 위장관계 기능 Gastrointestinal function",
+   "page": 17,
+   "adapt": true
+  },
+  "설사": null,
+  "위장관 운동기능 장애": {
+   "name": "위장관운동 장애",
+   "en": "Impaired gastrointestinal motility",
+   "domain": "3. 배설/교환 Elimination/Exchange",
+   "cls": "2. 위장관계 기능 Gastrointestinal function",
+   "page": 17,
+   "adapt": false
+  },
+  "가스교환 장애": {
+   "name": "가스교환 장애",
+   "en": "Impaired gas exchange",
+   "domain": "3. 배설/교환 Elimination/Exchange",
+   "cls": "4. 호흡기계 기능 Respiratory function",
+   "page": 17,
+   "adapt": false
+  },
+  "신체 기동성 장애": {
+   "name": "신체 기동성 장애",
+   "en": "Impaired physical mobility",
+   "domain": "4. 활동/휴식 Activity/Rest",
+   "cls": "2. 활동/운동 Activity/Exercise",
+   "page": 18,
+   "adapt": false
+  },
+  "침상 기동성 장애": {
+   "name": "침상 기동성 장애",
+   "en": "Impaired bed mobility",
+   "domain": "4. 활동/휴식 Activity/Rest",
+   "cls": "2. 활동/운동 Activity/Exercise",
+   "page": 18,
+   "adapt": false
+  },
+  "보행 장애": {
+   "name": "보행능력 장애",
+   "en": "Impaired walking ability",
+   "domain": "4. 활동/휴식 Activity/Rest",
+   "cls": "2. 활동/운동 Activity/Exercise",
+   "page": 18,
+   "adapt": false
+  },
+  "이동 능력 장애": {
+   "name": "이동능력 장애",
+   "en": "Impaired transferring ability",
+   "domain": "4. 활동/휴식 Activity/Rest",
+   "cls": "2. 활동/운동 Activity/Exercise",
+   "page": 18,
+   "adapt": false
+  },
+  "비사용 증후군의 위험": null,
+  "피로": {
+   "name": "피로 부담감 과다",
+   "en": "Excessive fatigue burden",
+   "domain": "4. 활동/휴식 Activity/Rest",
+   "cls": "3. 에너지 균형 Energy balance",
+   "page": 18,
+   "adapt": true
+  },
+  "활동 지속성 감소": {
+   "name": "활동지속성 감소",
+   "en": "Decreased activity tolerance",
+   "domain": "4. 활동/휴식 Activity/Rest",
+   "cls": "3. 에너지 균형 Energy balance",
+   "page": 18,
+   "adapt": false
+  },
+  "활동 지속성 감소의 위험": {
+   "name": "활동지속성 감소의 위험",
+   "en": "Risk for decreased activity tolerance",
+   "domain": "4. 활동/휴식 Activity/Rest",
+   "cls": "3. 에너지 균형 Energy balance",
+   "page": 18,
+   "adapt": false
+  },
+  "심박출량 감소": null,
+  "심박출량 감소의 위험": {
+   "name": "심박출량 감소의 위험",
+   "en": "Risk for decreased cardiac output",
+   "domain": "4. 활동/휴식 Activity/Rest",
+   "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses",
+   "page": 18,
+   "adapt": false
+  },
+  "자발적 환기 장애": {
+   "name": "자발적 환기 장애",
+   "en": "Impaired spontaneous ventilation",
+   "domain": "4. 활동/휴식 Activity/Rest",
+   "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses",
+   "page": 18,
+   "adapt": false
+  },
+  "인공호흡기 이탈 반응 장애": {
+   "name": "성인 호흡기 제거 반응 장애",
+   "en": "Impaired adult ventilatory weaning response",
+   "domain": "4. 활동/휴식 Activity/Rest",
+   "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses",
+   "page": 19,
+   "adapt": false
+  },
+  "비효과적 말초조직관류": {
+   "name": "비효과적 말초조직 관류",
+   "en": "Ineffective peripheral tissue perfusion",
+   "domain": "4. 활동/휴식 Activity/Rest",
+   "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses",
+   "page": 18,
+   "adapt": false
+  },
+  "비효과적 말초조직관류의 위험": {
+   "name": "비효과적 말초조직 관류의 위험",
+   "en": "Risk for ineffective peripheral tissue perfusion",
+   "domain": "4. 활동/휴식 Activity/Rest",
+   "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses",
+   "page": 18,
+   "adapt": false
+  },
+  "비효과적 뇌조직관류의 위험": {
+   "name": "비효과적 뇌조직 관류의 위험",
+   "en": "Risk for ineffective cerebral tissue perfusion",
+   "domain": "4. 활동/휴식 Activity/Rest",
+   "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses",
+   "page": 18,
+   "adapt": false
+  },
+  "심장조직관류 감소의 위험": null,
+  "비효과적 신장관류의 위험": null,
+  "혈전증의 위험": {
+   "name": "혈전의 위험",
+   "en": "Risk for thrombosis",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "2. 신체적 손상 Physical injury",
+   "page": 25,
+   "adapt": false
+  },
+  "쇼크의 위험": {
+   "name": "쇼크의 위험",
+   "en": "Risk for shock",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "2. 신체적 손상 Physical injury",
+   "page": 25,
+   "adapt": false
+  },
+  "목욕 자가간호 결핍": {
+   "name": "목욕 능력 감소",
+   "en": "Decreased bathing abilities",
+   "domain": "4. 활동/휴식 Activity/Rest",
+   "cls": "5. 자기돌봄 Self-care",
+   "page": 19,
+   "adapt": false
+  },
+  "옷 입기 자가간호 결핍": {
+   "name": "옷입기 능력 감소",
+   "en": "Decreased dressing abilities",
+   "domain": "4. 활동/휴식 Activity/Rest",
+   "cls": "5. 자기돌봄 Self-care",
+   "page": 19,
+   "adapt": false
+  },
+  "섭식 자가간호 결핍": {
+   "name": "음식섭취 능력 감소",
+   "en": "Decreased feeding abilities",
+   "domain": "4. 활동/휴식 Activity/Rest",
+   "cls": "5. 자기돌봄 Self-care",
+   "page": 19,
+   "adapt": false
+  },
+  "용변 자가간호 결핍": {
+   "name": "용변 능력 감소",
+   "en": "Decreased toileting abilities",
+   "domain": "4. 활동/휴식 Activity/Rest",
+   "cls": "5. 자기돌봄 Self-care",
+   "page": 19,
+   "adapt": false
+  },
+  "편측 무시": null,
+  "급성 혼돈": {
+   "name": "급성 혼돈",
+   "en": "Acute confusion",
+   "domain": "5. 지각/인지 Perception/Cognition",
+   "cls": "4. 인지 Cognition",
+   "page": 19,
+   "adapt": false
+  },
+  "급성 혼돈의 위험": {
+   "name": "급성 혼돈의 위험",
+   "en": "Risk for acute confusion",
+   "domain": "5. 지각/인지 Perception/Cognition",
+   "cls": "4. 인지 Cognition",
+   "page": 19,
+   "adapt": false
+  },
+  "만성 혼돈": {
+   "name": "만성 혼돈",
+   "en": "Chronic confusion",
+   "domain": "5. 지각/인지 Perception/Cognition",
+   "cls": "4. 인지 Cognition",
+   "page": 19,
+   "adapt": false
+  },
+  "기억력 장애": {
+   "name": "기억 장애",
+   "en": "Impaired memory",
+   "domain": "5. 지각/인지 Perception/Cognition",
+   "cls": "4. 인지 Cognition",
+   "page": 19,
+   "adapt": false
+  },
+  "언어적 의사소통 장애": {
+   "name": "언어적 의사소통 장애",
+   "en": "Impaired verbal communication",
+   "domain": "5. 지각/인지 Perception/Cognition",
+   "cls": "5. 의사소통 Communication",
+   "page": 20,
+   "adapt": false
+  },
+  "절망감": null,
+  "상황적 자존감 저하": {
+   "name": "상황적 자존감 저하",
+   "en": "Situational inadequate self-esteem",
+   "domain": "6. 자아지각 Self-perception",
+   "cls": "2. 자존감 Self-esteem",
+   "page": 20,
+   "adapt": false
+  },
+  "만성적 자존감 저하": {
+   "name": "만성적 자존감 저하",
+   "en": "Chronic inadequate self-esteem",
+   "domain": "6. 자아지각 Self-perception",
+   "cls": "2. 자존감 Self-esteem",
+   "page": 20,
+   "adapt": false
+  },
+  "신체상 장애": {
+   "name": "신체상 혼란",
+   "en": "Disturbed body image",
+   "domain": "6. 자아지각 Self-perception",
+   "cls": "3. 신체상 Body image",
+   "page": 20,
+   "adapt": false
+  },
+  "돌봄제공자 역할 긴장": {
+   "name": "돌봄제공 부담감 과다",
+   "en": "Excessive caregiving burden",
+   "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+   "cls": "2. 대처반응 Coping responses",
+   "page": 22,
+   "adapt": true
+  },
+  "양육 장애": {
+   "name": "부모역할 장애",
+   "en": "Impaired parenting behaviors",
+   "domain": "7. 역할관계 Role relationship",
+   "cls": "1. 돌봄제공자 역할 Caregiving roles",
+   "page": 20,
+   "adapt": false
+  },
+  "애착 장애의 위험": {
+   "name": "애착행위 중단의 위험",
+   "en": "Risk for disrupted attachment behaviors",
+   "domain": "7. 역할관계 Role relationship",
+   "cls": "2. 가족관계 Family relationships",
+   "page": 21,
+   "adapt": false
+  },
+  "가족과정 중단": {
+   "name": "가족과정 장애",
+   "en": "Impaired family processes",
+   "domain": "7. 역할관계 Role relationship",
+   "cls": "2. 가족관계 Family relationships",
+   "page": 21,
+   "adapt": false
+  },
+  "비효과적 역할수행": {
+   "name": "비효과적 역할수행",
+   "en": "Ineffective role performance",
+   "domain": "7. 역할관계 Role relationship",
+   "cls": "3. 역할수행 Role performance",
+   "page": 21,
+   "adapt": false
+  },
+  "사회적 상호작용 장애": {
+   "name": "사회적 상호작용 장애",
+   "en": "Impaired social interaction",
+   "domain": "7. 역할관계 Role relationship",
+   "cls": "3. 역할수행 Role performance",
+   "page": 21,
+   "adapt": false
+  },
+  "성기능 장애": {
+   "name": "성기능 장애",
+   "en": "Impaired sexual function",
+   "domain": "8. 성 Sexuality",
+   "cls": "2. 성기능 Sexual function",
+   "page": 21,
+   "adapt": false
+  },
+  "비효과적 출산 과정": {
+   "name": "비효과적 임신과 출산과정",
+   "en": "Ineffective childbearing process",
+   "domain": "7. 역할관계 Role relationship",
+   "cls": "3. 역할수행 Role performance",
+   "page": 21,
+   "adapt": false
+  },
+  "산모-태아 이원체 장애의 위험": {
+   "name": "모아관계 장애의 위험",
+   "en": "Risk for impaired maternal-fetal dyad",
+   "domain": "8. 성 Sexuality",
+   "cls": "3. 생식 Reproduction",
+   "page": 21,
+   "adapt": false
+  },
+  "외상후 증후군의 위험": {
+   "name": "외상후 증후군의 위험",
+   "en": "Risk for post-trauma syndrome",
+   "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+   "cls": "1. 외상 후 반응 Post-trauma responses",
+   "page": 22,
+   "adapt": false
+  },
+  "비효과적 대처": {
+   "name": "대처 부적응",
+   "en": "Maladaptive coping",
+   "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+   "cls": "2. 대처반응 Coping responses",
+   "page": 22,
+   "adapt": false
+  },
+  "가족 대처 손상": {
+   "name": "가족 대처 부적응",
+   "en": "Maladaptive family coping",
+   "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+   "cls": "2. 대처반응 Coping responses",
+   "page": 22,
+   "adapt": false
+  },
+  "과도한 두려움": {
+   "name": "과도한 두려움",
+   "en": "Excessive fear",
+   "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+   "cls": "2. 대처반응 Coping responses",
+   "page": 22,
+   "adapt": false
+  },
+  "무력감": null,
+  "부적응적 비탄": {
+   "name": "부적응적 슬픔",
+   "en": "Maladaptive grieving",
+   "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+   "cls": "2. 대처반응 Coping responses",
+   "page": 22,
+   "adapt": false
+  },
+  "비효과적 부정": null,
+  "정서 조절 장애": {
+   "name": "기분조절 장애",
+   "en": "Impaired mood regulation",
+   "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+   "cls": "3. 신경행동학적 스트레스 Neurobehavioral stress",
+   "page": 23,
+   "adapt": false
+  },
+  "자율신경 반사부전": {
+   "name": "자율적 반사장애의 위험",
+   "en": "Risk for autonomic dysreflexia",
+   "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+   "cls": "3. 신경행동학적 스트레스 Neurobehavioral stress",
+   "page": 23,
+   "adapt": true
+  },
+  "두개내압 적응능력 감소": null,
+  "신생아 금단 증후군": null,
+  "영아 행동 조직화 장애": {
+   "name": "영아 신경발달조직 손상",
+   "en": "Impaired infant neurodevelopmental organization",
+   "domain": "13. 성장/발달 Growth/Development",
+   "cls": "2. 발달 Development",
+   "page": 27,
+   "adapt": true
+  },
+  "영적 고뇌": {
+   "name": "영적 안녕 장애",
+   "en": "Impaired spiritual well-being",
+   "domain": "10. 삶의 원칙 Life principles",
+   "cls": "3. 가치/신념/행동의 일치성 Value/Belief/Action congruence",
+   "page": 23,
+   "adapt": true
+  },
+  "의사결정 갈등": {
+   "name": "의사결정 장애",
+   "en": "Impaired decision-making",
+   "domain": "5. 지각/인지 Perception/Cognition",
+   "cls": "4. 인지 Cognition",
+   "page": 19,
+   "adapt": true
+  },
+  "수술부위 감염의 위험": {
+   "name": "수술부위 감염의 위험",
+   "en": "Risk for surgical wound infection",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "1. 감염 Infection",
+   "page": 23,
+   "adapt": false
+  },
+  "흡인의 위험": {
+   "name": "흡인의 위험",
+   "en": "Risk for aspiration",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "2. 신체적 손상 Physical injury",
+   "page": 24,
+   "adapt": false
+  },
+  "출혈의 위험": {
+   "name": "출혈 과다의 위험",
+   "en": "Risk for excessive bleeding",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "2. 신체적 손상 Physical injury",
+   "page": 24,
+   "adapt": false
+  },
+  "피부 통합성 손상": {
+   "name": "피부 통합성 장애",
+   "en": "Impaired skin integrity",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "2. 신체적 손상 Physical injury",
+   "page": 24,
+   "adapt": false
+  },
+  "피부 통합성 손상의 위험": {
+   "name": "피부 통합성 장애의 위험",
+   "en": "Risk for impaired skin integrity",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "2. 신체적 손상 Physical injury",
+   "page": 24,
+   "adapt": false
+  },
+  "성인 압박손상의 위험": {
+   "name": "성인 욕창의 위험",
+   "en": "Risk for adult pressure injury",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "2. 신체적 손상 Physical injury",
+   "page": 24,
+   "adapt": false
+  },
+  "아동 압박손상의 위험": {
+   "name": "아동 욕창의 위험",
+   "en": "Risk for child pressure injury",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "2. 신체적 손상 Physical injury",
+   "page": 24,
+   "adapt": false
+  },
+  "조직 통합성 손상": {
+   "name": "조직 통합성 장애",
+   "en": "Impaired tissue integrity",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "2. 신체적 손상 Physical injury",
+   "page": 24,
+   "adapt": false
+  },
+  "수술 후 회복 지연": {
+   "name": "수술 후 회복 장애",
+   "en": "Impaired surgical recovery",
+   "domain": "4. 활동/휴식 Activity/Rest",
+   "cls": "3. 에너지 균형 Energy balance",
+   "page": 18,
+   "adapt": false
+  },
+  "말초 신경혈관 기능장애의 위험": {
+   "name": "말초신경혈관 기능 장애의 위험",
+   "en": "Risk for impaired peripheral neurovascular function",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "2. 신체적 손상 Physical injury",
+   "page": 25,
+   "adapt": false
+  },
+  "손상의 위험": {
+   "name": "신체 손상의 위험",
+   "en": "Risk for physical injury",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "2. 신체적 손상 Physical injury",
+   "page": 23,
+   "adapt": false
+  },
+  "영아 돌연사의 위험": {
+   "name": "영아 돌연사의 위험",
+   "en": "Risk for sudden infant death",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "2. 신체적 손상 Physical injury",
+   "page": 25,
+   "adapt": false
+  },
+  "질식의 위험": {
+   "name": "질식사고의 위험",
+   "en": "Risk for accidental suffocation",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "2. 신체적 손상 Physical injury",
+   "page": 24,
+   "adapt": false
+  },
+  "비자살적 자해의 위험": {
+   "name": "자살의도없는 자해행위의 위험",
+   "en": "Risk for non-suicidal self-injurious behavior",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "3. 폭력 Violence",
+   "page": 25,
+   "adapt": false
+  },
+  "자살 행동의 위험": {
+   "name": "자살적 자해행위의 위험",
+   "en": "Risk for suicidal self-injurious behavior",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "3. 폭력 Violence",
+   "page": 25,
+   "adapt": false
+  },
+  "타인 지향적 폭력의 위험": {
+   "name": "타인에 대한 폭력의 위험",
+   "en": "Risk for other-directed violence",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "3. 폭력 Violence",
+   "page": 25,
+   "adapt": false
+  },
+  "알레르기 반응의 위험": {
+   "name": "알레르기 반응의 위험",
+   "en": "Risk for allergy reaction",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "5. 방어과정 Defensive processes",
+   "page": 25,
+   "adapt": false
+  },
+  "저체온": {
+   "name": "체온감소",
+   "en": "Decreased body temperature",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "6. 체온조절 Thermoregulation",
+   "page": 25,
+   "adapt": false
+  },
+  "수술 전후 저체온의 위험": {
+   "name": "수술기 체온감소의 위험",
+   "en": "Risk for decreased perioperative body temperature",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "6. 체온조절 Thermoregulation",
+   "page": 26,
+   "adapt": false
+  },
+  "신생아 저체온": {
+   "name": "신생아 체온감소",
+   "en": "Decreased neonatal body temperature",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "6. 체온조절 Thermoregulation",
+   "page": 25,
+   "adapt": false
+  },
+  "만성 통증": {
+   "name": "만성 통증",
+   "en": "Chronic pain",
+   "domain": "12. 안위 Comfort",
+   "cls": "1. 신체적 안위 Physical comfort",
+   "page": 26,
+   "adapt": false
+  },
+  "오심": {
+   "name": "비효과적 오심 자기관리",
+   "en": "Ineffective nausea self-management",
+   "domain": "1. 건강증진 Health promotion",
+   "cls": "2. 건강관리 Health management",
+   "page": 15,
+   "adapt": true
+  },
+  "분만 통증": {
+   "name": "분만 통증",
+   "en": "Labor pain",
+   "domain": "12. 안위 Comfort",
+   "cls": "1. 신체적 안위 Physical comfort",
+   "page": 26,
+   "adapt": false
+  },
+  "안위 장애": {
+   "name": "손상된 신체적 안위",
+   "en": "Impaired physical comfort",
+   "domain": "12. 안위 Comfort",
+   "cls": "1. 신체적 안위 Physical comfort",
+   "page": 26,
+   "adapt": true
+  },
+  "사회적 고립": {
+   "name": "부적절한 사회적 유대감",
+   "en": "Inadequate social connectedness",
+   "domain": "12. 안위 Comfort",
+   "cls": "3. 사회적 안위 Social comfort",
+   "page": 26,
+   "adapt": true
+  },
+  "아동 발달 지연의 위험": {
+   "name": "아동발달 지연의 위험",
+   "en": "Risk for delayed child development",
+   "domain": "13. 성장/발달 Growth/Development",
+   "cls": "2. 발달 Development",
+   "page": 26,
+   "adapt": false
+  }
+ },
+ "new": [
+  {
+   "name": "신체 기동성 장애의 위험",
+   "en": "Risk for impaired physical mobility",
+   "domain": "4. 활동/휴식 Activity/Rest",
+   "cls": "2. 활동/운동 Activity/Exercise",
+   "page": 18
+  },
+  {
+   "name": "체액량 과다의 위험",
+   "en": "Risk for excessive fluid volume",
+   "domain": "2. 영양 Nutrition",
+   "cls": "5. 수화 Hydration",
+   "page": 17
+  },
+  {
+   "name": "고체온의 위험",
+   "en": "Risk for hyperthermia",
+   "domain": "11. 안전/보호 Safety/Protection",
+   "cls": "6. 체온조절 Thermoregulation",
+   "page": 26
+  },
+  {
+   "name": "변실금",
+   "en": "Impaired fecal continence",
+   "domain": "3. 배설/교환 Elimination/Exchange",
+   "cls": "2. 위장관계 기능 Gastrointestinal function",
+   "page": 17
+  },
+  {
+   "name": "과도한 외로움",
+   "en": "Excessive loneliness",
+   "domain": "12. 안위 Comfort",
+   "cls": "3. 사회적 안위 Social comfort",
+   "page": 26
+  }
+ ]
+}
