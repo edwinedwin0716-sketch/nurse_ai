@@ -710,7 +710,7 @@ $script:Templates['체액량 과다'] = @{
     priority = 2
     reason = '체액이 과다하면 폐부종과 심부전 악화로 호흡과 순환에 직접 영향을 주므로 ABC 중 순환 문제로 우선 다룬다'
     evalData = '매일 같은 시간 체중, I/O, 부종 정도, 폐 수포음·호흡곤란·SpO2, 혈압·경정맥 팽대, 혈청 나트륨·BUN/Cr, 수분·염분 제한 이행 여부'
-    keywords = '부종|edema|함요|pitting|체중 (증가|늘)|체액 ?(과다|과잉)|fluid overload|hypervolem|폐부종|pulmonary edema|수포음|crackle|\brales?\b|경정맥 ?팽대|JVD|심부전|heart failure|CHF|신부전|CKD|투석|라식스|lasix|furosemide|복수|ascites|I/?O ?(불균형|positive)'
+    keywords = '전신 ?부종|양측 ?(하지 ?)?부종|함요 ?부종|pitting|anasarca|generalized edema|체중.{0,8}(증가|늘)|체액 ?(과다|과잉)|fluid overload|hypervolem|폐부종|pulmonary edema|수포음|crackle|\brales?\b|경정맥 ?팽대|\bJVD\b|심부전|heart failure|\bCHF\b|신부전|\bCKD\b|투석|라식스|lasix|furosemide|복수|ascites|I/?O ?(불균형|positive)'
     cause = '나트륨과 수분의 과다 정체'
     long = '대상자는 퇴원 시 부종이 감소하고 체액 균형을 유지할 것이다.'
     short = @('대상자는 3일 내 체중이 하루 0.5~1kg 감소하고 섭취량보다 배설량이 많을 것이다.','대상자는 3일 내 하루 수분·염분 제한량을 정확히 말로 표현할 것이다.')
@@ -3085,6 +3085,13 @@ function Find-Diagnoses($subjective,$objective,$medical) {
     }
     return @($scores | Sort-Object score -Descending | ForEach-Object {$_.name})
 }
+# 원인(관련 요인) 후보: 이 진단을 떠올리게 한 대상자 자료 줄 (주관적·객관적 자료만, 의학적 진단은 제외)
+function Get-Cues($name,$subjective,$objective) {
+    $t=$script:Templates[$name];if(-not $t -or $t.custom){return @()}
+    $out=New-Object Collections.Generic.List[string]
+    foreach($l in (Split-Lines "$subjective`n$objective")){if([regex]::IsMatch($l,$t.keywords,'IgnoreCase') -and -not $out.Contains($l)){$out.Add($l)}}
+    return @($out|Select-Object -First 5)
+}
 function Get-Nrs($text) {
     $m=[regex]::Match($text,'NRS\s*[:：]?\s*(\d{1,2})','IgnoreCase')
     if($m.Success){return [int]$m.Groups[1].Value}
@@ -3437,5 +3444,7 @@ function Test-Templates {
     if((ConvertTo-Done '침상 난간을 항상 올리고 침대 높이를 낮게 유지한다.') -ne '침상 난간을 항상 올리고 침대 높이를 낮게 유지함'){throw 'done failed'}
     $rh=ConvertTo-ReportHtml $m @{subject='과목';title='제목';date='2026년 4월 3일';author='조';school='학교'}
     if($rh -notlike '*size:210mm 297mm*' -or $rh -notlike '*class=cover*'){throw 'report html failed'}
+    $cues=@(Get-Cues '급성 통증' '배가 쥐어짜는 듯이 너무 아파요' "Fever(+)`nNRS : 5/10점`nWBC(20000)")
+    if($cues.Count -ne 2 -or $cues[0] -ne '배가 쥐어짜는 듯이 너무 아파요'){throw "cues failed: $($cues -join ',')"}
     Write-Output 'Template tests passed'
 }

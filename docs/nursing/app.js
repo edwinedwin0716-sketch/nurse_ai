@@ -29,6 +29,7 @@
     state.checked[name] = true; state.open = name; box.value = ''; $('dxq').value = ''; renderList();
   };
   window.renderDx = function () { renderList(); };
+  ['s', 'o'].forEach(function (id) { $(id).addEventListener('input', function () { state.sample = false; }); });
 
   function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
   function toast(msg) { var t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(function () { t.classList.remove('show'); }, 2200); }
@@ -66,6 +67,7 @@
     $('dx').value = 'acute peritonitis';
     setSeg('age', 'adult');
     ['s', 'o', 'dx'].forEach(function (id) { store('draft_' + id, $(id).value); });
+    state.sample = true; state.causes = {};   // 예시 자료는 예시 원인을 그대로 써도 된다
     toast('예시를 불러왔어요');
   };
   window.clearAll = function () {
@@ -88,7 +90,7 @@
     if (move) go('p-dx');
     toast(top.length ? '추천 진단: ' + top.join(', ') : '추천할 진단을 찾지 못했어요. 직접 체크하세요.');
   };
-  function cause(name) { if (!state.causes[name]) state.causes[name] = { cause: T[name].cause, origin: '' }; return state.causes[name]; }
+  function cause(name) { if (!state.causes[name]) state.causes[name] = { cause: T[name].cause, origin: '', example: !state.sample }; return state.causes[name]; }
   function renderList() {
     var box = $('dxlist'); box.innerHTML = '';
     var q = ($('dxq') ? $('dxq').value : '').trim().toLowerCase(), shown = 0;
@@ -110,11 +112,16 @@
       box.appendChild(row);
       if (state.open === name && state.checked[name]) {
         var c = cause(name), ed = document.createElement('div'); ed.className = 'cause';
-        ed.innerHTML = '<label>원인 (관련 요인)</label><input class="c1"><label>원인의 원인 · 방식 2 (선택)</label><input class="c2" placeholder="예) 날음식 섭취"><div class="preview"></div>';
-        var c1 = ed.querySelector('.c1'), c2 = ed.querySelector('.c2'), pv = ed.querySelector('.preview');
+        ed.innerHTML = '<label>원인 (관련 요인) · 대상자가 호소하는 증상·자료와 연결해서 쓰세요</label><input class="c1"><div class="hint"></div><div class="cues"></div><label>원인의 원인 · 방식 2 (선택)</label><input class="c2" placeholder="예) 날음식 섭취"><div class="preview"></div>';
+        var c1 = ed.querySelector('.c1'), c2 = ed.querySelector('.c2'), pv = ed.querySelector('.preview'), hint = ed.querySelector('.hint'), cb = ed.querySelector('.cues');
         c1.value = c.cause; c2.value = c.origin;
-        var upd = function () { c.cause = c1.value.trim(); c.origin = c2.value.trim(); pv.textContent = '→ ' + N.formatDiagnosis(c.cause, name, c.origin); };
-        c1.addEventListener('input', upd); c2.addEventListener('input', upd); upd();
+        var upd = function () { c.cause = c1.value.trim(); c.origin = c2.value.trim(); pv.textContent = '→ ' + N.formatDiagnosis(c.cause, name, c.origin); hint.textContent = c.example ? '⚠️ 지금은 예시 원인이에요. 아래 대상자 자료를 눌러 이 환자에 맞게 고치세요.' : ''; };
+        var found = N.cues(name, $('s').value, $('o').value);
+        if (found.length) {
+          cb.innerHTML = '<small>이 진단과 관련된 대상자 자료 (누르면 원인 칸에 넣어요)</small>';
+          found.forEach(function (l) { var b = document.createElement('button'); b.type = 'button'; b.textContent = l; b.addEventListener('click', function () { c1.value = l.replace(/^["“”']|["“”']$/g, '').replace(/\s*\(\+\)\s*$/, ''); c.example = false; upd(); c1.focus(); }); cb.appendChild(b); });
+        }
+        c1.addEventListener('input', function () { c.example = false; upd(); }); c2.addEventListener('input', upd); upd();
         box.appendChild(ed);
       }
     });
@@ -139,6 +146,8 @@
     if (!ch.length) { suggest(false); ch = chosen(); }
     if (!ch.length) { toast('간호진단을 하나 이상 체크하세요'); go('p-dx'); return; }
     var s = $('s').value, o = $('o').value, dx = $('dx').value, d = getDate();
+    var ex = ch.filter(function (c) { return !T[c.name].custom && cause(c.name).example; }).map(function (c) { return c.name; });
+    if (ex.length && !confirm('아래 진단의 원인(관련 요인)이 아직 예시 그대로예요.\n' + ex.join(', ') + '\n\n원인은 대상자가 호소하는 증상·자료에 맞게 써야 해요. 그래도 틀을 만들까요?')) { state.open = ex[0]; go('p-dx'); renderList(); return; }
     state.format = seg('fmt');
     if (state.format === 'report') { state.model = N.workbookModel(s, o, dx, ch, d, false); state.text = N.reportText(state.model); }
     else if (state.format === 'b4') { state.model = N.workbookModel(s, o, dx, ch, d, false); state.text = N.workbookText(state.model); }
