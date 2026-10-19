@@ -811,7 +811,7 @@
   "priority": 2,
   "reason": "체액이 과다하면 폐부종과 심부전 악화로 호흡과 순환에 직접 영향을 주므로 ABC 중 순환 문제로 우선 다룬다",
   "evalData": "매일 같은 시간 체중, I/O, 부종 정도, 폐 수포음·호흡곤란·SpO2, 혈압·경정맥 팽대, 혈청 나트륨·BUN/Cr, 수분·염분 제한 이행 여부",
-  "keywords": "부종|edema|함요|pitting|체중 (증가|늘)|체액 ?(과다|과잉)|fluid overload|hypervolem|폐부종|pulmonary edema|수포음|crackle|\\brales?\\b|경정맥 ?팽대|JVD|심부전|heart failure|CHF|신부전|CKD|투석|라식스|lasix|furosemide|복수|ascites|I/?O ?(불균형|positive)",
+  "keywords": "전신 ?부종|양측 ?(하지 ?)?부종|함요 ?부종|pitting|anasarca|generalized edema|체중.{0,8}(증가|늘)|체액 ?(과다|과잉)|fluid overload|hypervolem|폐부종|pulmonary edema|수포음|crackle|\\brales?\\b|경정맥 ?팽대|\\bJVD\\b|심부전|heart failure|\\bCHF\\b|신부전|\\bCKD\\b|투석|라식스|lasix|furosemide|복수|ascites|I/?O ?(불균형|positive)",
   "cause": "나트륨과 수분의 과다 정체",
   "long": "대상자는 퇴원 시 부종이 감소하고 체액 균형을 유지할 것이다.",
   "short": [

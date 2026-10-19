@@ -64,6 +64,7 @@ function Select-Row($row) {
     foreach($r in $script:rows){$r.Selected=($r -eq $row);$r.Invalidate()}
     $script:selected=$row
     if($row){$c=$script:choices[$row.Tag];$script:loading=$true;$causeBox.Text=$c.cause;$originBox.Text=$c.origin;$script:loading=$false;$causeTitle.Text="원인 (관련 요인) · $($row.Tag)"}
+    Update-Cues
 }
 function Refresh-Diagnoses($suggested,$keepChecked=$false) {
     $checked=@($script:rows|Where-Object {$_.Checked}|ForEach-Object {$_.Tag})
@@ -82,7 +83,7 @@ function Refresh-Diagnoses($suggested,$keepChecked=$false) {
 }
 function New-DiagRow($name) {
     $t=$script:Templates[$name]
-    if(-not $script:choices.Contains($name)){$script:choices[$name]=@{cause=$t.cause;origin=''}}
+    if(-not $script:choices.Contains($name)){$script:choices[$name]=@{cause=$t.cause;origin='';example=(-not $t.custom)}}
     $row=New-Object CheckRow;$row.Text=$name;$row.Tag=$name;$row.Width=$diagCard.Width-$diagCard.Padding.Horizontal-22;$row.Margin=New-Object Windows.Forms.Padding(0)
     $tipText=if($t.custom){'직접 입력한 진단 · 틀을 만든 뒤 빈칸을 채우세요'}else{"$($t.en)  ·  $($t.domain)  ·  별책 부록 8 $(Get-PageRef $t.page)"}
     $tip.SetToolTip($row,$tipText)
@@ -109,6 +110,26 @@ function Add-CustomDiagnosis {
     $row.Checked=$true
     $diagList.Controls.SetChildIndex($row,0);$script:rows=@($row)+@($script:rows|Where-Object {$_ -ne $row})
     $customBox.Clear();$dxSearch.Clear();Filter-Diagnoses;Select-Row $row;$diagList.ScrollControlIntoView($row)
+}
+# 원인 칸 아래: 예시 원인 경고 + 이 진단과 관련된 대상자 자료 버튼 (누르면 원인 칸에 들어감)
+function Update-Cues {
+    $cuePanel.SuspendLayout();$cuePanel.Controls.Clear()
+    $row=$script:selected
+    if($row){
+        $c=$script:choices[$row.Tag]
+        if($c.example){$cuePanel.Controls.Add((New-Text '⚠️ 지금은 예시 원인이에요. 대상자가 호소하는 증상·자료에 맞게 고치세요.' 8.5 $false ([Drawing.Color]::FromArgb(201,110,0))))}
+        $found=@(Get-Cues $row.Tag $sData.Text $oData.Text)
+        if($found.Count){
+            $cuePanel.Controls.Add((New-Text '이 진단과 관련된 대상자 자료 (누르면 원인 칸에 넣어요)' 8.5 $false ([Theme]::Secondary)))
+            foreach($l in $found){
+                $label=if($l.Length -gt 26){$l.Substring(0,25)+'…'}else{$l}
+                $b=New-Pill $label;$b.Tag=$l;$b.Margin=New-Object Windows.Forms.Padding(0,4,6,0);$tip.SetToolTip($b,$l)
+                $b.Add_Click({$v=($this.Tag -replace '^["“”'']|["“”'']$','') -replace '\s*\(\+\)\s*$','';$causeBox.Text=$v;$causeBox.Focus();$causeBox.SelectionStart=$causeBox.Text.Length})
+                $cuePanel.Controls.Add($b)
+            }
+        }
+    }
+    $cuePanel.ResumeLayout()
 }
 function Move-Selected($delta) {
     $row=$script:selected;if(-not $row){return}
@@ -163,6 +184,11 @@ function Build-Document {
     $chosen=@(Get-Checked)
     if($chosen.Count -eq 0){Suggest;$chosen=@(Get-Checked)}
     if($chosen.Count -eq 0){[Windows.Forms.MessageBox]::Show('간호진단을 하나 이상 체크하세요.','간호과정 도우미')|Out-Null;return}
+    $ex=@($chosen|Where-Object {-not $script:Templates[$_.name].custom -and $script:choices[$_.name].example}|ForEach-Object {$_.name})
+    if($ex.Count -and -not ($Check -or $SelfTest)){
+        $msg="아래 진단의 원인(관련 요인)이 아직 예시 그대로예요.`r`n$($ex -join ', ')`r`n`r`n원인은 대상자가 호소하는 증상·자료에 맞게 써야 해요. 그래도 틀을 만들까요?"
+        if([Windows.Forms.MessageBox]::Show($msg,'간호과정 도우미','YesNo','Warning') -ne 'Yes'){$r=$script:rows|Where-Object {$_.Tag -eq $ex[0]}|Select-Object -First 1;if($r){Select-Row $r;$diagList.ScrollControlIntoView($r)};$causeBox.Focus();return}
+    }
     if($formatTabs.Selected -eq '제출 양식'){
         $script:model=New-WorkbookModel $sData.Text $oData.Text $dxBox.Text $chosen $datePicker.Value
         $script:format='report'
@@ -414,10 +440,11 @@ $causeBox=New-Field '예) 복강 내 염증  →  "복강 내 염증과 관련�
 $originBox=New-Field '(선택) 예) 날음식 섭취  →  "날음식 섭취로 인한 복강 내 염증과 관련된 급성 통증"' 1
 $causeCard=New-FormCard $cardWidth @(@('원인 (관련 요인)',$causeBox),@('원인의 원인 · 방식 2 (선택)',$originBox));$causeCard.Margin=New-Object Windows.Forms.Padding(0,14,0,0)
 $causeTitle=$causeCard.Controls[0]
+$cuePanel=New-Object Windows.Forms.FlowLayoutPanel;$cuePanel.Width=$cardWidth;$cuePanel.AutoSize=$true;$cuePanel.MaximumSize=New-Object Drawing.Size($cardWidth,0);$cuePanel.WrapContents=$true;$cuePanel.BackColor=[Theme]::Back;$cuePanel.Margin=New-Object Windows.Forms.Padding(4,6,0,0)
 
 $build=New-Object PillButton;$build.Text='틀 만들기';$build.Primary=$true;$build.Width=$cardWidth;$build.Height=46;$build.Margin=New-Object Windows.Forms.Padding(0,18,0,0)
 $tip.SetToolTip($build,'Ctrl+Enter')
-$left.Controls.AddRange(@($title,$sub,(New-Section '대상자 자료'),$dataCard,$actionRow,$diagHeader,$searchCard,$diagCard,$customRow,$causeCard,$build))
+$left.Controls.AddRange(@($title,$sub,(New-Section '대상자 자료'),$dataCard,$actionRow,$diagHeader,$searchCard,$diagCard,$customRow,$causeCard,$cuePanel,$build))
 
 # 오른쪽: 형식 선택 + 결과
 $right=New-Object Windows.Forms.Panel;$right.Dock='Fill';$right.Padding=New-Object Windows.Forms.Padding(12,20,24,8);$right.BackColor=[Theme]::Back
@@ -464,6 +491,8 @@ function Load-Sample {
     $oData.Text="Fever(+)`r`nNRS : 5/10점`r`n배를 움켜잡은 채 웅크리고 있는 모습 관찰됨`r`nChilling(+)`r`n데노간(+)`r`nWBC(20000)`r`nCRP(4.0)"
     $dxBox.Text='acute peritonitis';$ageBox.SelectedIndex=1
     Suggest
+    foreach($c in $script:choices.Values){$c.example=$false}   # 예시 자료는 예시 원인을 그대로 써도 된다
+    Update-Cues
 }
 function Show-Welcome {
     Show-Document "■ 시작하기`n`n1. 왼쪽에 주관적·객관적 자료를 한 줄에 하나씩 넣으세요.`n2. ‘진단 추천’을 누르면 맞는 간호진단에 체크돼요. 위에서부터 우선순위예요.`n3. 진단을 눌러 원인(관련 요인)을 고치고 ‘틀 만들기’를 누르세요.`n`n· 위쪽에서 제출 양식 / B4 워크북 / 기본 형식을 고를 수 있어요.`n· 결과는 여기서 바로 고칠 수 있어요.`n· 저장 → Word(.doc)를 고르면 표 양식으로 저장돼요. 제출 양식은 표지도 넣을 수 있어요.`n· ‘예시 불러오기’로 바로 사용법을 볼 수 있어요."
@@ -472,7 +501,7 @@ $suggestButton.Add_Click({Suggest})
 $sampleButton.Add_Click({Load-Sample})
 $clearButton.Add_Click({$sData.Clear();$oData.Clear();$dxBox.Clear();$script:choices=[ordered]@{};Refresh-Diagnoses @();$script:model=$null;Show-Welcome;Set-Status ''})
 $upButton.Add_Click({Move-Selected -1});$downButton.Add_Click({Move-Selected 1});$sortButton.Add_Click({Sort-Rows})
-$causeBox.Add_TextChanged({if(-not $script:loading -and $script:selected){$script:choices[$script:selected.Tag].cause=$causeBox.Text.Trim()}})
+$causeBox.Add_TextChanged({if(-not $script:loading -and $script:selected){$c=$script:choices[$script:selected.Tag];$c.cause=$causeBox.Text.Trim();if($c.example){$c.example=$false;Update-Cues}}})
 $originBox.Add_TextChanged({if(-not $script:loading -and $script:selected){$script:choices[$script:selected.Tag].origin=$originBox.Text.Trim()}})
 $build.Add_Click({Build-Document})
 $formatTabs.Add_SelectedChanged({if(@(Get-Checked).Count -gt 0 -and ($sData.Text -or $oData.Text)){Build-Document}})

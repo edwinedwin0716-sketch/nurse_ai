@@ -53,6 +53,13 @@
     scores.sort(function (a, b) { return b.score - a.score || a.i - b.i; });
     return scores.map(function (x) { return x.name; });
   }
+  // 원인(관련 요인) 후보: 이 진단을 떠올리게 한 대상자 자료 줄 (주관적·객관적 자료만, 의학적 진단은 제외)
+  function cues(name, s, o) {
+    var t = T[name]; if (!t || t.custom) return [];
+    var re = new RegExp(t.keywords, 'i'), out = [];
+    splitLines(s + '\n' + o).forEach(function (l) { if (re.test(l) && out.indexOf(l) < 0) out.push(l); });
+    return out.slice(0, 5);
+  }
   function getNrs(text) {
     var m = /NRS\s*[:：]?\s*(\d{1,2})/i.exec(text || '');
     return m ? parseInt(m[1], 10) : null;
@@ -337,7 +344,7 @@
   }
 
   root.Nursing = {
-    formatDiagnosis: formatDiagnosis, toPast: toPast, splitLines: splitLines, findDiagnoses: findDiagnoses,
+    formatDiagnosis: formatDiagnosis, toPast: toPast, splitLines: splitLines, findDiagnoses: findDiagnoses, cues: cues,
     basic: basic, workbookModel: workbookModel, workbookText: workbookText, workbookHtml: workbookHtml, simpleHtml: simpleHtml,
     reportText: reportText, reportHtml: reportHtml, toDone: toDone,
     sortByPriority: sortByPriority, particle: particle, ro: ro
