@@ -47,6 +47,7 @@ static class Bootstrap {
       File.WriteAllText(Path.Combine(runtime, name), reader.ReadToEnd(), new UTF8Encoding(true));
     }
    }
+   InstallCleanup.RemoveOldVersions(Path.Combine(dataDir, "runtime"), Version);   // 예전 버전 실행 파일은 지운다
 
    if (install) {
     if (!string.Equals(installedExe, Application.ExecutablePath, StringComparison.OrdinalIgnoreCase))
@@ -55,6 +56,7 @@ static class Bootstrap {
     int code = RunPowerShell(runtime, dataDir, installedExe, true);
     if (code != 0) { MessageBox.Show("설치 확인 중 문제가 발생했습니다.\n\n" + Tail(Path.Combine(dataDir, "check.log")) + "\n\n진단 기록: " + Path.Combine(dataDir, "check.log") + "\n(이 창을 캡처해서 보내 주세요)", Caption); return code; }
     MessageBox.Show("간호과정 도우미 " + Version + " 설치를 마쳤습니다.\n\n바탕화면의 간호과정 도우미를 더블클릭하세요.", Caption);
+    InstallCleanup.OfferRemoveDownloads(Caption, "간호과정도우미-", new[] { "NursingHelper.exe", "NursingHelperSetup.exe", "설치 및 사용법.txt" }, @"^NursingHelper-[0-9.]+( \(\d+\))?\.zip$", dataDir);
     Process.Start(new ProcessStartInfo(installedExe) { UseShellExecute = true, WorkingDirectory = dataDir });
     return 0;
    }

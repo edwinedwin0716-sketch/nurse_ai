@@ -10,11 +10,11 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("MySpace Launcher")]
 [assembly: AssemblyProduct("MySpace Launcher")]
 [assembly: AssemblyDescription("파일, 게임, AI, 메신저를 한 곳에서 실행")]
-[assembly: AssemblyVersion("1.3.0.0")]
-[assembly: AssemblyFileVersion("1.3.0.0")]
+[assembly: AssemblyVersion("1.3.1.0")]
+[assembly: AssemblyFileVersion("1.3.1.0")]
 
 static class Bootstrap {
- const string Version = "1.3.0";
+ const string Version = "1.3.1";
  const string Caption = "MySpace Launcher";
  static readonly object logLock = new object();
  static readonly string[] Payload = { "Launcher.ps1", "Discovery.ps1", "ModernControls.cs" };
@@ -47,6 +47,7 @@ static class Bootstrap {
       File.WriteAllText(Path.Combine(runtime, name), reader.ReadToEnd(), new UTF8Encoding(true));
     }
    }
+   InstallCleanup.RemoveOldVersions(Path.Combine(dataDir, "runtime"), Version);   // 예전 버전 실행 파일은 지운다
 
    if (install) {
     if (!string.Equals(installedExe, Application.ExecutablePath, StringComparison.OrdinalIgnoreCase))
@@ -55,6 +56,7 @@ static class Bootstrap {
     int code = RunPowerShell(runtime, dataDir, installedExe, true);
     if (code != 0) { MessageBox.Show("설치 확인 중 문제가 발생했습니다.\n진단 기록: " + Path.Combine(dataDir, "check.log"), Caption); return code; }
     MessageBox.Show("MySpace 런처 " + Version + " 설치를 마쳤습니다.\n이전 버전 파일은 정리했고, 등록한 항목은 그대로 유지됩니다.\n\n바탕화면의 MySpace 런처를 더블클릭하세요.", Caption);
+    InstallCleanup.OfferRemoveDownloads(Caption, "MySpaceLauncher-", new[] { "MySpaceLauncher.exe", "MySpaceSetup.exe", "설치 및 사용법.txt" }, @"^MySpaceLauncher-[0-9.]+( \(\d+\))?\.zip$", dataDir);
     Process.Start(new ProcessStartInfo(installedExe) { UseShellExecute = true, WorkingDirectory = dataDir });
     return 0;
    }

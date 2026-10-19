@@ -8,11 +8,11 @@ using Microsoft.Win32;
 
 [assembly: AssemblyTitle("플래시카드")]
 [assembly: AssemblyProduct("플래시카드")]
-[assembly: AssemblyVersion("2.1.1.0")]
-[assembly: AssemblyFileVersion("2.1.1.0")]
+[assembly: AssemblyVersion("2.1.2.0")]
+[assembly: AssemblyFileVersion("2.1.2.0")]
 
 static class Launcher {
-    const string Version = "2.1.1";
+    const string Version = "2.1.2";
     const string Caption = "플래시카드";
     static string Dir { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Flashcards"); } }
 
@@ -24,6 +24,7 @@ static class Launcher {
             if (fresh) Install(html, exe);
             if (args.Length > 0 && args[0] == "--install-only") return 0;
             Open(html);
+            if (fresh) InstallCleanup.OfferRemoveDownloads(Caption, "플래시카드", new[] { "플래시카드.exe", "설치 및 사용법.txt" }, @"^Flashcards-(Windows|PC)-[0-9.]+( \(\d+\))?\.zip$", Dir);
             return 0;
         } catch (Exception e) {
             MessageBox.Show("실행하지 못했어요.\n\n" + e.Message, Caption, MessageBoxButtons.OK, MessageBoxIcon.Warning);
