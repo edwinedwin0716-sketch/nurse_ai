@@ -119,10 +119,10 @@ var MAC_CMD='xattr -dr com.apple.quarantine /Applications/MySpace.app';
 var MAC_TIP='<strong>"확인되지 않은 개발자"</strong> 창이 뜨면 <b>완료</b>를 누르고, <b>시스템 설정 → 개인정보 보호 및 보안</b> 맨 아래 <b>그래도 열기</b>. 그래도 안 되면 터미널에 아래 줄을 붙여넣으세요.<div class="cmd"><code id="maccmd">'+MAC_CMD+'</code><button class="copy" type="button" data-copy="maccmd">복사</button></div>';
 
 var APPS={
-  nurse:{title:'간호과정 도우미',img:'nurse',points:['S/O 자료를 넣으면 NANDA-I 간호진단 추천 · 우선순위','제출 양식 · B4 워크북 형식으로 큰 틀 완성','Word 저장, ChatGPT · Claude · 제미나이로 다듬기'],
+  nurse:{title:'간호과정 도우미',img:'nurse',points:['NANDA-I 2024–2026 간호진단 114개 · 진단 찾기 · 직접 입력','S/O 자료를 넣으면 간호진단 추천 · 우선순위','제출 양식 · B4 워크북 형식으로 큰 틀 완성','Word 저장, ChatGPT · Claude · 제미나이로 다듬기'],
     devs:{
-      android:{file:'NursingHelper/NursingHelper.apk',name:'안드로이드 앱 받기',size:'apk · 버전 1.4.1',steps:APK_STEPS,tip:APK_TIP},
-      windows:{file:'NursingHelper/NursingHelper-1.4.1.zip',name:'Windows 10/11용 받기',size:'zip · 버전 1.4.1',steps:WIN_STEPS,exe:'NursingHelperSetup.exe',tip:WIN_TIP},
+      android:{file:'NursingHelper/NursingHelper.apk',name:'안드로이드 앱 받기',size:'apk · 버전 1.5',steps:APK_STEPS,tip:APK_TIP},
+      windows:{file:'NursingHelper/NursingHelper-1.5.zip',name:'Windows 10/11용 받기',size:'zip · 버전 1.5',steps:WIN_STEPS,exe:'NursingHelperSetup.exe',tip:WIN_TIP},
       mac:{web:'nursing/',name:'Mac에서 열기',size:'웹앱 · Dock에 추가해서 사용',steps:MAC_WEB_STEPS,tip:MAC_WEB_TIP},
       ios:{web:'nursing/',name:'아이폰에서 열기',size:'웹앱 · 홈 화면에 추가해서 사용',steps:IOS_STEPS,tip:IOS_TIP}}},
   flash:{title:'플래시카드',img:'flash',points:['PDF(굿노트 필기) · PPT · 워드 · 한글 파일에서','형광펜 · 굵은 글씨 · 필기 부분만 카드와 문제로','모름 / 애매 / 알아요 채점, 복습 주기, 학습지 저장'],

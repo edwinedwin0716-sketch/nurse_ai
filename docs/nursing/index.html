@@ -84,6 +84,9 @@ textarea.edit{width:calc(100% - 32px);margin:12px 16px 0;min-height:60vh;border:
 @keyframes r{to{transform:rotate(360deg)}}
 .page{display:none}.page.on{display:block}
 .coffee{display:flex;align-items:center;gap:12px;margin:22px 16px 8px;padding:14px 16px;border-radius:14px;background:#FEE500;color:#191919;text-decoration:none;box-shadow:0 1px 3px rgba(0,0,0,.08)}.coffee .cup{font-size:26px;line-height:1}.coffee b{display:block;font-size:14.5px}.coffee small{display:block;font-size:12px;opacity:.75;margin-top:2px}.coffee:active{transform:scale(.98)}
+.dxsearch{margin:0 16px 10px}.dxsearch input,.custom input{width:100%;box-sizing:border-box;border:0;border-radius:12px;background:var(--card);color:var(--text);padding:12px 14px;font-size:16px;-webkit-appearance:none}
+.custom{display:flex;gap:8px;margin:0 16px;align-items:center}.custom input{flex:1;min-width:0}
+#dxlist .empty{padding:18px 14px;color:var(--sub);font-size:14px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -109,8 +112,11 @@ textarea.edit{width:calc(100% - 32px);margin:12px 16px 0;min-height:60vh;border:
 <!-- 2. 진단 -->
 <section class="page" id="p-dx">
   <header><h1>간호진단</h1><p>위에서부터 우선순위예요. 진단을 눌러 원인을 고치세요.</p></header>
-  <div class="section"><span>NANDA-I 2024–2026</span><button class="pill small" onclick="autoSort()">자동 정렬</button></div>
+  <div class="section"><span>NANDA-I 2024–2026 · 자주 쓰는 진단</span><button class="pill small" onclick="autoSort()">자동 정렬</button></div>
+  <div class="dxsearch"><input id="dxq" type="search" placeholder="🔍 진단 찾기 (예: 변비, 피부, 위험, pain)" oninput="renderDx()" autocomplete="off"></div>
   <div class="card" id="dxlist"></div>
+  <div class="section"><span>목록에 없는 진단 직접 입력</span></div>
+  <div class="custom"><input id="dxnew" placeholder="예) 비효과적 투약관리" autocomplete="off" onkeydown="if(event.key==='Enter')addCustom()"><button class="pill" onclick="addCustom()">추가</button></div>
   <button class="big" onclick="build(true)">틀 만들기</button>
 </section>
 
@@ -169,6 +175,7 @@ textarea.edit{width:calc(100% - 32px);margin:12px 16px 0;min-height:60vh;border:
 <div class="toast" id="toast"></div>
 
 <script src="templates.js"></script>
+<script src="templates-extra.js"></script>
 <script src="engine.js"></script>
 <script src="app.js"></script>
 <script>/* 컴퓨터에서 ☕ 후원을 누르면 카카오페이 QR을 보여 준다 (PC에서는 카카오페이 창이 안 열림) */

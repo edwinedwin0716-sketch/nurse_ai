@@ -11,9 +11,9 @@ if(-not($Check -or $SelfTest)){
 }
 [System.Windows.Forms.Application]::EnableVisualStyles()
 $script:settingsPath=Join-Path $env:MYSPACE_DATA_DIR 'settings.json'
-$script:settings=[pscustomobject]@{key='';model='gemini-2.5-flash';privacyOk=$false;cover=$null}
+$script:settings=[pscustomobject]@{key='';model='gemini-2.5-flash';privacyOk=$false;cover=$null;customDx=@()}
 if(Test-Path -LiteralPath $script:settingsPath){
-    try{$saved=Get-Content -LiteralPath $script:settingsPath -Raw -Encoding UTF8|ConvertFrom-Json;foreach($p in 'key','model','privacyOk','cover','privacyExtOk'){if($null -ne $saved.$p){$script:settings.$p=$saved.$p}}}catch{}
+    try{$saved=Get-Content -LiteralPath $script:settingsPath -Raw -Encoding UTF8|ConvertFrom-Json;foreach($p in 'key','model','privacyOk','cover','privacyExtOk','customDx'){if($null -ne $saved.$p){$script:settings.$p=$saved.$p}}}catch{}
 }
 function Save-Settings {
     $json=$script:settings|ConvertTo-Json
@@ -71,16 +71,44 @@ function Refresh-Diagnoses($suggested,$keepChecked=$false) {
     foreach($r in $script:rows){$r.Dispose()};$diagList.Controls.Clear();$script:rows=@()
     $order=@($suggested)+@($script:Templates.Keys|Where-Object {$_ -notin $suggested})
     foreach($name in $order){
-        if(-not $script:choices.Contains($name)){$script:choices[$name]=@{cause=$script:Templates[$name].cause;origin=''}}
-        $row=New-Object CheckRow;$row.Text=$name;$row.Tag=$name;$row.Width=$diagCard.Width-$diagCard.Padding.Horizontal-22;$row.Margin=New-Object Windows.Forms.Padding(0)
+        $row=New-DiagRow $name
         $row.Checked=if($keepChecked){$name -in $checked}else{$name -in $suggested}
         if($name -in $suggested){$row.Badge='추천'}
-        $tip.SetToolTip($row,"$($script:Templates[$name].en)  ·  $($script:Templates[$name].domain)  ·  별책 부록 8 p.$($script:Templates[$name].page)")
-        $row.Add_Click({Select-Row $this})
         $diagList.Controls.Add($row);$script:rows+=$row
     }
     $diagList.ResumeLayout()
+    Filter-Diagnoses
     if($script:rows.Count){Select-Row $script:rows[0]}
+}
+function New-DiagRow($name) {
+    $t=$script:Templates[$name]
+    if(-not $script:choices.Contains($name)){$script:choices[$name]=@{cause=$t.cause;origin=''}}
+    $row=New-Object CheckRow;$row.Text=$name;$row.Tag=$name;$row.Width=$diagCard.Width-$diagCard.Padding.Horizontal-22;$row.Margin=New-Object Windows.Forms.Padding(0)
+    $tipText=if($t.custom){'직접 입력한 진단 · 틀을 만든 뒤 빈칸을 채우세요'}else{"$($t.en)  ·  $($t.domain)  ·  별책 부록 8 $(Get-PageRef $t.page)"}
+    $tip.SetToolTip($row,$tipText)
+    $row.Add_Click({Select-Row $this})
+    return $row
+}
+# 진단 찾기: 이름(한글·영문)에 검색어가 들어간 진단과 체크한 진단만 보인다
+function Filter-Diagnoses {
+    $q=$dxSearch.Text.Trim().ToLower()
+    $diagList.SuspendLayout()
+    foreach($r in $script:rows){$r.Visible=(-not $q) -or $r.Checked -or ("$($r.Tag) $($script:Templates[$r.Tag].en)".ToLower().Contains($q))}
+    $diagList.ResumeLayout()
+}
+# 목록에 없는 진단 직접 입력: 빈칸이 있는 틀로 목록 맨 위에 넣고 체크한다 (다음에도 쓰도록 저장)
+function Add-CustomDiagnosis {
+    $name=($customBox.Text.Trim() -replace '\s+',' ');if(-not $name){$customBox.Focus();return}
+    if(-not $script:Templates.Contains($name)){
+        $script:Templates[$name]=New-CustomTemplate $name
+        $script:settings.customDx=@(@($script:settings.customDx)+$name|Where-Object {$_}|Select-Object -Unique);Save-Settings
+        Set-Status "‘$name’ 진단을 추가했어요. 틀을 만든 뒤 빈칸을 채우세요."
+    }else{Set-Status '이미 목록에 있어서 체크했어요.'}
+    $row=$script:rows|Where-Object {$_.Tag -eq $name}|Select-Object -First 1
+    if(-not $row){$row=New-DiagRow $name;$diagList.Controls.Add($row)}
+    $row.Checked=$true
+    $diagList.Controls.SetChildIndex($row,0);$script:rows=@($row)+@($script:rows|Where-Object {$_ -ne $row})
+    $customBox.Clear();$dxSearch.Clear();Filter-Diagnoses;Select-Row $row;$diagList.ScrollControlIntoView($row)
 }
 function Move-Selected($delta) {
     $row=$script:selected;if(-not $row){return}
@@ -370,6 +398,17 @@ $diagCard=New-Object Card;$diagCard.Width=$cardWidth;$diagCard.Height=262;$diagC
 $diagList=New-Object Windows.Forms.FlowLayoutPanel;$diagList.Dock='Fill';$diagList.FlowDirection='TopDown';$diagList.WrapContents=$false;$diagList.AutoScroll=$true;$diagList.BackColor=[Theme]::Surface
 $diagList.Add_HandleCreated({[Ui]::ModernScroll($this,$false)})
 $diagCard.Controls.Add($diagList)
+$dxSearch=New-Field '진단 이름(한글·영문)으로 찾기' 1
+$searchCard=New-FormCard $cardWidth @(,@('진단 찾기 (예: 변비, 피부, 위험, pain)',$dxSearch));$searchCard.Margin=New-Object Windows.Forms.Padding(0,0,0,8)
+$dxSearch.Add_TextChanged({Filter-Diagnoses})
+$customBox=New-Field '목록에 없는 진단명을 쓰고 추가를 누르세요' 1
+$customAdd=New-Pill '추가'
+$customCard=New-FormCard ($cardWidth-$customAdd.Width-8) @(,@('목록에 없는 진단 직접 입력 (예: 비효과적 투약관리)',$customBox))
+$customRow=New-Object Windows.Forms.FlowLayoutPanel;$customRow.AutoSize=$true;$customRow.WrapContents=$false;$customRow.BackColor=[Theme]::Back;$customRow.Margin=New-Object Windows.Forms.Padding(0,10,0,0)
+$customAdd.Margin=New-Object Windows.Forms.Padding(8,24,0,0)
+$customRow.Controls.AddRange(@($customCard,$customAdd))
+$customAdd.Add_Click({Add-CustomDiagnosis})
+$customBox.Add_KeyDown({if($_.KeyCode -eq 'Return'){Add-CustomDiagnosis;$_.Handled=$true;$_.SuppressKeyPress=$true}})
 
 $causeBox=New-Field '예) 복강 내 염증  →  "복강 내 염증과 관련된 급성 통증"' 1
 $originBox=New-Field '(선택) 예) 날음식 섭취  →  "날음식 섭취로 인한 복강 내 염증과 관련된 급성 통증"' 1
@@ -378,7 +417,7 @@ $causeTitle=$causeCard.Controls[0]
 
 $build=New-Object PillButton;$build.Text='틀 만들기';$build.Primary=$true;$build.Width=$cardWidth;$build.Height=46;$build.Margin=New-Object Windows.Forms.Padding(0,18,0,0)
 $tip.SetToolTip($build,'Ctrl+Enter')
-$left.Controls.AddRange(@($title,$sub,(New-Section '대상자 자료'),$dataCard,$actionRow,$diagHeader,$diagCard,$causeCard,$build))
+$left.Controls.AddRange(@($title,$sub,(New-Section '대상자 자료'),$dataCard,$actionRow,$diagHeader,$searchCard,$diagCard,$customRow,$causeCard,$build))
 
 # 오른쪽: 형식 선택 + 결과
 $right=New-Object Windows.Forms.Panel;$right.Dock='Fill';$right.Padding=New-Object Windows.Forms.Padding(12,20,24,8);$right.BackColor=[Theme]::Back
@@ -448,6 +487,7 @@ $settingsButton.Add_Click({Open-Settings})
 $output.Add_TextChanged({if(-not $script:rendering){$script:model=$null}})
 $form.Add_KeyDown({if($_.Control -and $_.KeyCode -eq 'Return'){Build-Document;$_.Handled=$true;$_.SuppressKeyPress=$true}})
 
+foreach($n in @($script:settings.customDx)){if($n -and -not $script:Templates.Contains($n)){$script:Templates[$n]=New-CustomTemplate $n}}
 Refresh-Diagnoses @()
 Show-Welcome
 if($Check -or $SelfTest){

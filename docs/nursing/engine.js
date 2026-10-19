@@ -2,6 +2,8 @@
 (function (root) {
   'use strict';
   var T = root.TEMPLATES;
+  // 쪽수를 모르는 진단(새로 넣은 진단 · 직접 입력)은 빈칸으로 둔다
+  function pg(x) { return x.page ? 'p.' + x.page : 'p.____ (직접 찾기)'; }
 
   function finalOf(word) {
     if (!word) return -1;
@@ -162,8 +164,8 @@
     m.diags.forEach(function (x, n) {
       w(''); w('단서묶음 ' + (n + 1));
       x.cues.forEach(function (q, k) { w((k + 1) + '. ' + q); }); if (!x.cues.length) w('1. (이 진단의 근거가 되는 자료를 적으세요)');
-      w('▪ 영역: ' + x.domain); w('▪ 과: ' + x.cls); w('▪ 페이지: 별책 부록 8, p.' + x.page);
-      w('▪ 진단명: ' + x.name + ' (' + x.en + ')'); w('▪ 정의: (별책 부록 8, p.' + x.page + '의 정의를 옮겨 적으세요)');
+      w('▪ 영역: ' + x.domain); w('▪ 과: ' + x.cls); w('▪ 페이지: 별책 부록 8, ' + pg(x));
+      w('▪ 진단명: ' + x.name + ' (' + x.en + ')'); w('▪ 정의: (별책 부록 8, ' + pg(x) + '의 정의를 옮겨 적으세요)');
       w('관련(위험) 요인: ' + x.cause); w('간호진단 진술: ' + x.statement);
     });
     w(''); w('■ 3. 간호계획'); w('');
@@ -216,8 +218,8 @@
       h.push('<table><tr><th style="width:15%"></th>' + pair.map(function (x, i) { return '<th>단서묶음 ' + (k + i + 1) + '</th>'; }).join('') + '</tr>');
       var row = function (label, cell) { h.push('<tr><td class=k>' + label + '</td>' + pair.map(function (x) { return '<td>' + cell(x) + '</td>'; }).join('') + '</tr>'); };
       row('단서묶음', function (x) { return list(x.cues, '(근거 자료)'); });
-      row('영역찾기', function (x) { return '▪ 영역: ' + esc(x.domain) + '<br>▪ 과: ' + esc(x.cls) + '<br>▪ 페이지: 별책 부록 8, p.' + x.page; });
-      row('간호진단명과 정의', function (x) { return '▪ 진단명: <b>' + esc(x.name) + '</b> (' + esc(x.en) + ')<br>▪ 정의: <span class=hint>(부록 8, p.' + x.page + '의 정의를 옮겨 적으세요)</span>'; });
+      row('영역찾기', function (x) { return '▪ 영역: ' + esc(x.domain) + '<br>▪ 과: ' + esc(x.cls) + '<br>▪ 페이지: 별책 부록 8, ' + pg(x); });
+      row('간호진단명과 정의', function (x) { return '▪ 진단명: <b>' + esc(x.name) + '</b> (' + esc(x.en) + ')<br>▪ 정의: <span class=hint>(부록 8, ' + pg(x) + '의 정의를 옮겨 적으세요)</span>'; });
       row('관련(위험) 요인', function (x) { return esc(x.cause); });
       row('간호진단 진술', function (x) { return '<b>' + esc(x.statement) + '</b>'; });
       h.push('</table>');

@@ -17,7 +17,7 @@ APPS = {
     'nursing': dict(name='간호과정 도우미', short='간호과정', color='#F2F2F7', status='default',
                     icon='NursingHelper/android/res/mipmap-xxxhdpi/ic_launcher.png',
                     files=['NursingHelper/android/assets/index.html', 'NursingHelper/android/assets/app.js',
-                           'NursingHelper/android/assets/engine.js', 'NursingHelper/android/assets/templates.js'],
+                           'NursingHelper/android/assets/engine.js', 'NursingHelper/android/assets/templates.js', 'NursingHelper/android/assets/templates-extra.js'],
                     desc='자료를 넣으면 간호진단을 추천하고 간호과정의 큰 틀을 만들어 줘요.'),
     'flashcards': dict(name='플래시카드', short='플래시카드', color='#F2F2F7', status='default',
                        icon='StudyHelper/android/res/mipmap-xxxhdpi/ic_launcher.png',
