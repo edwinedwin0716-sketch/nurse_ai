@@ -7,6 +7,7 @@ import json, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, 'data', 'extra.json')
+VAR = os.path.join(HERE, 'data', 'variants.json')  # 질환별 추가 간호: {진단명: [{label, when, diag, ther, edu}]}
 PS = os.path.join(HERE, 'src', 'Templates.ps1')
 JS = os.path.join(HERE, 'android', 'assets', 'templates-extra.js')
 BEGIN = '# >>> 추가 진단'
@@ -47,12 +48,25 @@ def main():
     ps = open(PS, encoding='utf-8').read()
     a, b = ps.index(BEGIN), ps.index(END)
     head = ps[:a] + ps[a:ps.index('\n', a) + 1]
-    ps = head + ''.join(ps_entry(n, t) for n, t in data.items()) + ps[b:]
+    variants = json.load(open(VAR, encoding='utf-8')) if os.path.exists(VAR) else {}
+    for n, vs in variants.items():
+        for v in vs:
+            re.compile(v['when'], re.I)
+            for k in ('diag', 'ther', 'edu'):
+                for x in v.get(k, []):
+                    if not x.get('plan') or not x.get('why'): sys.exit('%s/%s: 빈 항목' % (n, v['label']))
+    vps = ''.join("$script:Variants[%s] = @(%s)\n$script:Templates[%s].keywords += %s\n" % (
+        q(n), ','.join("@{label=%s;when=%s;diag=%s;ther=%s;edu=%s}" % (q(v['label']), q(v['when']), items(v.get('diag', [])), items(v.get('ther', [])), items(v.get('edu', []))) for v in vs),
+        q(n), q('|' + '|'.join(v['when'] for v in vs))) for n, vs in variants.items())
+    ps = head + ''.join(ps_entry(n, t) for n, t in data.items()) + vps + ps[b:]
     open(PS, 'w', encoding='utf-8').write(ps)
     clean = {n: {f: t[f] for f in FIELDS} for n, t in data.items()}
-    open(JS, 'w', encoding='utf-8').write('// 자동 생성: NursingHelper/data/extra.json → build_templates.py (직접 고치지 마세요)\n'
-                                         'Object.assign(window.TEMPLATES, ' + json.dumps(clean, ensure_ascii=False, indent=1) + ');\n')
-    print('%d개 진단을 넣었어요' % len(data))
+    js = ('// 자동 생성: NursingHelper/data/extra.json · variants.json → build_templates.py (직접 고치지 마세요)\n'
+          'Object.assign(window.TEMPLATES, ' + json.dumps(clean, ensure_ascii=False, indent=1) + ');\n'
+          'window.VARIANTS = ' + json.dumps(variants, ensure_ascii=False, indent=1) + ';\n'
+          'Object.keys(window.VARIANTS).forEach(function (n) { window.TEMPLATES[n].keywords += "|" + window.VARIANTS[n].map(function (v) { return v.when; }).join("|"); });\n')
+    open(JS, 'w', encoding='utf-8').write(js)
+    print('%d개 진단, 질환별 추가 간호 %d개를 넣었어요' % (len(data), sum(len(v) for v in variants.values())))
 
 
 if __name__ == '__main__':

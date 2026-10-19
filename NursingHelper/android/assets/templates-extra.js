@@ -1,4 +1,4 @@
-// 자동 생성: NursingHelper/data/extra.json → build_templates.py (직접 고치지 마세요)
+// 자동 생성: NursingHelper/data/extra.json · variants.json → build_templates.py (직접 고치지 마세요)
 Object.assign(window.TEMPLATES, {
  "비효과적 가족 건강관리": {
   "en": "Ineffective family health management",
@@ -6213,3 +6213,5 @@ Object.assign(window.TEMPLATES, {
   ]
  }
 });
+window.VARIANTS = {};
+Object.keys(window.VARIANTS).forEach(function (n) { window.TEMPLATES[n].keywords += "|" + window.VARIANTS[n].map(function (v) { return v.when; }).join("|"); });

@@ -1,6 +1,7 @@
 # 간호진단 템플릿과 간호과정 문서 생성기 (UI 없음 · 단독 테스트 가능)
 # 각 항목: 계획(plan)과 이론적 근거(why). 중재는 계획 문장을 과거형으로 바꿔 자동 생성한다.
 
+$script:Variants = @{}
 $script:Templates = [ordered]@{
 '급성 통증' = @{
     en = 'Acute pain'
@@ -3034,6 +3035,16 @@ $script:Templates['영아 신경발달조직 손상'] = @{
 }
 # <<< 추가 진단
 
+# 질환별 추가 간호(예: 농가진): 자료에 해당 질환이 있으면 그 진단의 계획 뒤에 덧붙인다
+function Get-Template($name,$text) {
+    $t=$script:Templates[$name];$vs=$script:Variants[$name]
+    if(-not $vs){return $t}
+    $hit=@($vs|Where-Object {[regex]::IsMatch($text,$_.when,'IgnoreCase')})
+    if(-not $hit.Count){return $t}
+    $c=@{};foreach($k in $t.Keys){$c[$k]=$t[$k]}
+    foreach($k in 'diag','ther','edu'){$list=@($t[$k]);foreach($v in $hit){if($v[$k]){$list+=@($v[$k])}};$c[$k]=$list}
+    return $c
+}
 # 쪽수를 모르는 진단(새로 넣은 진단 · 직접 입력)은 빈칸으로 둔다
 function Get-PageRef($page) {if($page){return "p.$page"};return 'p.____ (직접 찾기)'}
 # 목록에 없는 진단 직접 입력: 빈칸이 있는 기본 틀
@@ -3123,7 +3134,7 @@ function New-NursingProcess($subjective,$objective,$medical,$choices,[datetime]$
     $nrs=Get-Nrs $objective
     $n=0
     foreach($choice in $choices){
-        $n++;$t=$script:Templates[$choice.name]
+        $n++;$t=Get-Template $choice.name "$subjective`n$objective`n$medical"
         $title=Format-Diagnosis $choice.cause $choice.name $choice.origin
         & $line ''
         & $line '────────────────────────────'
@@ -3185,7 +3196,7 @@ function New-WorkbookModel($subjective,$objective,$medical,$choices,[datetime]$d
     $nrs=Get-Nrs $objective
     $diags=@()
     foreach($c in $choices){
-        $t=$script:Templates[$c.name]
+        $t=Get-Template $c.name "$subjective`n$objective`n$medical"
         $goalNrs=if($nrs -ne $null){[Math]::Max(0,[Math]::Min(2,$nrs-3))}else{2}
         $short=@($t.short | ForEach-Object {$_.Replace('{nrsGoal}',[string]$goalNrs)})
         $plans=@()

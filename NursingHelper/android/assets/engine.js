@@ -2,6 +2,16 @@
 (function (root) {
   'use strict';
   var T = root.TEMPLATES;
+  // 질환별 추가 간호(예: 농가진): 자료에 해당 질환이 있으면 그 진단의 계획 뒤에 덧붙인다
+  function tpl(name, text) {
+    var t = T[name], vs = (root.VARIANTS || {})[name];
+    if (!vs) return t;
+    var hit = vs.filter(function (v) { return new RegExp(v.when, 'i').test(text); });
+    if (!hit.length) return t;
+    var c = {}; Object.keys(t).forEach(function (k) { c[k] = t[k]; });
+    ['diag', 'ther', 'edu'].forEach(function (k) { c[k] = t[k].slice(); hit.forEach(function (v) { (v[k] || []).forEach(function (p) { c[k].push(p); }); }); });
+    return c;
+  }
   // 쪽수를 모르는 진단(새로 넣은 진단 · 직접 입력)은 빈칸으로 둔다
   function pg(x) { return x.page ? 'p.' + x.page : 'p.____ (직접 찾기)'; }
 
@@ -85,7 +95,7 @@
     choices.forEach(function (c, i) { w('진단 ' + (i + 1) + ' : ' + formatDiagnosis(c.cause, c.name, c.origin)); });
     var nrs = getNrs(o);
     choices.forEach(function (c, n) {
-      var t = T[c.name], title = formatDiagnosis(c.cause, c.name, c.origin);
+      var t = tpl(c.name, s + '\n' + o + '\n' + dx), title = formatDiagnosis(c.cause, c.name, c.origin);
       w(''); w('────────────────────────────'); w('진단 ' + (n + 1) + ' : ' + title); w('────────────────────────────'); w('');
       w('■ 계획'); w(''); w('장기목표'); w(t.long); w(''); w('단기목표');
       goals(t, nrs).forEach(function (g, i) { w((i + 1) + '. ' + g); });
@@ -118,7 +128,7 @@
     var dxl = splitLines(dx).map(function (x) { return /^Dx/.test(x) ? x : 'Dx. ' + x; });
     var all = sl.concat(ol, dxl), nrs = getNrs(o);
     var diags = choices.map(function (c) {
-      var t = T[c.name], plans = [];
+      var t = tpl(c.name, s + '\n' + o + '\n' + dx), plans = [];
       [['진단적', 'diag'], ['치료적', 'ther'], ['교육적', 'edu']].forEach(function (k) {
         t[k[1]].forEach(function (p) { plans.push({ kind: k[0], plan: p.plan, why: p.why, done: toPast(p.plan) }); });
       });
