@@ -1,0 +1,134 @@
+[
+ {
+  "name": "비효과적 신장관류의 위험",
+  "en": "Risk for ineffective renal perfusion",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses"
+ },
+ {
+  "name": "혈전증의 위험",
+  "en": "Risk for thrombosis",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses"
+ },
+ {
+  "name": "쇼크의 위험",
+  "en": "Risk for shock",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses"
+ },
+ {
+  "name": "목욕 자가간호 결핍",
+  "en": "Bathing self-care deficit",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "5. 자가간호 Self-care"
+ },
+ {
+  "name": "옷 입기 자가간호 결핍",
+  "en": "Dressing self-care deficit",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "5. 자가간호 Self-care"
+ },
+ {
+  "name": "섭식 자가간호 결핍",
+  "en": "Feeding self-care deficit",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "5. 자가간호 Self-care"
+ },
+ {
+  "name": "용변 자가간호 결핍",
+  "en": "Toileting self-care deficit",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "5. 자가간호 Self-care"
+ },
+ {
+  "name": "편측 무시",
+  "en": "Unilateral neglect",
+  "domain": "5. 지각/인지 Perception/Cognition",
+  "cls": "1. 주의 Attention"
+ },
+ {
+  "name": "급성 혼돈",
+  "en": "Acute confusion",
+  "domain": "5. 지각/인지 Perception/Cognition",
+  "cls": "4. 인지 Cognition"
+ },
+ {
+  "name": "급성 혼돈의 위험",
+  "en": "Risk for acute confusion",
+  "domain": "5. 지각/인지 Perception/Cognition",
+  "cls": "4. 인지 Cognition"
+ },
+ {
+  "name": "만성 혼돈",
+  "en": "Chronic confusion",
+  "domain": "5. 지각/인지 Perception/Cognition",
+  "cls": "4. 인지 Cognition"
+ },
+ {
+  "name": "기억력 장애",
+  "en": "Impaired memory",
+  "domain": "5. 지각/인지 Perception/Cognition",
+  "cls": "4. 인지 Cognition"
+ },
+ {
+  "name": "언어적 의사소통 장애",
+  "en": "Impaired verbal communication",
+  "domain": "5. 지각/인지 Perception/Cognition",
+  "cls": "5. 의사소통 Communication"
+ },
+ {
+  "name": "절망감",
+  "en": "Hopelessness",
+  "domain": "6. 자기지각 Self-perception",
+  "cls": "1. 자아개념 Self-concept"
+ },
+ {
+  "name": "상황적 자존감 저하",
+  "en": "Situational low self-esteem",
+  "domain": "6. 자기지각 Self-perception",
+  "cls": "2. 자존감 Self-esteem"
+ },
+ {
+  "name": "만성적 자존감 저하",
+  "en": "Chronic low self-esteem",
+  "domain": "6. 자기지각 Self-perception",
+  "cls": "2. 자존감 Self-esteem"
+ },
+ {
+  "name": "신체상 장애",
+  "en": "Disturbed body image",
+  "domain": "6. 자기지각 Self-perception",
+  "cls": "3. 신체상 Body image"
+ },
+ {
+  "name": "돌봄제공자 역할 긴장",
+  "en": "Caregiver role strain",
+  "domain": "7. 역할관계 Role relationship",
+  "cls": "1. 돌봄제공자 역할 Caregiving roles"
+ },
+ {
+  "name": "양육 장애",
+  "en": "Impaired parenting",
+  "domain": "7. 역할관계 Role relationship",
+  "cls": "1. 돌봄제공자 역할 Caregiving roles"
+ },
+ {
+  "name": "애착 장애의 위험",
+  "en": "Risk for impaired attachment",
+  "domain": "7. 역할관계 Role relationship",
+  "cls": "2. 가족관계 Family relationships"
+ },
+ {
+  "name": "가족과정 중단",
+  "en": "Interrupted family processes",
+  "domain": "7. 역할관계 Role relationship",
+  "cls": "2. 가족관계 Family relationships"
+ },
+ {
+  "name": "비효과적 역할수행",
+  "en": "Ineffective role performance",
+  "domain": "7. 역할관계 Role relationship",
+  "cls": "3. 역할수행 Role performance"
+ }
+]

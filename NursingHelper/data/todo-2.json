@@ -1,0 +1,134 @@
+[
+ {
+  "name": "변비의 위험",
+  "en": "Risk for constipation",
+  "domain": "3. 배설/교환 Elimination/Exchange",
+  "cls": "2. 위장계 기능 Gastrointestinal function"
+ },
+ {
+  "name": "설사",
+  "en": "Diarrhea",
+  "domain": "3. 배설/교환 Elimination/Exchange",
+  "cls": "2. 위장계 기능 Gastrointestinal function"
+ },
+ {
+  "name": "위장관 운동기능 장애",
+  "en": "Dysfunctional gastrointestinal motility",
+  "domain": "3. 배설/교환 Elimination/Exchange",
+  "cls": "2. 위장계 기능 Gastrointestinal function"
+ },
+ {
+  "name": "가스교환 장애",
+  "en": "Impaired gas exchange",
+  "domain": "3. 배설/교환 Elimination/Exchange",
+  "cls": "4. 호흡기계 기능 Respiratory function"
+ },
+ {
+  "name": "불면증",
+  "en": "Insomnia",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "1. 수면/휴식 Sleep/Rest"
+ },
+ {
+  "name": "수면 박탈",
+  "en": "Sleep deprivation",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "1. 수면/휴식 Sleep/Rest"
+ },
+ {
+  "name": "신체 기동성 장애",
+  "en": "Impaired physical mobility",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "2. 활동/운동 Activity/Exercise"
+ },
+ {
+  "name": "침상 기동성 장애",
+  "en": "Impaired bed mobility",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "2. 활동/운동 Activity/Exercise"
+ },
+ {
+  "name": "보행 장애",
+  "en": "Impaired walking",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "2. 활동/운동 Activity/Exercise"
+ },
+ {
+  "name": "이동 능력 장애",
+  "en": "Impaired transfer ability",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "2. 활동/운동 Activity/Exercise"
+ },
+ {
+  "name": "비사용 증후군의 위험",
+  "en": "Risk for disuse syndrome",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "2. 활동/운동 Activity/Exercise"
+ },
+ {
+  "name": "피로",
+  "en": "Fatigue",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "3. 에너지 균형 Energy balance"
+ },
+ {
+  "name": "활동 지속성 감소",
+  "en": "Decreased activity tolerance",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses"
+ },
+ {
+  "name": "활동 지속성 감소의 위험",
+  "en": "Risk for decreased activity tolerance",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses"
+ },
+ {
+  "name": "심박출량 감소",
+  "en": "Decreased cardiac output",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses"
+ },
+ {
+  "name": "심박출량 감소의 위험",
+  "en": "Risk for decreased cardiac output",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses"
+ },
+ {
+  "name": "자발적 환기 장애",
+  "en": "Impaired spontaneous ventilation",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses"
+ },
+ {
+  "name": "인공호흡기 이탈 반응 장애",
+  "en": "Dysfunctional ventilatory weaning response",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses"
+ },
+ {
+  "name": "비효과적 말초조직관류",
+  "en": "Ineffective peripheral tissue perfusion",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses"
+ },
+ {
+  "name": "비효과적 말초조직관류의 위험",
+  "en": "Risk for ineffective peripheral tissue perfusion",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses"
+ },
+ {
+  "name": "비효과적 뇌조직관류의 위험",
+  "en": "Risk for ineffective cerebral tissue perfusion",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses"
+ },
+ {
+  "name": "심장조직관류 감소의 위험",
+  "en": "Risk for decreased cardiac tissue perfusion",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses"
+ }
+]

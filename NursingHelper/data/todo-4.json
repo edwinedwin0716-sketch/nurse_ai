@@ -1,0 +1,134 @@
+[
+ {
+  "name": "사회적 상호작용 장애",
+  "en": "Impaired social interaction",
+  "domain": "7. 역할관계 Role relationship",
+  "cls": "3. 역할수행 Role performance"
+ },
+ {
+  "name": "성기능 장애",
+  "en": "Sexual dysfunction",
+  "domain": "8. 성 Sexuality",
+  "cls": "2. 성기능 Sexual function"
+ },
+ {
+  "name": "비효과적 출산 과정",
+  "en": "Ineffective childbearing process",
+  "domain": "8. 성 Sexuality",
+  "cls": "3. 생식 Reproduction"
+ },
+ {
+  "name": "산모-태아 이원체 장애의 위험",
+  "en": "Risk for disturbed maternal-fetal dyad",
+  "domain": "8. 성 Sexuality",
+  "cls": "3. 생식 Reproduction"
+ },
+ {
+  "name": "외상후 증후군의 위험",
+  "en": "Risk for post-trauma syndrome",
+  "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+  "cls": "1. 외상후 반응 Post-trauma responses"
+ },
+ {
+  "name": "비효과적 대처",
+  "en": "Ineffective coping",
+  "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+  "cls": "2. 대처반응 Coping responses"
+ },
+ {
+  "name": "가족 대처 손상",
+  "en": "Compromised family coping",
+  "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+  "cls": "2. 대처반응 Coping responses"
+ },
+ {
+  "name": "과도한 두려움",
+  "en": "Excessive fear",
+  "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+  "cls": "2. 대처반응 Coping responses"
+ },
+ {
+  "name": "무력감",
+  "en": "Powerlessness",
+  "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+  "cls": "2. 대처반응 Coping responses"
+ },
+ {
+  "name": "부적응적 비탄",
+  "en": "Maladaptive grieving",
+  "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+  "cls": "2. 대처반응 Coping responses"
+ },
+ {
+  "name": "비효과적 부정",
+  "en": "Ineffective denial",
+  "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+  "cls": "2. 대처반응 Coping responses"
+ },
+ {
+  "name": "정서 조절 장애",
+  "en": "Impaired mood regulation",
+  "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+  "cls": "2. 대처반응 Coping responses"
+ },
+ {
+  "name": "자율신경 반사부전",
+  "en": "Autonomic dysreflexia",
+  "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+  "cls": "3. 신경행동 스트레스 Neurobehavioral stress"
+ },
+ {
+  "name": "두개내압 적응능력 감소",
+  "en": "Decreased intracranial adaptive capacity",
+  "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+  "cls": "3. 신경행동 스트레스 Neurobehavioral stress"
+ },
+ {
+  "name": "신생아 금단 증후군",
+  "en": "Neonatal abstinence syndrome",
+  "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+  "cls": "3. 신경행동 스트레스 Neurobehavioral stress"
+ },
+ {
+  "name": "영아 행동 조직화 장애",
+  "en": "Disorganized infant behavior",
+  "domain": "9. 대처/스트레스 내성 Coping/Stress tolerance",
+  "cls": "3. 신경행동 스트레스 Neurobehavioral stress"
+ },
+ {
+  "name": "영적 고뇌",
+  "en": "Spiritual distress",
+  "domain": "10. 삶의 원칙 Life principles",
+  "cls": "3. 가치/신념/행동 일치 Value/Belief/Action congruence"
+ },
+ {
+  "name": "의사결정 갈등",
+  "en": "Decisional conflict",
+  "domain": "10. 삶의 원칙 Life principles",
+  "cls": "3. 가치/신념/행동 일치 Value/Belief/Action congruence"
+ },
+ {
+  "name": "수술부위 감염의 위험",
+  "en": "Risk for surgical site infection",
+  "domain": "11. 안전/보호 Safety/Protection",
+  "cls": "1. 감염 Infection"
+ },
+ {
+  "name": "흡인의 위험",
+  "en": "Risk for aspiration",
+  "domain": "11. 안전/보호 Safety/Protection",
+  "cls": "2. 신체손상 Physical injury"
+ },
+ {
+  "name": "출혈의 위험",
+  "en": "Risk for bleeding",
+  "domain": "11. 안전/보호 Safety/Protection",
+  "cls": "2. 신체손상 Physical injury"
+ },
+ {
+  "name": "피부 통합성 손상",
+  "en": "Impaired skin integrity",
+  "domain": "11. 안전/보호 Safety/Protection",
+  "cls": "2. 신체손상 Physical injury"
+ }
+]

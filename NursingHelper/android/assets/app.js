@@ -6,6 +6,30 @@
   var bridge = window.Android || null;
   var state = { order: Object.keys(T), checked: {}, suggested: [], causes: {}, open: null, model: null, text: '', before: null, editing: false, busy: false };
 
+  // 목록에 없는 진단 직접 입력: 빈 틀을 만들어 목록에 넣고, 다음에도 쓰도록 저장한다
+  function customTemplate(name) {
+    return { en: '(영문 진단명)', domain: '(영역 직접 입력)', cls: '(과 직접 입력)', page: null, problem: name, priority: 4, custom: true,
+      reason: '(우선순위를 정한 이유를 쓰세요)', evalData: '(평가할 때 확인할 자료를 쓰세요)', keywords: '(?!)', cause: '(관련 요인)',
+      long: '대상자는 퇴원 시 (장기목표)할 것이다.', short: ['대상자는 _일 내 (단기목표 1)할 것이다.', '대상자는 _일 내 (단기목표 2)할 것이다.'],
+      diag: [{ plan: '(진단적 간호: 무엇을 사정할지) 사정한다.', why: '(이론적 근거를 쓰세요)' }],
+      ther: [{ plan: '(치료적 간호: 직접 하는 간호를 쓰세요)', why: '(이론적 근거를 쓰세요)' }],
+      edu: [{ plan: '(교육적 간호: 대상자·보호자에게 교육할 내용을) 교육한다.', why: '(이론적 근거를 쓰세요)' }] };
+  }
+  function customs() { try { return JSON.parse(store('custom_dx') || '[]'); } catch (e) { return []; } }
+  customs().forEach(function (n) { if (!T[n]) { T[n] = customTemplate(n); state.order.push(n); } });
+  window.addCustom = function () {
+    var box = $('dxnew'), name = box.value.trim().replace(/\s+/g, ' ');
+    if (!name) { box.focus(); return; }
+    if (!T[name]) {
+      T[name] = customTemplate(name);
+      var list = customs(); if (list.indexOf(name) < 0) { list.push(name); store('custom_dx', JSON.stringify(list)); }
+      toast('‘' + name + '’ 진단을 추가했어요. 틀을 만든 뒤 빈칸을 채우세요');
+    } else toast('이미 목록에 있어서 체크했어요');
+    state.order = [name].concat(state.order.filter(function (x) { return x !== name; }));
+    state.checked[name] = true; state.open = name; box.value = ''; $('dxq').value = ''; renderList();
+  };
+  window.renderDx = function () { renderList(); };
+
   function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
   function toast(msg) { var t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(function () { t.classList.remove('show'); }, 2200); }
   function seg(id) { var on = document.querySelector('#' + id + ' .on'); return on ? on.getAttribute('data-v') : null; }
@@ -67,14 +91,17 @@
   function cause(name) { if (!state.causes[name]) state.causes[name] = { cause: T[name].cause, origin: '' }; return state.causes[name]; }
   function renderList() {
     var box = $('dxlist'); box.innerHTML = '';
+    var q = ($('dxq') ? $('dxq').value : '').trim().toLowerCase(), shown = 0;
     state.order.forEach(function (name, idx) {
       var t = T[name], on = !!state.checked[name];
+      if (q && !on && (name + ' ' + t.en).toLowerCase().indexOf(q) < 0) return;
+      shown++;
       var row = document.createElement('div'); row.className = 'dx' + (on ? ' on' : '');
       row.innerHTML = '<div class="chk">' + (on ? '✓' : '') + '</div><div class="name"><b></b><small></small></div>' +
         (state.suggested.indexOf(name) >= 0 ? '<span class="badge">추천</span>' : '') +
         '<div class="order"><button data-d="-1">▲</button><button data-d="1">▼</button></div>';
       row.querySelector('b').textContent = name;
-      row.querySelector('small').textContent = t.en + ' · ' + t.domain.replace(/ [A-Za-z/ ]+$/, '') + ' · p.' + t.page;
+      row.querySelector('small').textContent = t.custom ? '직접 입력 · 결과 화면에서 빈칸을 채우세요' : t.en + ' · ' + t.domain.replace(/ [A-Za-z/ ]+$/, '') + (t.page ? ' · p.' + t.page : '');
       row.querySelector('.chk').addEventListener('click', function (e) { e.stopPropagation(); state.checked[name] = !on; if (!on) state.open = name; renderList(); });
       row.querySelectorAll('.order button').forEach(function (b) {
         b.addEventListener('click', function (e) { e.stopPropagation(); move(name, +b.getAttribute('data-d')); });
@@ -91,6 +118,7 @@
         box.appendChild(ed);
       }
     });
+    if (!shown) box.innerHTML = '<div class="empty">‘' + q.replace(/[<>&"]/g, '') + '’ 진단이 목록에 없어요. 아래 ‘직접 입력’으로 추가하세요.</div>';
   }
   function move(name, d) {
     var i = state.order.indexOf(name), j = i + d;
