@@ -1,0 +1,138 @@
+[
+ {
+  "name": "아동 욕창",
+  "en": "Child pressure injury",
+  "domain": "11. 안전/보호 Safety/Protection",
+  "cls": "2. 신체적 손상 Physical injury",
+  "page": 24,
+  "official_definition": "압력이나 전단력이 동반된 압력의 결과, 29일부터 18세 이하의 연령을 가진 개인의 피부 및/또는 기저조직에 발생한 국소적인 손상"
+ },
+ {
+  "name": "신생아 욕창의 위험",
+  "en": "Risk for neonatal pressure injury",
+  "domain": "11. 안전/보호 Safety/Protection",
+  "cls": "2. 신체적 손상 Physical injury",
+  "page": 24,
+  "official_definition": "압력이나 전단력이 동반된 압력의 결과, 29일 미만의 연령을 가진 개인의 피부 및/또는 기저조직에 발생한 국소적인 손상에 취약함"
+ },
+ {
+  "name": "지연된 아동성장",
+  "en": "Delayed child growth",
+  "domain": "13. 성장/발달 Growth/Development",
+  "cls": "1. 성장 Growth",
+  "page": 26,
+  "official_definition": "18세 이하 개인의 성별, 연령, 인종에 따른 기준에서 키, 신장, 체질량지수, 두위 그리고/또는 신장 성장 속도(cm/year)가 불충분함"
+ },
+ {
+  "name": "아동성장 지연의 위험",
+  "en": "Risk for delayed child growth",
+  "domain": "13. 성장/발달 Growth/Development",
+  "cls": "1. 성장 Growth",
+  "page": 26,
+  "official_definition": "18세 이하 개인의 성별, 연령, 인종에 따른 기준에서 키, 신장, 체질량지수, 두위 그리고/또는 신장 성장 속도가 불충분함에 취약함"
+ },
+ {
+  "name": "지연된 아동발달",
+  "en": "Delayed child development",
+  "domain": "13. 성장/발달 Growth/Development",
+  "cls": "2. 발달 Development",
+  "page": 26,
+  "official_definition": "1~9세의 개인에서 예상된 시간 내에 발달 이정표에 지속적으로 도달하지 못함"
+ },
+ {
+  "name": "지연된 영아운동발달",
+  "en": "Delayed infant motor development",
+  "domain": "13. 성장/발달 Growth/Development",
+  "cls": "2. 발달 Development",
+  "page": 27,
+  "official_definition": "생후 29일에서 1세 사이의 개인에서 뼈와 근육의 정상적인 강화와 움직임, 주변 환경과의 접촉 능력과 관련한 발달 이정표에 지속적으로 도달하지 못함"
+ },
+ {
+  "name": "영아운동발달 지연의 위험",
+  "en": "Risk for delayed infant motor development",
+  "domain": "13. 성장/발달 Growth/Development",
+  "cls": "2. 발달 Development",
+  "page": 27,
+  "official_definition": "생후 29일에서 1세 사이의 개인에서 뼈와 근육의 정상적인 강화와 움직임, 주변 환경과의 접촉 능력과 관련한 발달 이정표에 지속적으로 도달하지 못함에 취약함"
+ },
+ {
+  "name": "영아의 비효과적 빨기-삼킴 반응",
+  "en": "Ineffective infant suck-swallow response",
+  "domain": "13. 성장/발달 Growth/Development",
+  "cls": "2. 발달 Development",
+  "page": 27,
+  "official_definition": "1세 이하의 개인에서 호흡을 안전하게 조정하며 구강 섭취를 수행하는 능력이 손상됨"
+ },
+ {
+  "name": "비효과적 유아 식생활의 역학관계",
+  "en": "Ineffective child eating dynamics",
+  "domain": "2. 영양 Nutrition",
+  "cls": "1. 섭취 Ingestion",
+  "page": 16,
+  "official_definition": "1~10세 연령의 아동에게 변화된 태도, 행동, 식습관에 대한 영향으로 인해 영양 건강을 손상시키는 것"
+ },
+ {
+  "name": "비효과적 청소년 식생활의 역학관계",
+  "en": "Ineffective adolescent eating dynamics",
+  "domain": "2. 영양 Nutrition",
+  "cls": "1. 섭취 Ingestion",
+  "page": 16,
+  "official_definition": "11~19세 청소년의 태도와 행동의 변화로 인해 영양 건강을 손상시키는 과식 혹은 과소의 식이 양상이 발생하는 것"
+ },
+ {
+  "name": "신생아 고빌리루빈혈증의 위험",
+  "en": "Risk for neonatal hyperbilirubinemia",
+  "domain": "2. 영양 Nutrition",
+  "cls": "4. 대사 Metabolism",
+  "page": 16,
+  "official_definition": "생후 1주일 동안 발생하는 혈액 내 비결합성 빌리루빈(95번째 백분위수) 이상으로 축적되어 건강에 위협이 될 만큼 취약한 상태"
+ },
+ {
+  "name": "신생아 체온감소의 위험",
+  "en": "Risk for decreased neonatal body temperature",
+  "domain": "11. 안전/보호 Safety/Protection",
+  "cls": "6. 체온조절 Thermoregulation",
+  "page": 25,
+  "official_definition": "생후 28일 이내의 대상자에서 의도치 않게 체온이 정상적인 일일 체온 범위 이하로 하강하는 상태에 취약함"
+ },
+ {
+  "name": "소아 호흡기 제거 반응 장애",
+  "en": "Impaired child ventilatory weaning response",
+  "domain": "4. 활동/휴식 Activity/Rest",
+  "cls": "4. 심혈관/호흡기계 반응 Cardiovascular/Pulmonary responses",
+  "page": 19,
+  "official_definition": "24시간 이상 기계적 환기를 적용한 18세 미만 대상자가 자발적 호흡으로 성공적인 전환을 못하는 상태"
+ },
+ {
+  "name": "부모역할 장애의 위험",
+  "en": "Risk for impaired parenting behaviors",
+  "domain": "7. 역할관계 Role relationship",
+  "cls": "1. 돌봄제공자 역할 Caregiving roles",
+  "page": 21,
+  "official_definition": "주 양육자가 아동의 요구에 일관되고 공감적 권위 행사를 통해 아동의 양육, 보호, 최적의 성장과 발달을 증진하는 데 있어 제한이 발생할 가능성이 있음"
+ },
+ {
+  "name": "과도한 부모역할 갈등",
+  "en": "Excessive parental role conflict",
+  "domain": "7. 역할관계 Role relationship",
+  "cls": "1. 돌봄제공자 역할 Caregiving roles",
+  "page": 21,
+  "official_definition": "주 양육자가 아동의 요구를 충족시키는 데 일관되지 않거나 상충 또는 불일치하는 기대와 책임을 경험하는 상태"
+ },
+ {
+  "name": "비효과적 모유수유의 위험",
+  "en": "Risk for ineffective chestfeeding",
+  "domain": "2. 영양 Nutrition",
+  "cls": "1. 섭취 Ingestion",
+  "page": 16,
+  "official_definition": "젖을 통해 모유를 제공하거나 받아들이는 데에 대한 어려움으로 인해 영유아의 영양상태를 위협할 수 있는 상태"
+ },
+ {
+  "name": "모유수유 중단",
+  "en": "Disrupted exclusive chestfeeding",
+  "domain": "2. 영양 Nutrition",
+  "cls": "1. 섭취 Ingestion",
+  "page": 16,
+  "official_definition": "모유 생산이 적절한 최대 6개월까지의 영아에게 모유만 공급하는 과정에 방해"
+ }
+]

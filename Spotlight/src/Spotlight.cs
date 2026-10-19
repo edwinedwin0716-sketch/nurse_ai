@@ -17,8 +17,8 @@ using Microsoft.Win32;
 [assembly: AssemblyTitle("Spotlight")]
 [assembly: AssemblyProduct("Spotlight for Windows")]
 [assembly: AssemblyDescription("Shift 두 번으로 여는 빠른 검색")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.0.1.0")]
+[assembly: AssemblyFileVersion("1.0.1.0")]
 
 // Shift를 두 번 빠르게 눌렀는지 판단 (다른 키와 함께 누르거나 길게 누르면 무시)
 public class ShiftTap {
@@ -165,9 +165,10 @@ public class SpotForm : Form {
         run.Click += delegate { Startup = !Startup; };
         menu.Items.AddRange(new ToolStripItem[] { hk, th, run, new ToolStripSeparator() });
         menu.Items.Add("목록 새로 고침", null, delegate { ThreadPool.QueueUserWorkItem(_ => Reindex()); });
-        menu.Items.Add("종료", null, delegate { tray.Visible = false; Application.Exit(); });
+        menu.Items.Add("종료", null, delegate { QuitApp(); });
     }
     const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
+    public void QuitApp() { tray.Visible = false; Application.Exit(); }
     public static bool Startup {
         get { try { using (var r = Registry.CurrentUser.OpenSubKey(RunKey)) return r != null && r.GetValue("MySpotlight") != null; } catch { return false; } }
         set { try { using (var r = Registry.CurrentUser.CreateSubKey(RunKey)) { if (value) r.SetValue("MySpotlight", "\"" + Application.ExecutablePath + "\""); else r.DeleteValue("MySpotlight", false); } } catch { } }
@@ -366,11 +367,28 @@ static class Program {
         bool created;
         var mutex = new Mutex(true, @"Local\MySpotlight", out created);
         var signal = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\MySpotlightShow");
-        if (!created) { signal.Set(); return 0; }   // 이미 실행 중이면 그 창을 연다
+        var quit = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\MySpotlightQuit");
+        if (!created) {
+            string target = Path.Combine(Index.DataDir, "Spotlight.exe");
+            bool update = !string.Equals(Path.GetFullPath(Application.ExecutablePath), Path.GetFullPath(target), StringComparison.OrdinalIgnoreCase);
+            if (!update) { signal.Set(); return 0; }   // 이미 실행 중이면 그 창을 연다
+            // 새 버전으로 업데이트: 켜져 있는 예전 버전을 끄고, 끝나기를 기다린 뒤 설치한다
+            quit.Set();
+            bool got = false;
+            try { got = mutex.WaitOne(4000); } catch (AbandonedMutexException) { got = true; }
+            if (!got) {   // 1.0은 끄라는 신호를 모르므로 직접 끈다
+                int self = Process.GetCurrentProcess().Id;
+                foreach (var p in Process.GetProcessesByName("Spotlight")) { try { if (p.Id != self) { p.Kill(); p.WaitForExit(3000); } } catch { } p.Dispose(); }
+                try { got = mutex.WaitOne(4000); } catch (AbandonedMutexException) { got = true; }
+            }
+            if (!got) { MessageBox.Show("예전 Spotlight가 꺼지지 않았어요. 작업 표시줄 아이콘 → 종료 후 다시 실행해 주세요.", "Spotlight"); return 1; }
+        }
         if (Install(mutex)) return 0;
         var form = new SpotForm(false);
         var t = new Thread(() => { while (signal.WaitOne()) try { form.BeginInvoke((MethodInvoker)form.ShowSpot); } catch { return; } }) { IsBackground = true };
         form.HandleCreated += delegate { t.Start(); };
+        // 새 버전이 설치되면 스스로 끈다 (트레이 아이콘도 정리)
+        new Thread(() => { if (quit.WaitOne()) try { form.BeginInvoke((MethodInvoker)delegate { form.QuitApp(); }); } catch { } }) { IsBackground = true }.Start();
         var ctx = new ApplicationContext();
         form.CreateControl(); var h = form.Handle;
         Application.Run(ctx);
@@ -389,6 +407,7 @@ static class Program {
             mutex.ReleaseMutex(); mutex.Close();
             Process.Start(target);
             MessageBox.Show("설치했어요!\n\nShift 키를 두 번 빠르게 누르면 Spotlight 검색창이 열려요.\n(Windows를 켤 때마다 자동으로 실행돼요. 끄려면 작업 표시줄 오른쪽 아이콘 → 우클릭)", "Spotlight", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            InstallCleanup.OfferRemoveDownloads("Spotlight", "Spotlight-", new[] { "Spotlight.exe", "설치 및 사용법.txt" }, @"^Spotlight-[0-9.]+( \(\d+\))?\.zip$", Index.DataDir);
             return true;
         } catch { return false; }   // 복사가 안 되면 그냥 이 위치에서 실행
     }
