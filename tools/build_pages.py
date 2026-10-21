@@ -73,7 +73,8 @@ def build_app(key, a):
         name = 'index.html' if f.endswith('.html') else os.path.basename(f)
         text = read(f)
         if name == 'index.html':
-            text = text.replace('</title>', '</title>\n' + HEAD % a, 1).replace('</body>', REG + '</body>', 1)
+            text = text.replace('</title>', '</title>\n' + HEAD % a, 1)
+            text = (REG + '</body>').join(text.rsplit('</body>', 1))  # 마지막 </body> (스크립트 문자열 속 </body>는 건드리지 않는다)
         open(os.path.join(out, name), 'w', encoding='utf-8').write(text)
         names.append(name)
     icons(a['icon'], out, a['color'])
