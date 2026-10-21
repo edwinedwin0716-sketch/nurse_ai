@@ -804,8 +804,7 @@ root.EmbeddedCMapFactory=F;})(typeof window!=='undefined'?window:globalThis);
         q.options.forEach(function (x) { o.push('<div class=opt>' + (x.ink ? '<span class=pen>✎</span>' : '') + x.mark + ' ' + esc(x.text) + '</div>'); });
       });
     }
-    o.push('<p class=small style="margin-top:28px">※ 형광펜·강조 글씨·필기를 바탕으로 자동으로 만든 자료예요. 문제와 해설은 교재로 꼭 확인하세요.</p></div><script>if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(function () {});</script>
-</body></html>');
+    o.push('<p class=small style="margin-top:28px">※ 형광펜·강조 글씨·필기를 바탕으로 자동으로 만든 자료예요. 문제와 해설은 교재로 꼭 확인하세요.</p></div></body></html>');
     return o.join('');
   }
   // ChatGPT·Claude 앱에 붙여넣을 요청문 (사례기반 문제·요약 보완)
@@ -1111,5 +1110,6 @@ bg.innerHTML='<div style="background:#fff;color:#191919;border-radius:20px;paddi
 '<button type="button" style="border:0;background:#191919;color:#fff;border-radius:10px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer">닫기</button></div>';
 bg.addEventListener('click',function(ev){if(ev.target===bg||ev.target.tagName==='BUTTON')bg.remove();});document.body.appendChild(bg);});})();
 </script>
+<script>if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(function () {});</script>
 </body>
 </html>
