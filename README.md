@@ -25,6 +25,14 @@
 - 안드로이드는 apk, Windows는 zip(압축 풀고 exe 실행)이에요.
 - 아이폰 · Mac은 **웹앱**이에요. 사파리로 열고 아이폰은 공유 → **홈 화면에 추가**, Mac은 파일 → **Dock에 추가**하면 앱처럼 써요. (애플은 개발자 등록 없이 앱 파일 설치를 막아서 이 방식이 가장 잘 맞아요)
 
+## 🎬 사용법 영상 (30초 내외, 누르면 받아져요)
+| 프로그램 | 영상 |
+|---|---|
+| 🩺 간호과정 도우미 | [NursingHelper-howto.mp4](videos/NursingHelper-howto.mp4) (세로 · 22초) |
+| 🗂️ 플래시카드 | [Flashcards-howto.mp4](videos/Flashcards-howto.mp4) (세로 · 23초) |
+| 🚀 MySpace 런처 | [MySpace-howto.mp4](videos/MySpace-howto.mp4) (가로 · 30초) |
+| 🔍 Spotlight | [Spotlight-howto.mp4](videos/Spotlight-howto.mp4) (가로 · 28초) |
+
 ## 🩺 간호과정 도우미 (`NursingHelper/`)
 주관적·객관적 자료를 넣으면 간호진단을 추천하고 간호과정의 큰 틀을 만들어 줍니다.
 
