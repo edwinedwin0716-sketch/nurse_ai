@@ -182,15 +182,15 @@
   };
   function chart(vs) {
     if (vs.length < 2) return '';
-    var W = 640, H = 230, L = 34, R = 10, T = 12, B = 28, lo = 30, hi = 200;
+    var W = 520, H = 300, L = 40, R = 12, T = 14, B = 34, lo = 30, hi = 200;
     var x = function (i) { return L + (W - L - R) * i / (vs.length - 1); }, y = function (v) { return T + (H - T - B) * (1 - (v - lo) / (hi - lo)); };
     var line = function (k, color, dash) {
       var pts = vs.map(function (v, i) { return v[k] == null ? null : x(i).toFixed(1) + ',' + y(v[k]).toFixed(1); }).filter(Boolean).join(' ');
-      return '<polyline points="' + pts + '" fill="none" stroke="' + color + '" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"' + (dash ? ' stroke-dasharray="6 5"' : '') + ' style="filter:drop-shadow(0 0 4px ' + color + ')"/>' +
-        vs.map(function (v, i) { return v[k] == null ? '' : '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(v[k]).toFixed(1) + '" r="3" fill="' + color + '"/>'; }).join('');
+      return '<polyline points="' + pts + '" fill="none" stroke="' + color + '" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"' + (dash ? ' stroke-dasharray="6 5"' : '') + ' style="filter:drop-shadow(0 0 4px ' + color + ')"/>' +
+        vs.map(function (v, i) { return v[k] == null ? '' : '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(v[k]).toFixed(1) + '" r="3.6" fill="' + color + '"/>'; }).join('');
     };
-    var grid = [60, 90, 120, 150, 180].map(function (g) { return '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(g) + '" y2="' + y(g) + '" stroke="rgba(160,180,255,.13)"/><text x="' + (L - 6) + '" y="' + (y(g) + 4) + '" fill="#9aa7cc" font-size="11" text-anchor="end">' + g + '</text>'; }).join('');
-    var xs = vs.map(function (v, i) { return (vs.length <= 8 || i % Math.ceil(vs.length / 8) === 0 || i === vs.length - 1) ? '<text x="' + x(i) + '" y="' + (H - 8) + '" fill="#9aa7cc" font-size="10.5" text-anchor="middle">' + esc(short(v.time).replace(/^D(-?\d+) /, 'D$1 ')) + '</text>' : ''; }).join('');
+    var grid = [60, 90, 120, 150, 180].map(function (g) { return '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(g) + '" y2="' + y(g) + '" stroke="rgba(160,180,255,.13)"/><text x="' + (L - 6) + '" y="' + (y(g) + 4) + '" fill="#9aa7cc" font-size="14" text-anchor="end">' + g + '</text>'; }).join('');
+    var xs = vs.map(function (v, i) { return (vs.length <= 5 || i % Math.ceil(vs.length / 5) === 0 || i === vs.length - 1) ? '<text x="' + x(i) + '" y="' + (H - 8) + '" fill="#9aa7cc" font-size="13" text-anchor="middle">' + esc(short(v.time).slice(-5)) + '</text>' : ''; }).join('');
     return '<div class="block"><h3>📈 V/S 흐름</h3><svg class="chart" viewBox="0 0 ' + W + ' ' + H + '">' + grid + line('sbp', '#ff5c8a') + line('dbp', '#ff5c8a', 1) + line('hr', '#4de1ff') + line('rr', '#ffd24d') + xs + '</svg>' +
       '<div class="legendr"><span><i style="background:#ff5c8a"></i>수축기·이완기(점선) 혈압</span><span><i style="background:#4de1ff"></i>맥박</span><span><i style="background:#ffd24d"></i>호흡</span></div></div>';
   }
