@@ -32,7 +32,7 @@
   };
   window.back = function () { var p = stack.pop(); if (p) go(p, 'back'); else go('v-home'); return true; };
   // 안드로이드 뒤로 가기
-  window.onBack = function () { if ($('v-home').classList.contains('on')) return false; if ($('v-quiz').classList.contains('on')) { quitQuiz(); return true; } back(); return true; };
+  window.onBack = function () { if ($('v-home').classList.contains('on')) return false; if ($('v-quiz').classList.contains('on')) { quitQuiz(); return true; } if ($('v-emr').classList.contains('on')) { leaveEmr(); return true; } back(); return true; };
 
   function bindSeg(id, fn) {
     document.querySelectorAll('#' + id + ' button').forEach(function (b) {
@@ -219,5 +219,6 @@
   };
 
   $('askAdd').href = issueUrl('[간호 공부방] 추가 요청: ', '넣어 주면 좋겠는 내용 (과목 · 주제):\n\n틀린 내용이면 어디인지와 근거(교재 이름·쪽수):\n');
+  window.NS = { esc: esc, toast: toast, BY: BY, COLOR: COLOR, EMOJI: EMOJI, topicRow: topicRow, bindRows: bindRows, load: load, save: save };
   renderHome();
 })();

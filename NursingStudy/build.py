@@ -3,7 +3,7 @@
 
     python3 NursingStudy/build.py      → dist/간호공부방.html (PC·Windows), android/assets/index.html
 """
-import glob, json, os, shutil, sys
+import glob, json, os, re, shutil, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 WEB = os.path.join(HERE, 'web')
@@ -28,6 +28,26 @@ def check(f, t):
         if 'http' in json.dumps(v): bad('영상은 주소 대신 검색어(query)로')
 
 
+TIME = re.compile(r'^D-?\d+ ([01]\d|2[0-3]):[0-5]\d$')
+
+
+def check_case(f, c, topic_ids):
+    name = os.path.basename(f)[:-5]
+    bad = lambda m: sys.exit('사례 %s: %s' % (name, m))
+    for k in ('id', 'title', 'patient', 'stages', 'vitals', 'debrief'):
+        if k not in c: bad('빠진 항목 ' + k)
+    if c['id'] != name: bad('id와 파일 이름이 달라요')
+    for key in ('stages', 'vitals', 'orders', 'labs', 'docs', 'notes', 'io'):
+        for x in c.get(key, []):
+            if not TIME.match(x.get('time', '')): bad('%s 시간 형식 %r' % (key, x.get('time')))
+    for s in c['stages']:
+        for q in s.get('ask', []):
+            if not isinstance(q.get('answer'), int) or not 0 <= q['answer'] < len(q.get('options', [])): bad('질문 정답 번호: ' + q.get('q', '')[:30])
+    for r in c.get('related', []):
+        if r not in topic_ids: bad('related에 없는 주제 ' + r)
+    if 'http' in json.dumps(c): bad('주소(http)는 넣지 않아요')
+
+
 def main():
     topics = []
     for f in sorted(glob.glob(os.path.join(WEB, 'content', '*.json'))):
@@ -36,16 +56,21 @@ def main():
         topics.append(t)
     order = {s: i for i, s in enumerate(SUBJECTS)}
     topics.sort(key=lambda t: (order[t['subject']], t['kind'] != '개념', t['title']))
-    data = 'window.TOPICS = ' + json.dumps(topics, ensure_ascii=False, separators=(',', ':')) + ';'
+    cases = []
+    for f in sorted(glob.glob(os.path.join(WEB, 'content', 'cases', '*.json'))):
+        c = json.load(open(f, encoding='utf-8')); check_case(f, c, {t['id'] for t in topics})
+        c.pop('check', None); cases.append(c)
+    data = 'window.CASES = ' + json.dumps(cases, ensure_ascii=False, separators=(',', ':')) + ';\nwindow.TOPICS = ' + json.dumps(topics, ensure_ascii=False, separators=(',', ':')) + ';'
     app = open(os.path.join(WEB, 'app.js'), encoding='utf-8').read()
-    tags = ['<script>\n' + js.replace('</script', '<\\/script') + '\n</script>' for js in (data, app)]
+    emr = open(os.path.join(WEB, 'emr.js'), encoding='utf-8').read()
+    tags = ['<script>\n' + js.replace('</script', '<\\/script') + '\n</script>' for js in (data, app, emr)]
     html = open(os.path.join(WEB, 'index.html'), encoding='utf-8').read().replace('<!--SCRIPTS-->', '\n'.join(tags))
     os.makedirs(os.path.join(HERE, 'dist'), exist_ok=True)
     out = os.path.join(HERE, 'dist', '간호공부방.html')
     open(out, 'w', encoding='utf-8').write(html)
     assets = os.path.join(HERE, 'android', 'assets'); os.makedirs(assets, exist_ok=True)
     shutil.copy(out, os.path.join(assets, 'index.html'))
-    print('주제 %d개 · 문제 %d개 → %s' % (len(topics), sum(len(t['quiz']) for t in topics), out))
+    print('주제 %d개 · 문제 %d개 · 가상 환자 %d명 → %s' % (len(topics), sum(len(t['quiz']) for t in topics), len(cases), out))
 
 
 if __name__ == '__main__':
