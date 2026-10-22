@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="theme-color" content="#0b1430">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>간호 공부방</title>
+<style>
+:root{--bg:#0b1430;--bg2:#101c40;--card:#16244f;--card2:#1c2c5e;--text:#eef2ff;--sub:#9aa7cc;--sep:rgba(160,180,255,.12);--accent:#5ab8ff;--fill:rgba(140,165,255,.12);--brand:#b18cff;--red:#ff6b81;--orange:#ffb547;--green:#4dffb0;--yellow:#ffe066;--hl:rgba(255,224,102,.22);--shadow:0 6px 24px rgba(0,0,0,.28);--r:20px;--r2:14px;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:radial-gradient(900px 600px at 10% -10%,#1b2d6b 0,transparent 60%),radial-gradient(700px 500px at 110% 10%,#2a1b5e 0,transparent 55%),var(--bg);background-attachment:fixed;color:var(--text);font-family:-apple-system,"SF Pro Text","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",Roboto,sans-serif;font-size:16px;line-height:1.5}
+button{font:inherit;cursor:pointer;color:inherit}
+a{color:var(--accent)}
+.view{display:none;max-width:760px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom));min-height:100vh}
+.view.on{display:block}
+.top{display:flex;align-items:center;justify-content:space-between;min-height:36px}
+.back{border:0;background:none;color:var(--accent);font-size:17px;padding:4px 0}
+.icon-btn{border:0;background:var(--fill);border-radius:13px;width:34px;height:34px;font-size:17px;display:flex;align-items:center;justify-content:center}
+.icon-btn.on{background:rgba(255,224,102,.18);color:var(--yellow);box-shadow:0 0 12px rgba(255,224,102,.4)}
+h1{font-size:32px;font-weight:800;letter-spacing:-.5px;margin:6px 0 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.beta{font-size:12px;font-weight:800;color:#1a1033;background:var(--brand);box-shadow:0 0 14px rgba(177,140,255,.6);border-radius:999px;padding:2px 8px;letter-spacing:0}
+.lead{color:var(--sub);margin:6px 2px 0;font-size:14.5px}
+.section{color:var(--sub);font-size:13px;font-weight:600;margin:24px 4px 8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card{background:var(--card);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.search{display:flex;align-items:center;gap:8px;background:var(--card);box-shadow:inset 0 0 0 1px var(--sep);border-radius:var(--r2);padding:9px 12px;margin-top:16px}
+.search input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--text);font:inherit;font-size:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.tile{display:flex;flex-direction:column;gap:4px;border:0;background:var(--card);border-radius:var(--r);padding:14px;text-align:left;box-shadow:var(--shadow);min-width:0}
+.tile .i{font-size:24px}.tile{border-radius:var(--r)}.tile b{font-size:16px}.tile small{color:var(--sub);font-size:12.5px}
+.tile.primary{background:linear-gradient(135deg,#3a7bff,#8a5cff);color:#fff;box-shadow:0 0 22px rgba(110,120,255,.35)}.tile.primary small{color:rgba(255,255,255,.85)}
+.row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--sep);width:100%;border-left:0;border-right:0;border-top:0;background:transparent;text-align:left}
+.row:last-child{border-bottom:0}
+.row{position:relative}.row::before{content:'';position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:3px;background:var(--c,transparent);box-shadow:0 0 10px var(--c,transparent);opacity:.9}
+.row .em{font-size:19px;width:38px;height:38px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex:none;background:color-mix(in srgb,var(--c,#5ab8ff) 16%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c,#5ab8ff) 55%,transparent),0 0 14px color-mix(in srgb,var(--c,#5ab8ff) 30%,transparent)}
+.row .info{flex:1;min-width:0}.row .info b{display:block;font-size:16px;font-weight:600}
+.row .info small{color:var(--sub);font-size:13px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .chev{color:#c7c7cc;font-size:18px;flex:none}
+.pill{font-size:11.5px;font-weight:700;border-radius:7px;padding:2px 7px;flex:none}
+.pill{border-radius:999px}.pill.skill{background:rgba(77,255,176,.12);color:#6dffc0;box-shadow:inset 0 0 0 1px rgba(77,255,176,.35)}.pill.concept{background:rgba(90,184,255,.12);color:#7cc8ff;box-shadow:inset 0 0 0 1px rgba(90,184,255,.35)}
+.pill.done{background:var(--fill);color:var(--sub)}
+.empty{color:var(--sub);text-align:center;padding:26px 16px;font-size:15px}
+.seg{display:flex;background:var(--fill);border-radius:14px;padding:2px}
+.seg button{flex:1;border:0;background:transparent;font-size:14px;padding:6px 8px;border-radius:7px;white-space:nowrap}
+.seg button.on{background:var(--card2);font-weight:700;color:#fff;box-shadow:0 0 0 1px rgba(90,184,255,.35),0 0 14px rgba(90,184,255,.25)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--sep);background:var(--card);border-radius:999px;padding:7px 14px;font-size:14px}
+.chip.on{background:color-mix(in srgb,var(--c,#5ab8ff) 22%,transparent);border-color:var(--c,#5ab8ff);color:#fff;font-weight:600;box-shadow:0 0 12px color-mix(in srgb,var(--c,#5ab8ff) 40%,transparent)}
+.big{display:block;width:100%;margin-top:18px;padding:15px;border-radius:var(--r);border:0;background:linear-gradient(135deg,#3a7bff,#8a5cff);color:#fff;box-shadow:0 0 20px rgba(110,120,255,.3);font-size:17px;font-weight:700}
+.big:disabled{opacity:.45}.big.ghost{background:var(--fill);color:var(--accent);box-shadow:none}
+/* 주제 */
+.t-head h1{font-size:26px}.t-en{color:var(--sub);font-size:14px;margin-top:2px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tag{font-size:12.5px;color:var(--sub);background:var(--fill);border-radius:999px;padding:2px 8px}
+.summary{background:linear-gradient(135deg,color-mix(in srgb,var(--c,#5ab8ff) 18%,transparent),rgba(138,92,255,.12));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c,#5ab8ff) 35%,transparent);border-radius:var(--r);padding:14px 16px;margin-top:14px;font-size:15.5px}
+.tabs{position:sticky;top:0;z-index:5;background:linear-gradient(var(--bg) 75%,transparent);padding:10px 0 8px;margin-top:8px}
+.block{background:var(--card);border-radius:var(--r);padding:14px 16px;margin-top:12px;box-shadow:var(--shadow)}
+.block h3{margin:0 0 6px;font-size:16.5px}
+.block p{margin:4px 0}
+.block ul{margin:4px 0;padding-left:20px}.block li{margin:3px 0}
+.nums{display:grid;grid-template-columns:auto 1fr;gap:0}
+.nums div{padding:8px 4px;border-bottom:1px solid var(--sep);font-size:15px}
+.nums div:nth-child(odd){color:var(--sub);padding-right:14px}
+.nums div:nth-child(even){font-weight:700}
+.nums div:nth-last-child(-n+2){border-bottom:0}
+.steps{counter-reset:s;list-style:none;padding:0;margin:0}
+.steps li{position:relative;padding:10px 0 10px 40px;border-bottom:1px solid var(--sep)}
+.steps li:last-child{border-bottom:0}
+.steps li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:10px;width:28px;height:28px;border-radius:var(--r);background:var(--fill);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+.steps li.key::before{background:var(--orange);color:#1a1200;box-shadow:0 0 12px rgba(255,181,71,.55)}
+.steps .why{display:block;color:var(--sub);font-size:13.5px;margin-top:2px}
+.steps .do.hidden{display:block;width:100%;text-align:left;border:1px dashed rgba(255,181,71,.6);background:rgba(255,181,71,.08);color:var(--orange);border-radius:12px;padding:8px 12px;font-size:14.5px}
+.steps .do.shown{color:var(--orange);font-weight:600}
+.legend{font-size:12.5px;color:var(--sub);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dot{display:inline-block;width:12px;height:12px;border-radius:6px;background:var(--orange);box-shadow:0 0 8px rgba(255,181,71,.6)}
+.warn{border-left:4px solid var(--orange)}
+.vid{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--sep);text-decoration:none;color:var(--text)}
+.vid:last-child{border-bottom:0}.vid .yt{width:34px;height:24px;border-radius:8px;background:#ff0000;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none}
+.vid small{color:var(--sub);display:block;font-size:12.5px}
+.report{display:block;text-align:center;font-size:13.5px;margin-top:18px;color:var(--sub)}
+/* 문제 */
+.qhead{display:flex;justify-content:space-between;color:var(--sub);font-size:14px;margin-top:6px}
+.meter{height:5px;border-radius:3px;background:var(--fill);overflow:hidden;margin-top:8px}.meter i{display:block;height:100%;background:linear-gradient(90deg,#5ab8ff,#b18cff);box-shadow:0 0 10px #5ab8ff;width:0;transition:width .3s}
+.qcard{background:var(--card);border-radius:16px;padding:18px 16px;margin-top:14px;box-shadow:var(--shadow)}
+.qtopic{font-size:12.5px;color:var(--sub)}
+.qtext{font-size:18px;font-weight:700;margin:6px 0 14px;word-break:keep-all}
+.opt{display:flex;gap:10px;width:100%;border:1.5px solid var(--sep);background:var(--card);border-radius:var(--r2);padding:12px 14px;text-align:left;font-size:15.5px;margin-top:8px;word-break:keep-all}
+.opt .n{font-weight:700;color:var(--sub);flex:none}
+.opt.right{border-color:var(--green);background:rgba(77,255,176,.1);box-shadow:0 0 14px rgba(77,255,176,.25)}
+.opt.wrong{border-color:var(--red);background:rgba(255,107,129,.1);box-shadow:0 0 14px rgba(255,107,129,.22)}
+.opt:disabled{cursor:default;opacity:1}
+.explain{margin-top:14px;padding:12px 14px;border-radius:var(--r2);background:var(--fill);font-size:15px;display:none}
+.explain.on{display:block}.explain b.ok{color:var(--green)}.explain b.no{color:var(--red)}
+.score{font-size:54px;font-weight:800;text-align:center;margin-top:20px}
+.score small{display:block;font-size:16px;color:var(--sub);font-weight:500}
+.coffee{display:flex;align-items:center;gap:12px;margin:26px 0 8px;padding:14px 16px;border-radius:var(--r);box-shadow:0 0 18px rgba(254,229,0,.18);background:#FEE500;color:#191919;text-decoration:none}
+.coffee .cup{font-size:24px}.coffee b{display:block;font-size:15px}.coffee small{font-size:12.5px;opacity:.8}
+.toast{pointer-events:none;position:fixed;left:50%;bottom:40px;transform:translateX(-50%);background:rgba(30,30,30,.92);color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;opacity:0;transition:.25s;z-index:50;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.foot{color:var(--sub);font-size:12.5px;text-align:center;margin-top:10px}
+</style>
+</head>
+<body>
+
+<!-- 홈 -->
+<section class="view on" id="v-home">
+  <h1>간호 공부방 <span class="beta">베타</span></h1>
+  <p class="lead">개념 · 술기 설명을 읽고, 문제로 스스로 점검해요. 내용은 계속 늘어나요.</p>
+  <div class="search"><span>🔍</span><input id="q" placeholder="찾기 (예: ICP, 유치도뇨, 쇼크)" autocomplete="off"></div>
+  <div id="results"></div>
+  <div id="homeMain">
+    <div class="grid2">
+      <button class="tile primary" onclick="openQuizSetup()"><span class="i">📝</span><b>문제 풀기</b><small id="qCount"></small></button>
+      <button class="tile" onclick="startWrong()"><span class="i">❌</span><b>오답 노트</b><small id="wCount"></small></button>
+      <button class="tile" onclick="openList('★')"><span class="i">⭐</span><b>즐겨찾기</b><small id="sCount"></small></button>
+      <button class="tile" onclick="openList('')"><span class="i">📚</span><b>전체 주제</b><small id="tCount"></small></button>
+    </div>
+    <div id="recentBox"></div>
+    <div class="section">과목</div>
+    <div class="card" id="subjects"></div>
+  </div>
+  <a class="report" id="askAdd" target="_blank" rel="noopener">➕ 이런 내용도 넣어 주세요 / 틀린 내용 알려 주기</a>
+  <a class="coffee" href="https://qr.kakaopay.com/Ej8Yr8VXm" target="_blank" rel="noopener"><span class="cup">☕</span><span><b>Buy a poor nursing student a coffee</b><small>가난한 간호학생에게 커피 한 잔 (1,000원)</small></span></a>
+  <p class="foot">교과서 일반 내용을 바탕으로 정리했어요. 실습·시험은 학교 교재와 기관 지침을 따르세요.</p>
+</section>
+
+<!-- 주제 목록 -->
+<section class="view" id="v-list">
+  <div class="top"><button class="back" onclick="back()">‹ 처음</button></div>
+  <h1 id="listTitle"></h1>
+  <div class="seg" id="kind" style="margin-top:14px"><button data-v="" class="on">전체</button><button data-v="개념">개념</button><button data-v="술기">술기</button></div>
+  <div class="card" id="list" style="margin-top:12px"></div>
+</section>
+
+<!-- 주제 -->
+<section class="view" id="v-topic">
+  <div class="top"><button class="back" onclick="back()">‹ 뒤로</button><button class="icon-btn" id="star" onclick="toggleStar()" aria-label="즐겨찾기">☆</button></div>
+  <div class="t-head"><h1 id="tTitle"></h1><div class="t-en" id="tEn"></div><div class="tags" id="tTags"></div></div>
+  <div class="summary" id="tSummary"></div>
+  <div class="tabs"><div class="seg" id="ttab"><button data-v="learn" class="on">설명</button><button data-v="steps">술기 순서</button><button data-v="quiz">문제</button></div></div>
+  <div id="tBody"></div>
+  <a class="report" id="tReport" target="_blank" rel="noopener">✏️ 이 내용이 틀렸거나 더 넣고 싶은 게 있어요</a>
+</section>
+
+<!-- 문제 설정 -->
+<section class="view" id="v-setup">
+  <div class="top"><button class="back" onclick="back()">‹ 처음</button></div>
+  <h1>문제 풀기</h1>
+  <p class="lead">과목과 문제 수를 고르세요. 틀린 문제는 오답 노트에 모여요.</p>
+  <div class="section">과목</div>
+  <div class="chips" id="setupSubj"></div>
+  <div class="section">문제 수</div>
+  <div class="seg" id="setupN"><button data-v="5">5</button><button data-v="10" class="on">10</button><button data-v="20">20</button><button data-v="0">전체</button></div>
+  <button class="big" onclick="startFromSetup()">시작하기</button>
+</section>
+
+<!-- 문제 -->
+<section class="view" id="v-quiz">
+  <div class="top"><button class="back" onclick="quitQuiz()">‹ 그만하기</button></div>
+  <div class="qhead"><span id="qPos"></span><span id="qRight"></span></div>
+  <div class="meter"><i id="qMeter"></i></div>
+  <div class="qcard"><div class="qtopic" id="qTopic"></div><div class="qtext" id="qText"></div><div id="qOpts"></div>
+    <div class="explain" id="qExplain"></div></div>
+  <button class="big" id="qNext" style="display:none" onclick="nextQ()">다음 문제</button>
+</section>
+
+<!-- 결과 -->
+<section class="view" id="v-done">
+  <div class="top"><button class="back" onclick="go('v-home')">‹ 처음</button></div>
+  <div class="score" id="dScore"></div>
+  <div id="dList"></div>
+  <button class="big" onclick="retryWrong()" id="dRetry">틀린 문제만 다시</button>
+  <button class="big ghost" onclick="go('v-home')">처음으로</button>
+</section>
+
+<div class="toast" id="toast"></div>
+<!--SCRIPTS-->
+</body>
+</html>

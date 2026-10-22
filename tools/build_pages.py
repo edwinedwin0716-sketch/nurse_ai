@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""깃허브 페이지(docs/)를 만든다: 다운로드 모음 페이지 + 아이폰·Mac용 웹앱(간호과정 도우미, 플래시카드).
+"""깃허브 페이지(docs/)를 만든다: 다운로드 모음 페이지 + 아이폰·Mac용 웹앱(간호과정 도우미, 간호 공부방, 플래시카드).
 
     python3 StudyHelper/build.py        # 플래시카드 한 파일 묶기 (먼저)
     python3 tools/build_pages.py        # docs/ 다시 만들기
@@ -11,7 +11,7 @@ from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS = os.path.join(ROOT, 'docs')
 PAGES = 'https://edwinedwin0716-sketch.github.io/nurse_ai/'
-IMGS = {'nurse': 'nurse.jpg', 'flash': 'flash.jpg', 'myspace': 'myspace.jpg', 'spot': 'spot.jpg', 'matjip': 'matjip.png'}
+IMGS = {'nurse': 'nurse.jpg', 'flash': 'flash.jpg', 'myspace': 'myspace.jpg', 'spot': 'spot.jpg', 'matjip': 'matjip.png', 'study': 'study.jpg'}
 
 APPS = {
     'nursing': dict(name='간호과정 도우미', short='간호과정', color='#F2F2F7', status='default',
@@ -19,6 +19,10 @@ APPS = {
                     files=['NursingHelper/android/assets/index.html', 'NursingHelper/android/assets/app.js',
                            'NursingHelper/android/assets/engine.js', 'NursingHelper/android/assets/templates.js', 'NursingHelper/android/assets/templates-extra.js'],
                     desc='자료를 넣으면 간호진단을 추천하고 간호과정의 큰 틀을 만들어 줘요.'),
+    'study': dict(name='간호 공부방', short='간호공부방', color='#0B1430', status='black-translucent',
+                  icon='NursingStudy/android/res/mipmap-xxxhdpi/ic_launcher.png',
+                  files=['NursingStudy/dist/간호공부방.html'],
+                  desc='간호학 개념·술기를 공부하고 문제로 스스로 점검해요.'),
     'flashcards': dict(name='플래시카드', short='플래시카드', color='#F2F2F7', status='default',
                        icon='StudyHelper/android/res/mipmap-xxxhdpi/ic_launcher.png',
                        files=['StudyHelper/dist/플래시카드.html'],

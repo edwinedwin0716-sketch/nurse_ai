@@ -1,0 +1,15 @@
+{
+  "name": "간호 공부방",
+  "short_name": "간호공부방",
+  "description": "간호학 개념·술기를 공부하고 문제로 스스로 점검해요.",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0B1430",
+  "theme_color": "#0B1430",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

@@ -15,7 +15,9 @@
 ## 올리는 방법
 - 설치 파일은 각 폴더에 두고 README 맨 위 "📥 바로 다운로드" 표(기기 4칸)와 프로그램 설명을 고친다.
 - 다운로드 페이지(탭 + 기기 버튼 + 설치 3단계): `tools/download_page.html`을 고치고 `python3 tools/build_pages.py` → `docs/` (깃허브 페이지: https://edwinedwin0716-sketch.github.io/nurse_ai/). claude.ai 다운로드 페이지도 `--artifact out.html`로 만들어 같이 갱신한다.
-- 웹앱 원본을 바꾸면 `python3 StudyHelper/build.py` → `python3 tools/build_pages.py` 순서로 다시 만든다.
+- 웹앱 원본을 바꾸면 `python3 StudyHelper/build.py`·`python3 NursingStudy/build.py` → `python3 tools/build_pages.py` 순서로 다시 만든다.
+- 간호 공부방(`NursingStudy/`) 내용은 `web/content/<id>.json` 한 파일 = 한 주제 (`SCHEMA.md`). 새 주제는 쓴 뒤 따로 임상 검토를 거쳐 넣고, 교재마다 다른 값은 `check`에 적는다. 영상은 주소 대신 유튜브 검색어만.
+- 디자인·내용은 다른 앱·교재를 베끼지 않고 새로 만든다 (저작권·디자인권).
 - 사용자가 따로 주는 웹 주소(예: https://edwinedwin0716-sketch.github.io/matjip-finder/)의 프로그램은 그 저장소에 기기별 버전을 넣고, 여기 다운로드 표·페이지에도 탭을 추가한다.
 - 버전을 올리면 zip 이름, AssemblyVersion, versionCode/versionName, 사용법 txt를 같이 고친다.
 - PR을 만들어 바로 병합한다. 커밋 끝에 Co-Authored-By / Claude-Session 줄.
