@@ -97,6 +97,62 @@ h1{font-size:32px;font-weight:800;letter-spacing:-.5px;margin:6px 0 0;display:fl
 .toast{pointer-events:none;position:fixed;left:50%;bottom:40px;transform:translateX(-50%);background:rgba(30,30,30,.92);color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;opacity:0;transition:.25s;z-index:50;max-width:90vw;text-align:center}
 .toast.show{opacity:1}
 .foot{color:var(--sub);font-size:12.5px;text-align:center;margin-top:10px}
+/* 가상 EMR */
+.emrbtn{display:flex;align-items:center;gap:14px;width:100%;border:0;margin-top:14px;padding:16px;border-radius:var(--r);text-align:left;color:#fff;background:linear-gradient(135deg,rgba(77,225,255,.22),rgba(255,92,138,.2));box-shadow:inset 0 0 0 1px rgba(77,225,255,.45),0 0 24px rgba(77,225,255,.18)}
+.emrbtn .i{font-size:30px}.emrbtn b{display:block;font-size:17px}.emrbtn small{color:var(--sub);font-size:13px}
+.ccard{display:flex;gap:14px;align-items:center;width:100%;border:0;background:var(--card);border-radius:var(--r);padding:14px;margin-top:10px;text-align:left;box-shadow:var(--shadow)}
+.ccard .info{flex:1;min-width:0}.ccard b{display:block;font-size:16.5px}.ccard small{color:var(--sub);font-size:13px;display:block}
+.av{width:54px;height:54px;flex:none;border-radius:18px;background:var(--card2);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(77,225,255,.35)}
+.av svg{width:100%;height:100%}
+.av.talking .mouth{animation:talk .22s ease-in-out infinite alternate}
+@keyframes talk{from{transform:scaleY(.35)}to{transform:scaleY(1.25)}}
+.ptbar{display:flex;gap:12px;align-items:center;background:var(--card);border-radius:var(--r);padding:12px 14px;margin-top:8px;box-shadow:inset 0 0 0 1px var(--sep)}
+.ptbar .info{flex:1;min-width:0;font-size:13.5px;color:var(--sub)}.ptbar .info b{color:var(--text);font-size:16px}
+.allergy{display:inline-block;margin-top:4px;font-size:12px;font-weight:700;color:#ff8da1;background:rgba(255,107,129,.12);box-shadow:inset 0 0 0 1px rgba(255,107,129,.5);border-radius:999px;padding:2px 9px}
+.clock{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px}
+.clock .now{font-weight:800;font-size:15px;color:#7cefff;text-shadow:0 0 10px rgba(77,225,255,.6);background:rgba(77,225,255,.1);border-radius:999px;padding:4px 12px}
+.dots{display:flex;gap:5px;flex:1;justify-content:flex-end}.dots i{width:18px;height:6px;border-radius:3px;background:var(--fill)}.dots i.on{background:#4de1ff;box-shadow:0 0 8px #4de1ff}
+.stage{background:linear-gradient(135deg,rgba(77,225,255,.1),rgba(177,140,255,.1));border-radius:var(--r);padding:14px 16px;margin-top:10px;box-shadow:inset 0 0 0 1px rgba(77,225,255,.3)}
+.stage h3{margin:0 0 4px;font-size:17px}.stage p{margin:0;font-size:15px}
+.talk{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.bub{display:flex;gap:8px;align-items:flex-start}.bub .who{flex:none;font-size:12px;font-weight:700;color:var(--sub);width:46px;text-align:center;padding-top:6px}
+.bub .say{background:var(--card2);border-radius:16px 16px 16px 4px;padding:8px 12px;font-size:15px;box-shadow:inset 0 0 0 1px var(--sep)}
+.bub.patient .say{box-shadow:inset 0 0 0 1px rgba(255,92,138,.55),0 0 12px rgba(255,92,138,.15)}
+.bub.speaking .say{box-shadow:inset 0 0 0 1.5px #4de1ff,0 0 16px rgba(77,225,255,.35)}
+.sndrow{display:flex;gap:8px;margin-top:8px}
+.mini{border:0;background:var(--fill);border-radius:999px;padding:6px 12px;font-size:13.5px}
+.mini.on{color:#7cefff;box-shadow:inset 0 0 0 1px rgba(77,225,255,.5)}
+.etabs{display:flex;gap:6px;overflow-x:auto;padding:10px 0 6px;position:sticky;top:0;background:linear-gradient(var(--bg) 80%,transparent);z-index:5;scrollbar-width:none}
+.etabs::-webkit-scrollbar{display:none}
+.etabs button{flex:none;border:0;background:var(--card);border-radius:999px;padding:7px 13px;font-size:14px;position:relative}
+.etabs button.on{background:var(--card2);color:#fff;font-weight:700;box-shadow:inset 0 0 0 1px rgba(90,184,255,.5),0 0 12px rgba(90,184,255,.25)}
+.etabs .nb{position:absolute;top:-3px;right:-2px;min-width:16px;height:16px;border-radius:8px;background:#ff5c8a;color:#fff;font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 0 8px #ff5c8a}
+.etable{width:100%;border-collapse:separate;border-spacing:0;font-size:13.5px}
+.tscroll{overflow-x:auto;border-radius:var(--r2)}
+.etable th,.etable td{padding:7px 8px;border-bottom:1px solid var(--sep);white-space:nowrap;text-align:center}
+.etable th{color:var(--sub);font-weight:600;position:sticky;left:0;background:var(--card)}
+.etable td.hi,.ab-h{color:#ff8da1;font-weight:800;text-shadow:0 0 8px rgba(255,107,129,.45)}
+.etable td.lo,.ab-l{color:#7cc8ff;font-weight:800;text-shadow:0 0 8px rgba(90,184,255,.45)}
+.etable tr.new td{background:rgba(77,225,255,.07)}
+.chart{width:100%;height:auto;display:block}
+.legendr{display:flex;flex-wrap:wrap;gap:10px;font-size:12.5px;color:var(--sub);margin-top:6px}.legendr i{display:inline-block;width:10px;height:10px;border-radius:5px;margin-right:4px;vertical-align:-1px}
+.ord{padding:10px 0;border-bottom:1px solid var(--sep)}.ord:last-child{border-bottom:0}
+.ord .t{font-size:12px;color:var(--sub)}.ord b{font-weight:600;font-size:15px}
+.st{font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 8px;margin-left:6px}
+.st.시행,.st.신규{color:#6dffc0;box-shadow:inset 0 0 0 1px rgba(77,255,176,.45)}.st.중단{color:#ff8da1;box-shadow:inset 0 0 0 1px rgba(255,107,129,.45)}.st.보류{color:#ffcf7a;box-shadow:inset 0 0 0 1px rgba(255,181,71,.45)}
+.newtag{font-size:10.5px;font-weight:800;color:#0b1430;background:#4de1ff;border-radius:999px;padding:1px 6px;margin-left:6px;box-shadow:0 0 8px #4de1ff}
+.doc{background:var(--card);border-radius:var(--r);margin-top:10px;overflow:hidden;box-shadow:var(--shadow)}
+.doc summary{padding:13px 16px;cursor:pointer;list-style:none;display:flex;gap:8px;align-items:center}
+.doc summary::-webkit-details-marker{display:none}
+.doc .k{font-size:12px;color:var(--sub)}.doc pre{white-space:pre-wrap;font:inherit;font-size:14.5px;margin:0;padding:0 16px 14px;color:var(--text)}
+.tl{position:relative;padding-left:18px}.tl::before{content:'';position:absolute;left:5px;top:4px;bottom:4px;width:2px;background:linear-gradient(#4de1ff,#b18cff);border-radius:2px;opacity:.6}
+.tl .n{position:relative;padding:8px 0 10px}.tl .n::before{content:'';position:absolute;left:-17px;top:13px;width:10px;height:10px;border-radius:5px;background:#4de1ff;box-shadow:0 0 8px #4de1ff}
+.tl .n .t{font-size:12.5px;color:#7cefff;font-weight:700}.tl .n p{margin:2px 0 0;font-size:14.5px;white-space:pre-wrap}.tl .n small{color:var(--sub);font-size:12px}
+.navbar{position:sticky;bottom:0;display:flex;gap:10px;padding:12px 0 calc(8px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 30%);margin-top:16px}
+.navbar button{flex:1;margin:0}
+.ask{background:var(--card);border-radius:var(--r);padding:14px 16px;margin-top:10px;box-shadow:inset 0 0 0 1px rgba(255,181,71,.45),0 0 16px rgba(255,181,71,.12)}
+.ask .h{font-size:12.5px;color:var(--orange);font-weight:700}.ask .q{font-weight:700;font-size:16px;margin:4px 0 6px;word-break:keep-all}
+.fake{font-size:11.5px;color:var(--sub);text-align:center;margin-top:8px}
 </style>
 </head>
 <body>
@@ -114,6 +170,7 @@ h1{font-size:32px;font-weight:800;letter-spacing:-.5px;margin:6px 0 0;display:fl
       <button class="tile" onclick="openList('★')"><span class="i">⭐</span><b>즐겨찾기</b><small id="sCount"></small></button>
       <button class="tile" onclick="openList('')"><span class="i">📚</span><b>전체 주제</b><small id="tCount"></small></button>
     </div>
+    <button class="emrbtn" onclick="openCases()"><span class="i">🏥</span><span><b>가상 EMR 실습</b><small id="cCount">가상 환자의 V/S·처방·기록을 시간 순서로 보며 판단해요</small></span></button>
     <div id="recentBox"></div>
     <div class="section">과목</div>
     <div class="card" id="subjects"></div>
@@ -170,6 +227,35 @@ h1{font-size:32px;font-weight:800;letter-spacing:-.5px;margin:6px 0 0;display:fl
   <div id="dList"></div>
   <button class="big" onclick="retryWrong()" id="dRetry">틀린 문제만 다시</button>
   <button class="big ghost" onclick="go('v-home')">처음으로</button>
+</section>
+
+<!-- 가상 EMR: 사례 목록 -->
+<section class="view" id="v-cases">
+  <div class="top"><button class="back" onclick="back()">‹ 처음</button></div>
+  <h1>🏥 가상 EMR 실습</h1>
+  <p class="lead">가상 환자의 기록을 시간 순서대로 보며, 다음에 나타날 증상과 우선 간호를 판단해 보세요. 환자 말은 소리와 자막으로 나와요.</p>
+  <div id="caseList"></div>
+  <p class="fake">모든 환자·병원·의료진은 가상이에요. 처방은 교육용 가상 처방이며 실제 처방 기준이 아니에요.</p>
+</section>
+
+<!-- 가상 EMR: 환자 화면 -->
+<section class="view" id="v-emr">
+  <div class="top"><button class="back" onclick="leaveEmr()">‹ 목록</button><button class="mini" id="sndBtn" onclick="toggleSound()">🔊 소리 켜짐</button></div>
+  <div class="ptbar"><div class="av" id="ptAv"></div><div class="info" id="ptInfo"></div></div>
+  <div class="clock"><span class="now" id="emrNow"></span><span class="dots" id="emrDots"></span></div>
+  <div class="stage" id="emrStage"></div>
+  <div id="emrAsk"></div>
+  <div class="etabs" id="etabs"></div>
+  <div id="emrBody"></div>
+  <div class="navbar"><button class="big ghost" id="emrPrev" onclick="emrMove(-1)">◀ 이전</button><button class="big" id="emrNext" onclick="emrMove(1)">다음 시간으로 ▶</button></div>
+</section>
+
+<!-- 가상 EMR: 마무리 -->
+<section class="view" id="v-debrief">
+  <div class="top"><button class="back" onclick="openCases()">‹ 목록</button></div>
+  <h1 id="dbTitle"></h1>
+  <div id="dbBody"></div>
+  <button class="big ghost" onclick="openCases()">다른 환자 보기</button>
 </section>
 
 <div class="toast" id="toast"></div>

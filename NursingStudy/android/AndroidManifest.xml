@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="kr.nursing.studyroom"
-    android:versionCode="1"
-    android:versionName="0.1">
+    android:versionCode="2"
+    android:versionName="0.2">
     <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="34" />
+    <!-- Android 11+: 기기 음성 엔진(TTS)에 연결하려면 필요 -->
+    <queries>
+        <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>
+    </queries>
     <application
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"

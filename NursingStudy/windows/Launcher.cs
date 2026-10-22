@@ -8,11 +8,11 @@ using Microsoft.Win32;
 
 [assembly: AssemblyTitle("간호 공부방")]
 [assembly: AssemblyProduct("간호 공부방")]
-[assembly: AssemblyVersion("0.1.0.0")]
-[assembly: AssemblyFileVersion("0.1.0.0")]
+[assembly: AssemblyVersion("0.2.0.0")]
+[assembly: AssemblyFileVersion("0.2.0.0")]
 
 static class Launcher {
-    const string Version = "0.1";
+    const string Version = "0.2";
     const string Caption = "간호 공부방";
     static string Dir { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NursingStudy"); } }
 
