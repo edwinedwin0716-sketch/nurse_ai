@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>HWP 편집기</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <div id="titlebar">
+    <span class="logo" id="logo"></span>
+    <div id="title">새 문서 <small></small></div>
+    <button class="qbtn" data-cmd="undo" title="되돌리기 (Ctrl+Z)"></button>
+    <button class="qbtn" data-cmd="redo" title="다시 실행 (Ctrl+Shift+Z)"></button>
+    <button class="qbtn" data-cmd="save" title="저장하기 (Alt+S)"></button>
+    <button class="qbtn" id="modeBtn" data-cmd="toggleEdit" title="편집 / 보기 전환"></button>
+  </div>
+  <div id="menus"></div>
+  <div id="ribbon"></div>
+  <div id="fmtbar">
+    <select id="styleSel" title="스타일 (F6)"></select>
+    <select id="fontSel" title="글꼴"></select>
+    <button class="fbtn" data-cmd="sizeDown" title="글자 작게 (Alt+Shift+R)">−</button>
+    <input id="sizeIn" inputmode="decimal" title="글자 크기(pt)">
+    <button class="fbtn" data-cmd="sizeUp" title="글자 크게 (Alt+Shift+E)">+</button>
+    <span class="sep"></span>
+    <button class="fbtn" data-cmd="bold" title="진하게 (Ctrl+B)"></button>
+    <button class="fbtn" data-cmd="italic" title="기울임 (Ctrl+I)"></button>
+    <button class="fbtn" data-cmd="underline" title="밑줄 (Ctrl+U)"></button>
+    <button class="fbtn" data-cmd="strike" title="취소선"></button>
+    <button class="fbtn" data-cmd="foreColor" title="글자 색"><span class="swatch" id="fcSw" style="background:#e00000"></span></button>
+    <button class="fbtn drop" data-cmd="pickFore" title="글자 색 고르기">▾</button>
+    <button class="fbtn" data-cmd="hilite" title="형광펜(음영 색)"><span class="swatch" id="hcSw" style="background:#ffef00"></span></button>
+    <button class="fbtn drop" data-cmd="pickHilite" title="형광펜 색 고르기">▾</button>
+    <span class="sep"></span>
+    <button class="fbtn" data-cmd="alignJustify" title="양쪽 정렬 (Ctrl+Shift+M)"></button>
+    <button class="fbtn" data-cmd="alignLeft" title="왼쪽 정렬 (Ctrl+Shift+L)"></button>
+    <button class="fbtn" data-cmd="alignCenter" title="가운데 정렬 (Ctrl+Shift+C)"></button>
+    <button class="fbtn" data-cmd="alignRight" title="오른쪽 정렬 (Ctrl+Shift+R)"></button>
+    <button class="fbtn" data-cmd="alignDistribute" title="배분 정렬 (Ctrl+Shift+T)"></button>
+    <span class="sep"></span>
+    <select id="lsSel" title="줄 간격"></select>
+    <button class="fbtn" data-cmd="numbers" title="문단 번호"></button>
+    <button class="fbtn" data-cmd="bullets" title="글머리표"></button>
+    <button class="fbtn" data-cmd="outdent" title="왼쪽 여백 줄이기"></button>
+    <button class="fbtn" data-cmd="indent" title="왼쪽 여백 늘리기"></button>
+  </div>
+  <div id="view">
+    <div id="sizer"><div id="stage"><div id="sheets"></div><div id="doc" spellcheck="false"></div></div></div>
+    <div id="welcome">
+      <div class="card">
+        <h1>HWP 편집기</h1>
+        <p>한글 문서(.hwp · .hwpx)를 보고 고쳐요. 인터넷 없이 기기 안에서만 열어요.</p>
+        <div class="big">
+          <button data-cmd="open"><span data-icon="open"></span>문서 열기</button>
+          <button data-cmd="newDoc"><span data-icon="new"></span>새 문서</button>
+        </div>
+        <div class="recent" id="recent"></div>
+        <div class="foot">가난한 간호학생이 만든 무료 앱이에요. <a href="https://qr.kakaopay.com/Ej8Yr8VXm" data-ext>☕ 1,000원 후원</a></div>
+      </div>
+    </div>
+  </div>
+  <div id="status">
+    <span id="stPage">1/1쪽</span>
+    <span id="stPos" class="wide-only"></span>
+    <span id="stCount"></span>
+    <button id="insMode" data-cmd="toggleOverwrite" title="삽입/수정 (Insert)">삽입</button>
+    <span id="stMsg" class="wide-only"></span>
+    <span class="grow"></span>
+    <button data-cmd="zoomOut" title="축소">−</button>
+    <input type="range" id="zoomRange" min="25" max="300" step="5" value="100" title="확대 비율">
+    <button data-cmd="zoomIn" title="확대">+</button>
+    <button id="zoomPct" data-cmd="zoomMenu" title="화면 확대">100%</button>
+  </div>
+</div>
+<div id="dlgBack"></div>
+<div id="toast"></div>
+<div id="chord"></div>
+<input type="file" id="fileIn" accept=".hwp,.hwpx,.txt,.htm,.html,application/x-hwp,application/haansofthwp,application/vnd.hancom.hwp,application/hwp+zip,application/vnd.hancom.hwpx,application/haansofthwpx" hidden>
+<input type="file" id="imgIn" accept="image/*" hidden>
+<script src="vendor/pako.min.js"></script>
+<script src="container.js"></script>
+<script src="template.js"></script>
+<script src="model.js"></script>
+<script src="hwp5.js"></script>
+<script src="hwpx.js"></script>
+<script src="icons.js"></script>
+<script src="editor.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
