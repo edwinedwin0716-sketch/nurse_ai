@@ -14,6 +14,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
 <style>
+/* 안드로이드 앱에 넣은 나눔명조(OFL). 웹·PC에선 파일이 없어서 기기 글꼴을 쓴다 */
 :root {
   --bar: #f3f4f6; --bar2: #ffffff; --line: #d5d8dd; --text: #1f2328; --sub: #5d6470; --accent: #2563c9; --accent-soft: #e3ecfb;
   --desk: #8b9099; --hover: #e8ebef; --press: #d9e3f3; --danger: #c62828;
@@ -90,6 +91,11 @@ button, select, input, textarea { font: inherit; color: inherit; }
 .mask .hf { overflow: hidden; font: 10pt/1.6 "함초롬바탕", "Noto Serif KR", serif; white-space: pre-wrap; color: #000; }
 .mask .hf p { margin: 0; }
 .mask .pgno { font: 10pt "함초롬바탕", "Noto Serif KR", serif; color: #000; white-space: nowrap; }
+.pagegrid .sheet { cursor: pointer; }
+.pagegrid .sheet:hover { outline: 3px solid var(--accent); }
+.pcard { position: absolute; left: 0; overflow: hidden; pointer-events: none; }
+.pcard .docclone { position: absolute; left: 0; }
+.pgnum { position: absolute; left: 0; right: 0; text-align: center; font: 12px var(--font-ui); color: #fff; text-shadow: 0 1px 2px #0008; }
 .sheet .hf { position: absolute; overflow: hidden; font: 10pt/1.6 "함초롬바탕", "Noto Serif KR", serif; white-space: pre-wrap; color: #000; }
 .sheet .hf p { margin: 0; }
 .sheet .guide { position: absolute; border: 1px dashed transparent; pointer-events: none; }
@@ -99,22 +105,34 @@ button, select, input, textarea { font: inherit; color: inherit; }
 .sheet .notes p { margin: 0; }
 
 #doc { position: absolute; outline: none; color: #000; background: transparent; caret-color: #000;
-  font: 10pt/1.6 "함초롬바탕", "HCR Batang", "Noto Serif KR", "Noto Serif CJK KR", serif; white-space: pre-wrap; word-break: break-all; overflow-wrap: anywhere;
-  tab-size: 40pt; -moz-tab-size: 40pt; counter-reset: o1 o2 o3 o4 o5 o6 o7 fn ln; }
+  font: 10pt/1.6 "함초롬바탕", "HCR Batang", HwpSerif, AppleMyungjo, Batang, "Noto Serif KR", "Noto Serif CJK KR", serif; white-space: pre-wrap; word-break: normal; overflow-wrap: anywhere; text-justify: inter-word;
+  tab-size: 40pt; -moz-tab-size: 40pt; counter-reset: o1 o2 o3 o4 o5 o6 o7 fn en ln; }
 #doc p { margin: 0; min-height: 1em; }
 #doc table.tb { border-collapse: collapse; table-layout: fixed; margin: 0; }
 #doc td table.tb, #doc th table.tb, #doc .box table.tb { table-layout: auto; max-width: 100%; }
 #doc .pgap { pointer-events: none; }
-#doc table.tb td { border: 0.12mm solid #000; padding: 1.41mm 1.8mm; vertical-align: middle; overflow-wrap: anywhere; }
+#doc table.tb td { border: 0.12mm solid #000; padding: 0.5mm 1.8mm; vertical-align: middle; overflow-wrap: anywhere; }
+/* 한글이 정한 줄 바꿈: 보기 모드에서만 쓴다 (편집할 땐 기기가 줄을 나눈다) */
+#doc .hlb { display: none; }
+#doc .pua { display: none; }
+.hlines #doc .hlb { display: block; height: 0; }
+.hlines #doc p:has(> .hlb):not([style*="text-align"]) { text-align-last: justify; }
+.hlines #doc .hll { display: block; text-indent: 0; text-align-last: auto; }
 #doc table.tb td.cellsel { background-image: linear-gradient(rgba(37, 99, 201, .28), rgba(37, 99, 201, .28)); }
 #doc img { vertical-align: bottom; max-width: 100%; }
 #doc img.picked { outline: 2px solid var(--accent); outline-offset: 1px; }
-#doc .box { border: 0.12mm solid #000; padding: 1.41mm 1.8mm; margin: 2pt 0; }
+#doc .box { border: 0.12mm solid #000; padding: 0.5mm 1.8mm; margin: 2pt 0; }
 #doc a { color: #00f; text-decoration: underline; }
 #doc .fn { counter-increment: fn; color: #00f; cursor: pointer; font-size: 75%; }
 #doc .fn::after { content: counter(fn) ")"; }
+#doc .fn[data-end] { counter-increment: en; }
+#doc .fn[data-end]::after { content: counter(en, lower-roman) ")"; }
+.fnotes { font: 9pt/1.5 "함초롬바탕", HwpSerif, AppleMyungjo, Batang, "Noto Serif KR", serif; color: #000; }
+.fnotes::before { content: ""; display: block; width: 40%; border-top: 0.5pt solid #000; margin-bottom: 3px; }
+.fnotes p { margin: 0; }
 #doc .eq { font-family: "Times New Roman", serif; font-style: italic; background: #f1f5ff; padding: 0 2px; border-radius: 2px; cursor: pointer; }
 #doc .pgn { background: #eef; }
+#doc .ph { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; border: 1px dashed #999; background: #f5f5f5; color: #777; font: 9pt var(--font-ui); vertical-align: bottom; max-width: 100%; text-indent: 0; }
 #doc[data-ro="1"] { caret-color: transparent; }
 
 /* 개요 번호(1. 가. 1) 가) (1) (가) ①)와 문단 번호·글머리표 */
@@ -271,7 +289,7 @@ button, select, input, textarea { font: inherit; color: inherit; }
   </div>
   <div id="viewbar"><span>📖 보기 모드예요</span><button data-cmd="toggleEdit" class="vb-main">✏️ 편집하기</button><button data-cmd="alwaysEdit" class="vb-sub">다음부터 바로 편집</button></div>
   <div id="view">
-    <div id="sizer"><div id="stage"><div id="sheets"></div><div id="doc" spellcheck="false"></div><div id="masks"></div></div></div>
+    <div id="sizer"><div id="stage"><div id="sheets"></div><div id="doc" spellcheck="false"></div><div id="masks"></div><div id="grid"></div></div></div>
     <div id="welcome">
       <div class="card">
         <h1>HWP 편집기</h1>
@@ -293,7 +311,7 @@ button, select, input, textarea { font: inherit; color: inherit; }
     <span id="stMsg" class="wide-only"></span>
     <span class="grow"></span>
     <button data-cmd="zoomOut" title="축소">−</button>
-    <input type="range" id="zoomRange" min="25" max="300" step="5" value="100" title="확대 비율">
+    <input type="range" id="zoomRange" min="10" max="300" step="5" value="100" title="확대 비율">
     <button data-cmd="zoomIn" title="확대">+</button>
     <button id="zoomPct" data-cmd="zoomMenu" title="화면 확대">100%</button>
   </div>
@@ -508,13 +526,16 @@ const Model = (() => {
   const A4 = { w: 59528, h: 84188, ml: 8504, mr: 8504, mt: 5668, mb: 4252, mh: 4252, mf: 4252, gutter: 0 };
   const STYLES = ['바탕글', '본문', '개요 1', '개요 2', '개요 3', '개요 4', '개요 5', '개요 6', '개요 7'];
   const FALLBACK = {
-    '함초롬바탕': '"함초롬바탕","HCR Batang","Noto Serif KR","Noto Serif CJK KR",serif',
+    '함초롬바탕': '"함초롬바탕","HCR Batang",HwpSerif,AppleMyungjo,Batang,"Noto Serif KR","Noto Serif CJK KR",serif',
     '함초롬돋움': '"함초롬돋움","HCR Dotum","Noto Sans KR","Noto Sans CJK KR",sans-serif',
-    '바탕': '"바탕",Batang,"Noto Serif KR",serif', '바탕체': '"바탕체",BatangChe,"Noto Serif KR",serif',
+    '바탕': '"바탕",Batang,HwpSerif,AppleMyungjo,"Noto Serif KR",serif', '바탕체': '"바탕체",BatangChe,HwpSerif,"Noto Serif KR",serif',
     '굴림': '"굴림",Gulim,"Noto Sans KR",sans-serif', '돋움': '"돋움",Dotum,"Noto Sans KR",sans-serif',
-    '맑은 고딕': '"맑은 고딕","Malgun Gothic","Noto Sans KR",sans-serif', '궁서': '"궁서",Gungsuh,serif',
+    '맑은 고딕': '"맑은 고딕","Malgun Gothic","Noto Sans KR",sans-serif', '궁서': '"궁서",Gungsuh,HwpSerif,serif',
   };
-  const fontCss = f => FALLBACK[f] || `"${String(f).replace(/"/g, '')}",${/명조|바탕|궁서|serif/i.test(f) ? 'serif' : 'sans-serif'}`;
+  const fontCss = f => FALLBACK[f] || `"${String(f).replace(/"/g, '')}",${/명조|바탕|궁서|serif|Times|Batang|Myeongjo/i.test(f) ? 'HwpSerif,AppleMyungjo,Batang,serif' : 'sans-serif'}`;
+  // 장평(글자 폭 %)은 화면에서 자간으로 비슷하게 줄여 보인다 (한글 글자 폭 약 1em 기준)
+  const RATIO_K = 0.85;
+  const spacingEm = (sp, ratio) => ((sp || 0) + ((ratio || 100) - 100) * RATIO_K) / 100;
 
   const empty = () => ({ page: Object.assign({}, A4), header: [], footer: [], pageNum: null, blocks: [para()], bins: {} });
   function para(text) {
@@ -537,7 +558,8 @@ const Model = (() => {
     if (deco.length) s.push('text-decoration:' + deco.join(' '));
     if (cs.color && cs.color.toLowerCase() !== '#000000') s.push('color:' + cs.color);
     if (cs.bg && cs.bg.toLowerCase() !== '#ffffff') s.push('background-color:' + cs.bg);
-    if (cs.spacing) s.push('letter-spacing:' + (cs.spacing / 100) + 'em');
+    const ls = spacingEm(cs.spacing, cs.ratio);
+    if (Math.abs(ls) > 0.0001) s.push('letter-spacing:' + +ls.toFixed(4) + 'em');
     return s.join(';');
   }
 
@@ -556,6 +578,15 @@ const Model = (() => {
     return s.join(';');
   }
 
+  // 글자처럼 취급하지 않는 그림·표의 위치(가운데·오른쪽·어울림)
+  function placeCss(pl) {
+    if (!pl) return '';
+    if (pl.wrap === 'square' && pl.align !== 'center') return pl.align === 'right' ? ';float:right;margin:0 0 2pt 6pt' : `;float:left;margin:0 6pt 2pt ${pt(pl.x || 0)}`;
+    return ';display:block;' + (pl.align === 'center' ? 'margin-left:auto;margin-right:auto' : pl.align === 'right' ? 'margin-left:auto;margin-right:0' : `margin-left:${pt(pl.x || 0)}`);
+  }
+  const placeAttr = pl => pl ? ` data-align="${pl.align}" data-wrap="${pl.wrap}" data-x="${pl.x || 0}"` : '';
+  const placeOfEl = n => n.dataset.align ? { align: n.dataset.align, wrap: n.dataset.wrap || 'block', x: +n.dataset.x || 0 } : null;
+
   function runsHtml(runs, ctx) {
     let h = '', link = null;
     for (const r of runs) {
@@ -563,7 +594,8 @@ const Model = (() => {
       switch (r.t) {
         case 'text': {
           if ((r.href || null) !== link) { if (link) h += '</a>'; link = r.href || null; if (link) h += `<a href="${esc(link)}">`; }
-          let t = esc(r.text);
+          // 한컴 전용 기호(사용자 정의 영역 글자)는 다른 글꼴에 없어 네모로 보이니 숨긴다(파일에는 남는다)
+          let t = esc(r.text).replace(/[\uE000-\uF8FF]+/g, m => `<span class="pua">${m}</span>`);
           const css = csCss(r.cs || {});
           const ratio = r.cs && r.cs.ratio && r.cs.ratio !== 100 ? ` data-ratio="${r.cs.ratio}"` : '';
           if (css || ratio) t = `<span style="${css}"${ratio}>${t}</span>`;
@@ -573,16 +605,18 @@ const Model = (() => {
           break;
         }
         case 'tab': h += '\t'; break;
+        case 'lb': h += '<span class="hlb"></span>'; break;
         case 'br': h += '<br>'; break;
         case 'img': {
           const b = ctx.doc.bins[r.bin];
           const url = b ? ctx.url(r.bin, b) : '';
-          h += `<img src="${url}" data-bin="${r.bin}" style="width:${pt(r.w)};height:${pt(r.h)}" alt="">`;
+          h += `<img src="${url}" data-bin="${r.bin}"${placeAttr(r.place)} style="width:${pt(r.w)};height:${pt(r.h)}${placeCss(r.place)}" alt="">`;
           break;
         }
-        case 'note': h += `<sup class="fn" contenteditable="false" data-note="${esc(blocksText(r.blocks))}"></sup>`; break;
+        case 'note': h += `<sup class="fn" contenteditable="false"${r.end ? ' data-end="1"' : ''} data-note="${esc(blocksText(r.blocks))}"></sup>`; break;
         case 'eq': h += `<span class="eq" contenteditable="false" data-script="${esc(r.script)}">${esc(r.script)}</span>`; break;
         case 'pagenum': h += '<span class="pgn" contenteditable="false">#</span>'; break;
+        case 'ph': h += `<span class="ph" contenteditable="false" style="width:${pt(r.w)};height:${pt(r.h)}">${esc(r.label || '개체')}<br><small>이 앱에선 못 보여요</small></span>`; break;
       }
     }
     if (link) h += '</a>';
@@ -603,7 +637,11 @@ const Model = (() => {
     if (p.outline) attrs.push(`data-outline="${p.outline}"`);
     if (p.list) attrs.push(`data-list="${p.list}"`);
     if (p.pageBreak) attrs.push('data-pb="1"');
-    const inner = runsHtml(p.runs.filter(r => r.t !== 'table' && r.t !== 'box'), ctx);
+    const flow = p.runs.filter(r => r.t !== 'table' && r.t !== 'box');
+    // 한글이 정한 줄 바꿈이 있으면 마지막 줄을 따로 묶는다(보기 모드에서 앞줄만 양쪽 정렬)
+    let last = -1;
+    flow.forEach((r, i) => { if (r.t === 'lb') last = i; });
+    const inner = last < 0 ? runsHtml(flow, ctx) : runsHtml(flow.slice(0, last + 1), ctx) + '<span class="hll">' + runsHtml(flow.slice(last + 1), ctx) + '</span>';
     return `<p${attrs.length ? ' ' + attrs.join(' ') : ''}>${inner || '<br>'}</p>`;
   }
 
@@ -632,7 +670,8 @@ const Model = (() => {
   function tableHtml(t, ctx) {
     const rows = [];
     for (const c of t.cells) (rows[c.r] = rows[c.r] || []).push(c);
-    let h = `<table class="tb"${t.w ? ` style="width:${pt(t.w)}"` : ''}><tbody>`;
+    const tpl = t.place && t.place.wrap !== 'square' ? t.place : null;
+    let h = `<table class="tb"${placeAttr(tpl)} style="${t.w ? 'width:' + pt(t.w) : ''}${tpl ? placeCss(tpl).replace(';display:block', '') : ''}"><tbody>`;
     const nRows = Math.max(t.rows || 0, rows.length);
     for (let r = 0; r < nRows; r++) {
       h += '<tr>';
@@ -642,6 +681,8 @@ const Model = (() => {
         if (c.h) s.push('height:' + pt(c.h));
         if (c.bg && c.bg.toLowerCase() !== '#ffffff') s.push('background-color:' + c.bg);
         if (c.valign && c.valign !== 'middle') s.push('vertical-align:' + c.valign);
+        const pd = c.pad || t.pad;
+        if (pd) s.push(`padding:${pt(pd[2])} ${pt(pd[1])} ${pt(pd[3])} ${pt(pd[0])}`);
         if (c.border) s.push(`border-left:${c.border.l};border-right:${c.border.r};border-top:${c.border.t};border-bottom:${c.border.b}`);
         h += `<td${c.cs > 1 ? ` colspan="${c.cs}"` : ''}${c.rs > 1 ? ` rowspan="${c.rs}"` : ''} style="${s.join(';')}">${blocksHtml(c.blocks.length ? c.blocks : [para()], ctx)}</td>`;
       }
@@ -669,8 +710,12 @@ const Model = (() => {
     const st = getComputedStyle(el);
     const cs = { font: firstFont(st.fontFamily) || BASE.font, size: Math.round(parseFloat(st.fontSize) * 0.75 * 10) / 10,
       bold: (parseInt(st.fontWeight, 10) || 400) >= 600, italic: st.fontStyle === 'italic', color: hex(st.color) || '#000000' };
-    const ls = parseFloat(st.letterSpacing);
-    if (ls) cs.spacing = Math.round(ls / parseFloat(st.fontSize) * 100);
+    const rEl = el.closest && el.closest('[data-ratio]');
+    const ratio = rEl && (!stop || stop.contains(rEl)) ? +rEl.dataset.ratio : 100;
+    if (ratio !== 100) cs.ratio = ratio;
+    const ls = parseFloat(st.letterSpacing) || 0;
+    const sp = Math.round(ls / parseFloat(st.fontSize) * 100 - (ratio - 100) * RATIO_K);
+    if (sp) cs.spacing = Math.max(-50, Math.min(50, sp));
     for (let e = el; e && e !== stop; e = e.parentElement) {
       const tag = e.tagName;
       const d = e.style.textDecorationLine || e.style.textDecoration || '';
@@ -680,7 +725,6 @@ const Model = (() => {
       if (tag === 'SUB' || e.style.verticalAlign === 'sub') cs.sub = true;
       if (tag === 'A') cs.underline = true;
       if (!cs.bg) { const bg = hex(e.style.backgroundColor) || (tag === 'MARK' ? '#ffff00' : null); if (bg) cs.bg = bg; }
-      if (!cs.ratio && e.dataset && e.dataset.ratio) cs.ratio = +e.dataset.ratio;
     }
     if (cs.sup || cs.sub) cs.size = Math.round(cs.size / 0.83 * 10) / 10;   // 위·아래 첨자는 작게 보이기만 한다
     cache.set(el, cs);
@@ -733,11 +777,12 @@ const Model = (() => {
         if (tag === 'BR') { if (n.nextSibling || n.previousSibling) p.runs.push({ t: 'br' }); }
         else if (tag === 'IMG') {
           const key = n.dataset.bin;
-          if (key && ctx.doc.bins[key]) p.runs.push({ t: 'img', bin: key, w: huOf(n.style.width) || Math.round(n.width * 75), h: huOf(n.style.height) || Math.round(n.height * 75) });
+          if (key && ctx.doc.bins[key]) p.runs.push({ t: 'img', bin: key, w: huOf(n.style.width) || Math.round(n.width * 75), h: huOf(n.style.height) || Math.round(n.height * 75), place: placeOfEl(n) });
         }
-        else if (n.classList.contains('fn')) p.runs.push({ t: 'note', blocks: (n.dataset.note || '').split('\n').map(t => para(t)) });
+        else if (n.classList.contains('fn')) p.runs.push({ t: 'note', end: !!n.dataset.end, blocks: (n.dataset.note || '').split('\n').map(t => para(t)) });
         else if (n.classList.contains('eq')) p.runs.push({ t: 'eq', script: n.dataset.script || n.textContent, cs: csOf(n, el.parentElement, cache) });
         else if (n.classList.contains('pgn')) p.runs.push({ t: 'pagenum' });
+        else if (n.classList.contains('ph') || n.classList.contains('pgap')) { if (n.classList.contains('ph')) ctx.lost = (ctx.lost || 0) + 1; }
         else if (tag === 'TABLE') p.runs.push(tableOf(n, ctx));
         else if (tag === 'A') walk(n, n.getAttribute('href') || href);
         else walk(n, href);
@@ -748,7 +793,7 @@ const Model = (() => {
   }
 
   function tableOf(tb, ctx) {
-    const t = { t: 'table', cells: [], rows: 0, cols: 0, w: Math.round(tb.offsetWidth * 75) || huOf(tb.style.width) };
+    const t = { t: 'table', cells: [], rows: 0, cols: 0, w: Math.round(tb.offsetWidth * 75) || huOf(tb.style.width), place: placeOfEl(tb) };
     const taken = [];
     let r = 0;
     for (const tr of tb.rows) {
@@ -760,7 +805,8 @@ const Model = (() => {
         for (let i = 0; i < rs; i++) for (let j = 0; j < cs; j++) (taken[r + i] = taken[r + i] || [])[c + j] = true;
         const st = td.style;
         const b = side => st['border' + side] || '';
-        t.cells.push({ r, c, rs, cs, w: Math.round(td.offsetWidth * 75) || huOf(st.width), h: Math.round(td.offsetHeight * 75) || huOf(st.height),
+        const pad = st.paddingTop ? [huOf(st.paddingLeft), huOf(st.paddingRight), huOf(st.paddingTop), huOf(st.paddingBottom)] : null;
+        t.cells.push({ r, c, rs, cs, pad, w: Math.round(td.offsetWidth * 75) || huOf(st.width), h: Math.round(td.offsetHeight * 75) || huOf(st.height),
           bg: hex(st.backgroundColor), valign: st.verticalAlign || 'middle',
           border: (st.borderLeft || st.borderTop) ? { l: b('Left'), r: b('Right'), t: b('Top'), b: b('Bottom') } : null,
           blocks: blocksOf(td, ctx) });
@@ -819,12 +865,14 @@ const Model = (() => {
 
   function fromDom(root, doc) {
     const ctx = { doc, cache: new Map() };
-    return blocksOf(root, ctx);
+    const blocks = blocksOf(root, ctx);
+    blocks.lost = ctx.lost || 0;          // 저장하지 못하는 개체(차트 등) 수
+    return blocks;
   }
 
   function toHtml(blocks, doc, url) { return blocksHtml(blocks, { doc, url }); }
 
-  return { BASE, A4, STYLES, empty, para, toHtml, fromDom, blocksText, csCss, paraCss, fontCss, esc, hex, huOf, ptOf };
+  return { RATIO_K, spacingEm, BASE, A4, STYLES, empty, para, toHtml, fromDom, blocksText, csCss, paraCss, fontCss, esc, hex, huOf, ptOf };
 })();
 
 </script>
@@ -835,8 +883,8 @@ const Model = (() => {
 
 const Hwp5 = (() => {
   const T = { DOC_PROPS: 16, ID_MAPPINGS: 17, BIN_DATA: 18, FACE_NAME: 19, BORDER_FILL: 20, CHAR_SHAPE: 21, PARA_SHAPE: 25, STYLE: 26,
-    PARA_HEADER: 66, PARA_TEXT: 67, PARA_CHAR_SHAPE: 68, CTRL_HEADER: 71, LIST_HEADER: 72, PAGE_DEF: 73,
-    SHAPE_COMPONENT: 76, TABLE: 77, PICTURE: 85, EQEDIT: 88 };
+    PARA_HEADER: 66, PARA_TEXT: 67, PARA_CHAR_SHAPE: 68, PARA_LINE_SEG: 69, CTRL_HEADER: 71, LIST_HEADER: 72, PAGE_DEF: 73,
+    SHAPE_COMPONENT: 76, TABLE: 77, OLE: 84, PICTURE: 85, EQEDIT: 88, CHART: 95 };
   const ALIGN = ['justify', 'left', 'right', 'center', 'distribute', 'distribute'];
   const LS = ['PERCENT', 'FIXED', 'BETWEEN_LINES', 'AT_LEAST'];
 
@@ -975,12 +1023,16 @@ const Hwp5 = (() => {
     c.u32(); c.u32();
     const paraShape = c.u16(), styleId = c.u8(), brk = c.u8();
     let units = null, shapes = [[0, 0]];
-    const ctrls = [];
+    const ctrls = [], lineStarts = new Set();
     for (const ch of rec.children) {
       if (ch.tag === T.PARA_TEXT) units = new Uint16Array(ch.data.buffer.slice(ch.data.byteOffset, ch.data.byteOffset + (ch.data.length & ~1)));
       else if (ch.tag === T.PARA_CHAR_SHAPE) {
         const r = new R(ch.data); shapes = [];
         while (r.left >= 8) shapes.push([r.u32(), r.u32()]);
+      } else if (ch.tag === T.PARA_LINE_SEG) {
+        // 한글이 정한 줄 바꿈 위치(각 줄의 첫 글자 위치)
+        const r = new R(ch.data);
+        while (r.left >= 36) { const pos = r.u32(); r.p += 32; if (pos > 0) lineStarts.add(pos); }
       } else if (ch.tag === T.CTRL_HEADER) ctrls.push(ch);
     }
     const para = Object.assign({ t: 'p', runs: [] }, paraStyle(ctx.info, paraShape, styleId));
@@ -993,6 +1045,7 @@ const Hwp5 = (() => {
       buf = '';
     };
     for (let i = 0; i < units.length;) {
+      if (lineStarts.has(i)) { flush(); para.runs.push({ t: 'lb' }); }
       const u = units[i], csId = csAt(i);
       if (u >= 32) {
         if (csId !== bufCs) { flush(); bufCs = csId; }
@@ -1094,8 +1147,10 @@ const Hwp5 = (() => {
     const tbl = { t: 'table', cells: [], rows: 0, cols: 0 };
     const common = new R(rec.data); common.u32(); common.u32(); common.i32(); common.i32();
     tbl.w = common.u32();
+    tbl.place = placeOf(rec.data);
     for (const ch of rec.children) if (ch.tag === T.TABLE) {
-      const r = new R(ch.data); r.u32(); tbl.rows = r.u16(); tbl.cols = r.u16();
+      const r = new R(ch.data); r.u32(); tbl.rows = r.u16(); tbl.cols = r.u16(); r.u16();
+      tbl.pad = [r.u16(), r.u16(), r.u16(), r.u16()];          // 칸 안쪽 여백 기본값(왼·오·위·아래)
     }
     // 표 기록(TABLE) 앞의 목록은 캡션이다
     const ti = rec.children.findIndex(ch => ch.tag === T.TABLE);
@@ -1103,9 +1158,10 @@ const Hwp5 = (() => {
     if (caption) tbl.caption = paragraphs(ctx, caption.paras);
     for (const l of lists(rec.children.slice(ti + 1))) {
       const r = new R(l.head.data);
-      r.u16(); const lp = r.u32(); r.u16();
+      r.u16(); const lp = r.u32(); const flags = r.u16();
       const cell = { c: r.u16(), r: r.u16(), cs: r.u16() || 1, rs: r.u16() || 1, w: r.u32(), h: r.u32() };
-      r.i16(); r.i16(); r.i16(); r.i16();
+      const own = [r.u16(), r.u16(), r.u16(), r.u16()];
+      cell.pad = (flags & 1) ? own : tbl.pad;
       const bf = ctx.info.borderFills[r.u16()];
       cell.valign = ['top', 'middle', 'bottom'][(lp >> 21) & 3] || 'middle';
       if (bf) { cell.bg = bf.bg; cell.border = borders(bf); }
@@ -1127,9 +1183,18 @@ const Hwp5 = (() => {
     return out;
   }
 
+  // 개체 위치: 글자처럼 취급(0번 비트), 가로 정렬(10~12번), 본문과의 배치(21~23번)
+  function placeOf(data) {
+    const c = new R(data); c.u32();
+    const props = c.u32(); c.i32(); const x = c.i32();
+    if (props & 1) return null;
+    return { align: ['left', 'center', 'right', 'left', 'right'][(props >> 10) & 7] || 'left', wrap: ['square', 'block', 'behind', 'front'][(props >> 21) & 7] || 'block', x: (props >> 8 & 3) >= 2 ? Math.max(0, x) : 0 };
+  }
+
   function shape(ctx, rec) {
     const c = new R(rec.data); c.u32(); c.u32(); c.i32(); c.i32();
     const w = c.u32(), h = c.u32();
+    const place = placeOf(rec.data);
     const pic = findAll(rec, T.PICTURE)[0];
     if (pic) {
       const r = new R(pic.data); r.p = 71;
@@ -1143,7 +1208,7 @@ const Hwp5 = (() => {
           if ((bin.compress === 0 && ctx.compressed) || bin.compress === 1) { try { data = pako.inflateRaw(data); } catch (e) { } }
           const key = 'img' + (Object.keys(ctx.doc.bins).length + 1);
           ctx.doc.bins[key] = { data, ext };
-          return { t: 'img', bin: key, w, h };
+          return { t: 'img', bin: key, w, h, place };
         }
       }
       return null;
@@ -1152,8 +1217,10 @@ const Hwp5 = (() => {
     const comp = rec.children.find(x => x.tag === T.SHAPE_COMPONENT);
     if (comp) {
       const l = lists(comp.children)[0];
-      if (l) return { t: 'box', w, h, blocks: paragraphs(ctx, l.paras) };
+      if (l) return { t: 'box', w, h, place, blocks: paragraphs(ctx, l.paras) };
     }
+    // 차트·OLE 개체는 그리지 못해 자리만 보여 준다
+    if (findAll(rec, T.OLE).length || findAll(rec, T.CHART).length) return { t: 'ph', w, h, label: '차트·개체' };
     return null;
   }
 
@@ -1200,6 +1267,14 @@ const Hwpx = (() => {
   const col = v => !v || v === 'none' || !/^#[0-9a-f]{6}/i.test(v) ? null : v.slice(0, 7).toLowerCase();
   const ALIGN = { JUSTIFY: 'justify', LEFT: 'left', RIGHT: 'right', CENTER: 'center', DISTRIBUTE: 'distribute', DISTRIBUTE_SPACE: 'distribute' };
   const parse = s => new DOMParser().parseFromString(s, 'application/xml');
+  const placeOf = el => {
+    const pos = kid(el, 'pos');
+    if (!pos || pos.getAttribute('treatAsChar') === '1') return null;
+    const rel = pos.getAttribute('horzRelTo');
+    return { align: { CENTER: 'center', RIGHT: 'right', OUTSIDE: 'right' }[pos.getAttribute('horzAlign')] || 'left',
+      wrap: { SQUARE: 'square', TOP_AND_BOTTOM: 'block', BEHIND_TEXT: 'behind', IN_FRONT_OF_TEXT: 'front' }[el.getAttribute('textWrap')] || 'block',
+      x: rel === 'COLUMN' || rel === 'PARA' ? Math.max(0, num(pos, 'horzOffset')) : 0 };
+  };
 
   // ---------- 읽기 ----------
   function readHeader(xml) {
@@ -1344,6 +1419,7 @@ const Hwpx = (() => {
         case 'tbl': p.runs.push(table(ctx, n)); break;
         case 'pic': { const im = picture(ctx, n); if (im) p.runs.push(im); break; }
         case 'container': for (const pic of desc(n, 'pic')) { const im = picture(ctx, pic); if (im) p.runs.push(im); } break;
+        case 'ole': case 'chart': { const sz = kid(n, 'sz') || kid(n, 'curSz'); p.runs.push({ t: 'ph', w: num(sz, 'width', 20000), h: num(sz, 'height', 10000), label: '차트·개체' }); break; }
         case 'equation': { const s = kid(n, 'script'); p.runs.push({ t: 'eq', script: s ? s.textContent : '', cs: cs() }); break; }
         case 'rect': case 'ellipse': case 'polygon': case 'curve': case 'arc': {
           const dt = kid(n, 'drawText');
@@ -1380,12 +1456,16 @@ const Hwpx = (() => {
 
   function table(ctx, el) {
     const t = { t: 'table', rows: num(el, 'rowCnt'), cols: num(el, 'colCnt'), cells: [], w: num(kid(el, 'sz'), 'width') };
+    const m4 = e => e ? [num(e, 'left', 510), num(e, 'right', 510), num(e, 'top', 141), num(e, 'bottom', 141)] : null;
+    t.pad = m4(kid(el, 'inMargin')) || [510, 510, 141, 141];
+    t.place = placeOf(el);
     for (const tr of kids(el, 'tr')) for (const tc of kids(tr, 'tc')) {
       const a = kid(tc, 'cellAddr'), sp = kid(tc, 'cellSpan'), sz = kid(tc, 'cellSz'), sl = kid(tc, 'subList');
       const fill = ctx.head.fills[tc.getAttribute('borderFillIDRef')];
       t.cells.push({ r: num(a, 'rowAddr'), c: num(a, 'colAddr'), rs: num(sp, 'rowSpan', 1), cs: num(sp, 'colSpan', 1), w: num(sz, 'width'), h: num(sz, 'height'),
         valign: { TOP: 'top', BOTTOM: 'bottom' }[sl && sl.getAttribute('vertAlign')] || 'middle',
-        bg: fill ? fill.bg : null, border: fill ? fill.border : null, blocks: sl ? blocks(ctx, sl) : [] });
+        bg: fill ? fill.bg : null, border: fill ? fill.border : null, blocks: sl ? blocks(ctx, sl) : [],
+        pad: tc.getAttribute('hasMargin') === '1' && kid(tc, 'cellMargin') ? m4(kid(tc, 'cellMargin')) : t.pad });
     }
     return t;
   }
@@ -1404,7 +1484,7 @@ const Hwpx = (() => {
       ctx.binMap[ref] = key;
     }
     const sz = kid(el, 'curSz') || kid(el, 'sz');
-    return { t: 'img', bin: ctx.binMap[ref], w: num(sz, 'width', 10000), h: num(sz, 'height', 10000) };
+    return { t: 'img', bin: ctx.binMap[ref], w: num(sz, 'width', 10000), h: num(sz, 'height', 10000), place: placeOf(el) };
   }
 
   // ---------- 저장 ----------
@@ -1516,12 +1596,12 @@ const Hwpx = (() => {
         case 'img': {
           if (!doc.bins[r.bin]) return '';
           const id = binOf(r.bin), w = Math.max(1, Math.round(r.w)), h = Math.max(1, Math.round(r.h)), o = nid();
-          return `<hp:pic textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" reverse="0" id="${o}" zOrder="0" numberingType="PICTURE" lock="0" dropcapstyle="None" href="" groupLevel="0" instid="${o}">` +
+          return `<hp:pic textWrap="${r.place && r.place.wrap === 'square' ? 'SQUARE' : 'TOP_AND_BOTTOM'}" textFlow="BOTH_SIDES" reverse="0" id="${o}" zOrder="0" numberingType="PICTURE" lock="0" dropcapstyle="None" href="" groupLevel="0" instid="${o}">` +
             `<hp:offset x="0" y="0"/><hp:orgSz width="${w}" height="${h}"/><hp:curSz width="${w}" height="${h}"/><hp:flip horizontal="0" vertical="0"/>` +
             `<hp:rotationInfo angle="0" centerX="${w >> 1}" centerY="${h >> 1}" rotateimage="1"/><hp:renderingInfo><hc:transMatrix e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/><hc:scaMatrix e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/><hc:rotMatrix e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/></hp:renderingInfo>` +
             `<hp:imgRect><hc:pt0 x="0" y="0"/><hc:pt1 x="${w}" y="0"/><hc:pt2 x="${w}" y="${h}"/><hc:pt3 x="0" y="${h}"/></hp:imgRect><hp:imgClip left="0" right="${w}" top="0" bottom="${h}"/>` +
             `<hp:inMargin left="0" right="0" top="0" bottom="0"/><hp:imgDim dimwidth="${w}" dimheight="${h}"/><hc:img binaryItemIDRef="${id}" bright="0" contrast="0" effect="REAL_PIC" alpha="0"/><hp:effects/>` +
-            `<hp:sz width="${w}" widthRelTo="ABSOLUTE" height="${h}" heightRelTo="ABSOLUTE" protect="0"/><hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>` +
+            `<hp:sz width="${w}" widthRelTo="ABSOLUTE" height="${h}" heightRelTo="ABSOLUTE" protect="0"/>${posXml(r.place)}` +
             '<hp:outMargin left="0" right="0" top="0" bottom="0"/><hp:shapeComment>그림입니다.</hp:shapeComment></hp:pic>';
         }
         case 'note': {
@@ -1546,26 +1626,37 @@ const Hwpx = (() => {
       return '';
     }
 
+    // 글자처럼 취급(기본) 또는 단(column) 기준 왼쪽·가운데·오른쪽
+    function posXml(pl) {
+      if (!pl) return '<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>';
+      return `<hp:pos treatAsChar="0" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="${{ center: 'CENTER', right: 'RIGHT' }[pl.align] || 'LEFT'}" vertOffset="0" horzOffset="${pl.align === 'left' ? Math.round(pl.x || 0) : 0}"/>`;
+    }
+
     function tableXml(t) {
       const o = nid();
       const rows = [];
       for (const c of t.cells) (rows[c.r] = rows[c.r] || []).push(c);
+      const PAD0 = [510, 510, 141, 141];
+      const tp = (t.pad || PAD0).map(v => Math.max(0, Math.round(v)));
+      const same = (a, b) => a.every((v, i) => Math.abs(v - b[i]) < 2);
       const nRows = Math.max(1, rows.length), nCols = Math.max(1, t.cols || 1);
       const width = Math.round(t.w || t.cells.filter(c => c.r === 0).reduce((s, c) => s + (c.w || 0), 0) || 42520);
       let height = 0;
       for (let r = 0; r < nRows; r++) height += Math.max(...(rows[r] || [{ h: 282 }]).filter(c => c.rs === 1).map(c => c.h || 282), 282);
       let h = `<hp:tbl id="${o}" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="CELL" repeatHeader="0" rowCnt="${nRows}" colCnt="${nCols}" cellSpacing="0" borderFillIDRef="${tableFill}" noAdjust="0">` +
         `<hp:sz width="${width}" widthRelTo="ABSOLUTE" height="${height}" heightRelTo="ABSOLUTE" protect="0"/>` +
-        '<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>' +
-        '<hp:outMargin left="0" right="0" top="0" bottom="0"/><hp:inMargin left="510" right="510" top="141" bottom="141"/>';
+        posXml(t.place) +
+        `<hp:outMargin left="0" right="0" top="0" bottom="0"/><hp:inMargin left="${tp[0]}" right="${tp[1]}" top="${tp[2]}" bottom="${tp[3]}"/>`;
       for (let r = 0; r < nRows; r++) {
         h += '<hp:tr>';
         for (const c of (rows[r] || []).sort((a, b) => a.c - b.c)) {
           const va = { top: 'TOP', bottom: 'BOTTOM' }[c.valign] || 'CENTER';
-          h += `<hp:tc name="" header="0" hasMargin="0" protect="0" editable="0" dirty="0" borderFillIDRef="${fillId(c)}">` +
+          const cp = (c.pad || tp).map(v => Math.max(0, Math.round(v)));
+          const own = !same(cp, tp);
+          h += `<hp:tc name="" header="0" hasMargin="${own ? 1 : 0}" protect="0" editable="0" dirty="0" borderFillIDRef="${fillId(c)}">` +
             subList(c.blocks && c.blocks.length ? c.blocks : [Model.para()], va) +
             `<hp:cellAddr colAddr="${c.c}" rowAddr="${c.r}"/><hp:cellSpan colSpan="${c.cs || 1}" rowSpan="${c.rs || 1}"/><hp:cellSz width="${Math.round(c.w || width / nCols)}" height="${Math.round(c.h || 282)}"/>` +
-            '<hp:cellMargin left="510" right="510" top="141" bottom="141"/></hp:tc>';
+            `<hp:cellMargin left="${cp[0]}" right="${cp[1]}" top="${cp[2]}" bottom="${cp[3]}"/></hp:tc>`;
         }
         h += '</hp:tr>';
       }
@@ -1779,7 +1870,7 @@ const Icons = (() => {
 
 const Ed = (() => {
   const el = document.getElementById('doc');
-  const masksEl = document.getElementById('masks');
+  const masksEl = document.getElementById('masks'), gridEl = document.getElementById('grid');
   const stage = document.getElementById('stage'), sizer = document.getElementById('sizer'), sheetsEl = document.getElementById('sheets'), view = document.getElementById('view');
   const PX = 75;          // 1px = 75 HWPUNIT (96dpi)
   const GAP = 18, PAD = 18;
@@ -1882,7 +1973,7 @@ const Ed = (() => {
 
   // 쪽 나누기: 문서 위에서부터 쪽 끝을 넘는 첫 문단을 찾아 다음 쪽으로 넘기기를 되풀이한다.
   // 표 안(칸 안)의 문단도 똑같이 줄 단위로 넘긴다. 넘긴 자리는 .pgap(저장되지 않는 빈칸)으로 채운다.
-  function paginate(g) {
+  function paginate(g, reserve) {
     const scale = st.zoom;
     const stuck = new Set();
     const spacer = (before, h) => {
@@ -1891,7 +1982,7 @@ const Ed = (() => {
       d.style.height = Math.ceil(h + 0.5) + 'px';
       before.parentNode.insertBefore(d, before);
     };
-    const tries = new Map();
+    const tries = new Map(), pbDone = new Set();
     // 가운데·아래 맞춤 칸에서 글이 칸보다 짧아 떠 있으면 나누지 않는다 (밀수록 같이 내려가 끝이 없다)
     const floating = node => {
       const td = node.closest('td,th');
@@ -1911,7 +2002,7 @@ const Ed = (() => {
       const dt = el.getBoundingClientRect().top;
       let best = null;
       const pageOf = y => Math.max(0, Math.floor((y + 2) / g.stride));
-      const endOf = pg => pg * g.stride + g.bodyH;
+      const endOf = pg => pg * g.stride + g.bodyH - ((reserve && reserve[pg]) || 0);
       const rg = document.createRange();
       const consider = (node, kind) => {
         if (stuck.has(node)) return;
@@ -1944,7 +2035,7 @@ const Ed = (() => {
         if (best && line.lt >= best.top) return;
         best = { node, kind, top: line.lt, page: line.pg, whole: line.lt <= first + 2, pTop: top, bottom };
       };
-      for (const k of el.querySelectorAll(':scope > [data-pb]')) if (k !== el.firstElementChild) consider(k, 'pb');
+      for (const k of el.querySelectorAll(':scope > [data-pb]')) if (k !== el.firstElementChild && !pbDone.has(k)) consider(k, 'pb');
       for (const p of el.querySelectorAll('p')) consider(p, 'p');
       if (!best) break;
       const { node, kind, top, page } = best;
@@ -1952,7 +2043,7 @@ const Ed = (() => {
       const n = (tries.get(node) || 0) + 1;
       tries.set(node, n);
       if (n > 30) { stuck.add(node); continue; }
-      if (kind === 'pb') { spacer(node, next - top); stuck.add(node); continue; }
+      if (kind === 'pb') { spacer(node, next - top); pbDone.add(node); continue; }
       if (floating(node)) {
         // 가운데 맞춤 칸: 앞에 두 배 높이를 넣으면 글이 다음 쪽 맨 위로 온다 (한 번만)
         if (getComputedStyle(node.closest('td,th')).verticalAlign === 'middle' && n === 1) spacer(node, 2 * (next - top));
@@ -1979,6 +2070,26 @@ const Ed = (() => {
     }
   }
 
+  function groupNotes(g, fns) {
+    const dt = el.getBoundingClientRect().top, out = {};
+    fns.forEach((f, i) => {
+      const pg = Math.max(0, Math.floor(((f.getBoundingClientRect().top - dt) / st.zoom + 2) / g.stride));
+      (out[pg] = out[pg] || []).push({ n: i + 1, text: f.dataset.note || '' });
+    });
+    return out;
+  }
+  const notesHtml = list => list.map(x => `<p>${x.n}) ${Model.esc(x.text)}</p>`).join('');
+  function noteHeights(g, groups) {
+    const probe = document.createElement('div');
+    probe.className = 'fnotes';
+    probe.style.cssText = `position:absolute;visibility:hidden;width:${g.bodyW}px;left:0;top:0`;
+    masksEl.appendChild(probe);
+    const out = {};
+    for (const k in groups) { probe.innerHTML = notesHtml(groups[k]); out[k] = probe.offsetHeight + 6; }
+    probe.remove();
+    return out;
+  }
+
   function layout() {
     clearTimeout(pagTimer);
     const g = geo();
@@ -1988,13 +2099,25 @@ const Ed = (() => {
     const kids = [...el.children];
     let pages = 1;
     if (st.pageView) {
-      paginate(g);
+      paginate(g, null);
+      // 각주: 쪽마다 아래에 둘 자리를 비워 두고 다시 나눈다
+      st.noteGroups = null;
+      const fns = [...el.querySelectorAll('.fn:not([data-end])')];
+      if (fns.length) {
+        let groups = groupNotes(g, fns), reserve = noteHeights(g, groups);
+        clearPagination();
+        paginate(g, reserve);
+        groups = groupNotes(g, fns);
+        const again = noteHeights(g, groups);
+        for (const k in again) reserve[k] = Math.max(reserve[k] || 0, again[k]);
+        st.noteGroups = groups; st.noteReserve = reserve;
+      }
       const bottom = el.offsetHeight;
       pages = Math.max(pages, Math.floor(Math.max(0, bottom - 1) / g.stride) + 1);
     }
     restoreSelOffsets(sel);
     const contentH = el.offsetHeight;
-    const notes = [...el.querySelectorAll('.fn')];
+    const notes = [...el.querySelectorAll(st.pageView ? '.fn[data-end]' : '.fn')];      // 쪽 윤곽에선 미주만 끝에
     const notesH = notes.length ? 20 + notes.length * 18 : 0;
     if (!st.pageView) pages = 1;
     const totalH = st.pageView ? pages * g.stride - GAP : Math.max(g.H, g.top + contentH + notesH + st.doc.page.mb / PX + 40);
@@ -2004,13 +2127,23 @@ const Ed = (() => {
     }
     st.pages = pages;
     drawSheets(g, pages, st.pageView ? null : totalH, notes);
-    const w = g.W + PAD * 2, h = (st.pageView ? pages * g.stride - GAP : totalH) + PAD * 2;
+    let w = g.W + PAD * 2, h = (st.pageView ? pages * g.stride - GAP : totalH) + PAD * 2;
+    const cols = gridCols(g);
+    st.grid = cols >= 2;
+    el.style.visibility = st.grid ? 'hidden' : '';
+    sheetsEl.style.display = masksEl.style.display = st.grid ? 'none' : '';
+    if (st.grid) {
+      drawGrid(g, pages, cols);
+      const rows = Math.ceil(pages / cols);
+      w = cols * (g.W + GAP) - GAP + PAD * 2; h = rows * (g.H + GAP) - GAP + PAD * 2;
+    } else if (gridEl.firstChild) { gridEl.innerHTML = ''; if (gridObs) gridObs.disconnect(); }
     stage.style.width = w + 'px'; stage.style.height = h + 'px';
     stage.style.transform = `scale(${st.zoom})`;
     sizer.style.width = w * st.zoom + 'px'; sizer.style.height = h * st.zoom + 'px';
     if (st.onLayout) st.onLayout();
   }
 
+  const toRoman = n => ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x'][n - 1] || String(n);
   function hfHtml(blocks, pageNo) {
     if (!blocks || !blocks.length) return '';
     return Model.toHtml(blocks, st.doc, binUrl).replace(/<span class="pgn"[^>]*>#<\/span>/g, String(pageNo));
@@ -2040,25 +2173,78 @@ const Ed = (() => {
         if (/TOP/.test(pos)) hf += num; else ff += num;
       }
       if (contHeight) { h = h.replace(/<\/div>$/, hf + ff + '</div>'); continue; }
-      m += `<div class="mask" style="top:${top}px;left:${PAD}px;width:${g.W}px;height:${g.top}px">${hf}</div>`;
-      m += `<div class="mask" style="top:${top + bodyBottom}px;left:${PAD}px;width:${g.W}px;height:${g.H - bodyBottom}px">${ff}</div>`;
+      m += `<div class="mask mtop" style="top:${top}px;left:${PAD}px;width:${g.W}px;height:${g.top}px">${hf}</div>`;
+      m += `<div class="mask mbot" style="top:${top + bodyBottom}px;left:${PAD}px;width:${g.W}px;height:${g.H - bodyBottom}px">${ff}</div>`;
       if (i < n - 1) m += `<div class="mask gapm" style="top:${top + g.H}px;left:0;width:100%;height:${GAP}px"></div>`;
+      const fg = st.noteGroups && st.noteGroups[i];
+      if (fg) { const rh = st.noteReserve[i]; m += `<div class="mask fnotes" data-page="${i}" style="top:${top + bodyBottom - rh}px;left:${PAD + g.left}px;width:${g.bodyW}px;height:${rh}px">${notesHtml(fg)}</div>`; }
     }
     if (notes.length) {
       // 각주·미주는 문서 끝에 모아서 보여 준다
       const y = PAD + g.top + el.offsetHeight + 12;
       h += `<div class="sheet-notes" style="position:absolute;left:${PAD + g.left}px;top:${y}px;width:${g.bodyW * 0.5}px;font:9pt/1.5 '함초롬바탕',serif;color:#000;border-top:0.5pt solid #000;padding-top:3pt">` +
-        notes.map((f, i) => `<p style="margin:0">${i + 1}) ${Model.esc(f.dataset.note || '')}</p>`).join('') + '</div>';
+        notes.map((f, i) => `<p style="margin:0">${st.pageView ? toRoman(i + 1) : i + 1}) ${Model.esc(f.dataset.note || '')}</p>`).join('') + '</div>';
     }
     sheetsEl.innerHTML = h;
     masksEl.innerHTML = m;
   }
 
+  // 쪽 모아보기: 화면을 줄여 두 쪽 이상이 옆으로 들어가면 쪽을 바둑판처럼 늘어놓는다
+  function gridCols(g) {
+    if (!st.pageView || st.pages < 2) return 1;
+    const room = view.clientWidth / st.zoom - PAD * 2 + GAP;
+    return Math.max(1, Math.min(st.pages, Math.floor(room / (g.W + GAP))));
+  }
+  let gridObs = null;
+  function drawGrid(g, n, cols) {
+    if (gridObs) gridObs.disconnect();
+    const p = st.doc.page;
+    let h = '';
+    for (let i = 0; i < n; i++) {
+      const x = PAD + (i % cols) * (g.W + GAP), y = PAD + Math.floor(i / cols) * (g.H + GAP);
+      h += `<div class="sheet" data-page="${i + 1}" style="top:${y}px;left:${x}px;width:${g.W}px;height:${g.H}px"><div class="pcard" style="width:${g.W}px;height:${g.H}px"></div></div>`;
+    }
+    gridEl.innerHTML = h;
+    gridEl.className = 'pagegrid';
+    // 보이는 쪽만 내용을 채운다 (쪽이 많아도 가볍게)
+    const fill = card => {
+      if (card.dataset.filled) return;
+      card.dataset.filled = '1';
+      const i = +card.parentNode.dataset.page - 1;
+      const c = el.cloneNode(true);
+      c.removeAttribute('contenteditable'); c.style.visibility = 'visible';
+      c.style.left = g.left + 'px'; c.style.top = (g.top - i * g.stride) + 'px';
+      c.querySelectorAll('[contenteditable]').forEach(e => e.removeAttribute('contenteditable'));
+      const top = `<div class="mask" style="top:0;left:0;width:${g.W}px;height:${g.top}px"></div>`;
+      const bot = `<div class="mask" style="top:${g.top + g.bodyH}px;left:0;width:${g.W}px;height:${g.H - g.top - g.bodyH}px"></div>`;
+      card.appendChild(c);
+      card.insertAdjacentHTML('beforeend', top + bot);
+      const mt = masksEl.querySelectorAll('.mtop')[i], mb = masksEl.querySelectorAll('.mbot')[i];
+      if (mt) card.lastElementChild.previousElementSibling.innerHTML = mt.innerHTML;
+      if (mb) card.lastElementChild.innerHTML = mb.innerHTML;
+      const fn = masksEl.querySelector(`.fnotes[data-page="${i}"]`);
+      if (fn) { const d = fn.cloneNode(true); d.style.top = (parseFloat(fn.style.top) - PAD - i * g.stride) + 'px'; d.style.left = g.left + 'px'; card.appendChild(d); }
+    };
+    gridObs = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) fill(e.target); }), { root: view, rootMargin: '400px' }) : null;
+    gridEl.querySelectorAll('.pcard').forEach(c => gridObs ? gridObs.observe(c) : fill(c));
+  }
+  gridEl.addEventListener('click', e => {
+    const sh = e.target.closest('.sheet'); if (!sh) return;
+    const n = +sh.dataset.page;
+    fitWidth();
+    if (st.grid) setZoom(Math.max(st.zoom, 0.5), false);
+    gotoPage(n);
+  });
+
   function setZoom(z, keepCenter) {
-    z = Math.max(0.25, Math.min(3, z));
-    const cx = view.scrollLeft + view.clientWidth / 2, cy = view.scrollTop + view.clientHeight / 2;
-    const ratio = z / st.zoom;
+    z = Math.max(0.1, Math.min(3, z));
+    const g0 = geo(), old = st.zoom;
+    const wasCols = st.grid ? gridCols(g0) : 1;
     st.zoom = z;
+    const nowCols = gridCols(g0);
+    if (nowCols !== wasCols && (nowCols >= 2 || wasCols >= 2)) { layout(); return; }
+    const cx = view.scrollLeft + view.clientWidth / 2, cy = view.scrollTop + view.clientHeight / 2;
+    const ratio = z / old;
     const g = geo();
     stage.style.transform = `scale(${z})`;
     const w = parseFloat(stage.style.width) || g.W + PAD * 2, h = parseFloat(stage.style.height) || g.H + PAD * 2;
@@ -2304,6 +2490,7 @@ const Ed = (() => {
       if (!out.ratio && e.dataset && e.dataset.ratio) out.ratio = +e.dataset.ratio;
     }
     if (out.sup || out.sub) out.size = Math.round(out.size / 0.83 * 10) / 10;
+    out.spacing = Math.round(out.spacing - ((out.ratio || 100) - 100) * Model.RATIO_K);
     return out;
   }
 
@@ -2314,7 +2501,7 @@ const Ed = (() => {
       const r = range();
       if (!r) return;
       const css = { fontFamily: Model.fontCss(cs.font), fontSize: cs.size + 'pt', fontWeight: cs.bold ? 'bold' : 'normal', fontStyle: cs.italic ? 'italic' : 'normal',
-        color: cs.color, letterSpacing: (cs.spacing || 0) / 100 + 'em', textDecoration: [cs.underline && 'underline', cs.strike && 'line-through'].filter(Boolean).join(' ') || 'none',
+        color: cs.color, letterSpacing: +Model.spacingEm(cs.spacing, cs.ratio).toFixed(4) + 'em', textDecoration: [cs.underline && 'underline', cs.strike && 'line-through'].filter(Boolean).join(' ') || 'none',
         backgroundColor: cs.bg || '' };
       hist.push();
       applyCssNoHist(css, cs.ratio);
@@ -2347,6 +2534,8 @@ const Ed = (() => {
       if (ratio && ratio !== 100) span.dataset.ratio = ratio;
       f.querySelectorAll('[style]').forEach(e => { for (const k in styles) e.style[k] = ''; });
       f.querySelectorAll('u,s,strike,b,i,strong,em').forEach(e => { e.replaceWith(...e.childNodes); });
+      f.querySelectorAll('[data-ratio]').forEach(e => e.removeAttribute('data-ratio'));
+      if (ratio === 100) span.dataset.ratio = '100';
       while (f.firstChild) span.appendChild(f.firstChild);
       f.replaceWith(span);
       made.push(span);
@@ -2877,7 +3066,11 @@ const Ed = (() => {
   }
   function caretPage() {
     const r = range();
-    if (!r) return 1;
+    if (!r || st.readOnly) {
+      // 커서가 없으면(보기 모드) 화면 가운데 보이는 쪽
+      const y = (view.scrollTop + view.clientHeight / 3) / st.zoom - PAD;
+      return Math.max(1, Math.min(st.pages, Math.floor(y / geo().stride) + 1));
+    }
     let rc = r.getBoundingClientRect();
     if (!rc.height) { const n = r.startContainer.nodeType === 3 ? r.startContainer.parentElement : r.startContainer; rc = n.getBoundingClientRect(); }
     const y = (rc.top - stage.getBoundingClientRect().top) / st.zoom - PAD;
@@ -2918,7 +3111,7 @@ const Ed = (() => {
   const Native = window.Android || null;              // 안드로이드 앱 안이면 Java 다리
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const narrow = () => window.innerWidth <= 700;
-  const VERSION = '1.0.4';
+  const VERSION = '1.1.0';
   const app = { name: '새 문서.hwpx', writable: false, kind: 'new' };
   const pref = (k, v) => { try { if (v === undefined) return localStorage.getItem('hwped.' + k); localStorage.setItem('hwped.' + k, v); } catch (e) { return null; } };
 
@@ -2976,6 +3169,13 @@ const Ed = (() => {
   cmd('zoom100', '100%', 'fitp', 'Ctrl+0', () => Ed.setZoom(1));
   cmd('fitWidth', '폭 맞춤', 'fitw', '', Ed.fitWidth);
   cmd('fitPage', '쪽 맞춤', 'fitp', '', Ed.fitPage);
+  cmd('pageGrid', '쪽 모아보기', 'columns', '', () => {
+    if (st.grid) { Ed.fitWidth(); return; }
+    if (!st.pageView) { st.pageView = true; }
+    if (st.pages < 2) { toast('쪽이 하나뿐이에요'); return; }
+    const g = Ed.geo(), cols = Math.min(st.pages, narrow() ? 2 : 3);
+    Ed.setZoom((Ed.view.clientWidth - 8) / (cols * (g.W + 18) + 36));
+  }, { on: () => !!st.grid });
   cmd('pageView', '쪽 윤곽', 'outline', 'Ctrl+G,L', () => { st.pageView = !st.pageView; Ed.layout(); toast(st.pageView ? '쪽 윤곽을 켰어요' : '쪽 윤곽을 껐어요(이어서 보기)'); }, { on: () => st.pageView });
   cmd('showMarks', '문단 부호', 'marks', 'Ctrl+G,T', () => document.body.classList.toggle('show-marks'), { on: () => document.body.classList.contains('show-marks') });
   cmd('showCodes', '조판 부호', 'codes', 'Ctrl+G,C', () => document.body.classList.toggle('show-codes'), { on: () => document.body.classList.contains('show-codes') });
@@ -3063,7 +3263,7 @@ const Ed = (() => {
   const MENUS = [
     { id: 'file', label: '파일', groups: [['newDoc', 'open'], ['save', 'saveAs', 'share'], ['exportPdf', 'exportHtml', 'exportTxt'], ['print', 'docInfo'], ['closeDoc']] },
     { id: 'edit', label: '편집', groups: [['undo', 'redo'], ['cut', 'copy', 'paste', 'pastePlain'], ['selectAll', 'painter', 'clearFormat'], ['find', 'replace', 'goto']] },
-    { id: 'view', label: '보기', groups: [['toggleEdit'], ['zoomIn', 'zoomOut', 'zoom100', 'fitWidth', 'fitPage'], ['pageView', 'showMarks', 'showCodes', 'showGuide'], ['theme']] },
+    { id: 'view', label: '보기', groups: [['toggleEdit'], ['zoomIn', 'zoomOut', 'zoom100', 'fitWidth', 'fitPage', 'pageGrid'], ['pageView', 'showMarks', 'showCodes', 'showGuide'], ['theme']] },
     { id: 'insert', label: '입력', groups: [['table', 'image', 'textbox'], ['symbol', 'equation', 'date'], ['link', 'footnote'], ['pageBreak']] },
     { id: 'format', label: '서식', groups: [['charShape', 'paraShape', 'styles'], ['bold', 'italic', 'underline', 'strike', 'sup', 'sub'], ['sizeUp', 'sizeDown', 'spaceWide', 'spaceNarrow'], ['numbers', 'bullets', 'outdent', 'indent', 'lsWide', 'lsNarrow'], ['painter', 'clearFormat']] },
     { id: 'page', label: '쪽', groups: [['paper', 'portrait', 'landscape'], ['header', 'pageNum'], ['pageBreak']] },
@@ -3200,7 +3400,7 @@ const Ed = (() => {
     });
   }
   function status() {
-    $('#stPage').textContent = `${Ed.caretPage()}/${st.pages}쪽`;
+    $('#stPage').textContent = st.grid ? `쪽 모아보기 · ${st.pages}쪽` : `${Ed.caretPage()}/${st.pages}쪽`;
     $('#zoomPct').textContent = Math.round(st.zoom * 100) + '%';
     $('#zoomRange').value = Math.round(st.zoom * 100);
     $('#insMode').textContent = st.overwrite ? '수정' : '삽입';
@@ -3238,12 +3438,19 @@ const Ed = (() => {
     el.contentEditable = ro ? 'false' : 'true';
     el.dataset.ro = ro ? '1' : '';
     document.body.classList.toggle('ro', ro);
+    const was = document.body.classList.contains('hlines');
+    document.body.classList.toggle('hlines', ro);          // 보기 모드: 한글이 정한 줄 바꿈 그대로
+    if (was !== ro) Ed.layout();
     if (ro) el.blur();
     title();
   }
 
   // ---------- 입력 처리 ----------
-  el.addEventListener('input', () => { Ed.hist.later(); Ed.paginateSoon(); if (!st.dirty) { st.dirty = true; title(); } scheduleDraft(); });
+  el.addEventListener('input', () => {
+    // 고친 문단은 한글이 정해 둔 줄 바꿈을 버린다(글이 바뀌어 맞지 않으니까)
+    const cp = Ed.curPara();
+    if (cp && cp.querySelector('.hlb,.hll')) { cp.querySelectorAll('.hlb').forEach(x => x.remove()); cp.querySelectorAll('.hll').forEach(x => x.replaceWith(...x.childNodes)); }
+    Ed.hist.later(); Ed.paginateSoon(); if (!st.dirty) { st.dirty = true; title(); } scheduleDraft(); });
   el.addEventListener('beforeinput', e => {
     if (st.readOnly) { e.preventDefault(); return; }
     // 수정(덮어쓰기) 모드
@@ -3429,10 +3636,11 @@ const Ed = (() => {
     }
   });
   C.toggleOverwrite = { label: '삽입/수정', keys: 'Insert', run: () => { st.overwrite = !st.overwrite; toast(st.overwrite ? '수정 모드: 쓰는 글자가 뒤 글자를 덮어요' : '삽입 모드'); } };
-  C.zoomMenu = { label: '확대', run: () => { const r = $('#zoomPct').getBoundingClientRect(); const p = showPop([50, 75, 100, 125, 150, 200].map(z => `<button data-z="${z}">${z}%</button>`).join('') + '<hr><button data-cmd="fitWidth">폭 맞춤</button><button data-cmd="fitPage">쪽 맞춤</button>', r.left - 60, r.top - 260); p.addEventListener('click', e => { const b = e.target.closest('[data-z]'); if (b) { Ed.setZoom(b.dataset.z / 100); closePop(); } }); } };
+  C.zoomMenu = { label: '확대', run: () => { const r = $('#zoomPct').getBoundingClientRect(); const p = showPop([50, 75, 100, 125, 150, 200].map(z => `<button data-z="${z}">${z}%</button>`).join('') + '<hr><button data-cmd="fitWidth">폭 맞춤</button><button data-cmd="fitPage">쪽 맞춤</button><button data-cmd="pageGrid">쪽 모아보기</button>', r.left - 60, r.top - 260); p.addEventListener('click', e => { const b = e.target.closest('[data-z]'); if (b) { Ed.setZoom(b.dataset.z / 100); closePop(); } }); } };
   $('#zoomRange').addEventListener('input', e => Ed.setZoom(e.target.value / 100));
 
   // 확대·축소: Ctrl+휠, 두 손가락
+  Ed.view.addEventListener('scroll', () => { if (st.readOnly && !st.grid) { cancelAnimationFrame(refreshT); refreshT = requestAnimationFrame(status); } }, { passive: true });
   Ed.view.addEventListener('wheel', e => { if (e.ctrlKey) { e.preventDefault(); Ed.setZoom(st.zoom * (e.deltaY < 0 ? 1.1 : 0.9)); } }, { passive: false });
   let pinch = null;
   Ed.view.addEventListener('touchstart', e => { if (e.touches.length === 2) { const [a, b] = e.touches; pinch = { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), z: st.zoom }; } }, { passive: true });
@@ -3940,6 +4148,7 @@ const Ed = (() => {
   const hwpxName = () => app.name.replace(/\.(hwp|hwpx|txt|html?)$/i, '') + '.hwpx';
   function bytesOut() {
     const doc = Ed.toModel();
+    if (doc.blocks.lost) toast(`차트 같은 개체 ${doc.blocks.lost}개는 이 앱에서 저장하지 못해 빠져요`, 4000);
     return Hwpx.write(doc, { title: app.name.replace(/\.[^.]+$/, '') });
   }
   const b64 = bytes => { let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s); };
@@ -4147,6 +4356,8 @@ const Ed = (() => {
   setReadOnly(false);
   showWelcome(true);
   $('#ver').textContent = '버전 ' + VERSION;
+  // 글꼴을 다 받으면 줄이 바뀌니 쪽을 다시 나눈다
+  if (document.fonts) { document.fonts.ready.then(() => Ed.layout()); document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', () => Ed.paginateSoon()); }
   window.addEventListener('resize', () => { if (narrow() && st.zoom > 1.2) Ed.fitWidth(); status(); });
   // 다른 앱에서 연 파일
   if (Native && Native.pendingFile) setTimeout(() => Native.pendingFile(), 50);

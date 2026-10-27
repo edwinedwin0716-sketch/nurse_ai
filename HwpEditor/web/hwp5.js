@@ -4,8 +4,8 @@
 
 const Hwp5 = (() => {
   const T = { DOC_PROPS: 16, ID_MAPPINGS: 17, BIN_DATA: 18, FACE_NAME: 19, BORDER_FILL: 20, CHAR_SHAPE: 21, PARA_SHAPE: 25, STYLE: 26,
-    PARA_HEADER: 66, PARA_TEXT: 67, PARA_CHAR_SHAPE: 68, CTRL_HEADER: 71, LIST_HEADER: 72, PAGE_DEF: 73,
-    SHAPE_COMPONENT: 76, TABLE: 77, PICTURE: 85, EQEDIT: 88 };
+    PARA_HEADER: 66, PARA_TEXT: 67, PARA_CHAR_SHAPE: 68, PARA_LINE_SEG: 69, CTRL_HEADER: 71, LIST_HEADER: 72, PAGE_DEF: 73,
+    SHAPE_COMPONENT: 76, TABLE: 77, OLE: 84, PICTURE: 85, EQEDIT: 88, CHART: 95 };
   const ALIGN = ['justify', 'left', 'right', 'center', 'distribute', 'distribute'];
   const LS = ['PERCENT', 'FIXED', 'BETWEEN_LINES', 'AT_LEAST'];
 
@@ -144,12 +144,16 @@ const Hwp5 = (() => {
     c.u32(); c.u32();
     const paraShape = c.u16(), styleId = c.u8(), brk = c.u8();
     let units = null, shapes = [[0, 0]];
-    const ctrls = [];
+    const ctrls = [], lineStarts = new Set();
     for (const ch of rec.children) {
       if (ch.tag === T.PARA_TEXT) units = new Uint16Array(ch.data.buffer.slice(ch.data.byteOffset, ch.data.byteOffset + (ch.data.length & ~1)));
       else if (ch.tag === T.PARA_CHAR_SHAPE) {
         const r = new R(ch.data); shapes = [];
         while (r.left >= 8) shapes.push([r.u32(), r.u32()]);
+      } else if (ch.tag === T.PARA_LINE_SEG) {
+        // 한글이 정한 줄 바꿈 위치(각 줄의 첫 글자 위치)
+        const r = new R(ch.data);
+        while (r.left >= 36) { const pos = r.u32(); r.p += 32; if (pos > 0) lineStarts.add(pos); }
       } else if (ch.tag === T.CTRL_HEADER) ctrls.push(ch);
     }
     const para = Object.assign({ t: 'p', runs: [] }, paraStyle(ctx.info, paraShape, styleId));
@@ -162,6 +166,7 @@ const Hwp5 = (() => {
       buf = '';
     };
     for (let i = 0; i < units.length;) {
+      if (lineStarts.has(i)) { flush(); para.runs.push({ t: 'lb' }); }
       const u = units[i], csId = csAt(i);
       if (u >= 32) {
         if (csId !== bufCs) { flush(); bufCs = csId; }
@@ -263,8 +268,10 @@ const Hwp5 = (() => {
     const tbl = { t: 'table', cells: [], rows: 0, cols: 0 };
     const common = new R(rec.data); common.u32(); common.u32(); common.i32(); common.i32();
     tbl.w = common.u32();
+    tbl.place = placeOf(rec.data);
     for (const ch of rec.children) if (ch.tag === T.TABLE) {
-      const r = new R(ch.data); r.u32(); tbl.rows = r.u16(); tbl.cols = r.u16();
+      const r = new R(ch.data); r.u32(); tbl.rows = r.u16(); tbl.cols = r.u16(); r.u16();
+      tbl.pad = [r.u16(), r.u16(), r.u16(), r.u16()];          // 칸 안쪽 여백 기본값(왼·오·위·아래)
     }
     // 표 기록(TABLE) 앞의 목록은 캡션이다
     const ti = rec.children.findIndex(ch => ch.tag === T.TABLE);
@@ -272,9 +279,10 @@ const Hwp5 = (() => {
     if (caption) tbl.caption = paragraphs(ctx, caption.paras);
     for (const l of lists(rec.children.slice(ti + 1))) {
       const r = new R(l.head.data);
-      r.u16(); const lp = r.u32(); r.u16();
+      r.u16(); const lp = r.u32(); const flags = r.u16();
       const cell = { c: r.u16(), r: r.u16(), cs: r.u16() || 1, rs: r.u16() || 1, w: r.u32(), h: r.u32() };
-      r.i16(); r.i16(); r.i16(); r.i16();
+      const own = [r.u16(), r.u16(), r.u16(), r.u16()];
+      cell.pad = (flags & 1) ? own : tbl.pad;
       const bf = ctx.info.borderFills[r.u16()];
       cell.valign = ['top', 'middle', 'bottom'][(lp >> 21) & 3] || 'middle';
       if (bf) { cell.bg = bf.bg; cell.border = borders(bf); }
@@ -296,9 +304,18 @@ const Hwp5 = (() => {
     return out;
   }
 
+  // 개체 위치: 글자처럼 취급(0번 비트), 가로 정렬(10~12번), 본문과의 배치(21~23번)
+  function placeOf(data) {
+    const c = new R(data); c.u32();
+    const props = c.u32(); c.i32(); const x = c.i32();
+    if (props & 1) return null;
+    return { align: ['left', 'center', 'right', 'left', 'right'][(props >> 10) & 7] || 'left', wrap: ['square', 'block', 'behind', 'front'][(props >> 21) & 7] || 'block', x: (props >> 8 & 3) >= 2 ? Math.max(0, x) : 0 };
+  }
+
   function shape(ctx, rec) {
     const c = new R(rec.data); c.u32(); c.u32(); c.i32(); c.i32();
     const w = c.u32(), h = c.u32();
+    const place = placeOf(rec.data);
     const pic = findAll(rec, T.PICTURE)[0];
     if (pic) {
       const r = new R(pic.data); r.p = 71;
@@ -312,7 +329,7 @@ const Hwp5 = (() => {
           if ((bin.compress === 0 && ctx.compressed) || bin.compress === 1) { try { data = pako.inflateRaw(data); } catch (e) { } }
           const key = 'img' + (Object.keys(ctx.doc.bins).length + 1);
           ctx.doc.bins[key] = { data, ext };
-          return { t: 'img', bin: key, w, h };
+          return { t: 'img', bin: key, w, h, place };
         }
       }
       return null;
@@ -321,8 +338,10 @@ const Hwp5 = (() => {
     const comp = rec.children.find(x => x.tag === T.SHAPE_COMPONENT);
     if (comp) {
       const l = lists(comp.children)[0];
-      if (l) return { t: 'box', w, h, blocks: paragraphs(ctx, l.paras) };
+      if (l) return { t: 'box', w, h, place, blocks: paragraphs(ctx, l.paras) };
     }
+    // 차트·OLE 개체는 그리지 못해 자리만 보여 준다
+    if (findAll(rec, T.OLE).length || findAll(rec, T.CHART).length) return { t: 'ph', w, h, label: '차트·개체' };
     return null;
   }
 

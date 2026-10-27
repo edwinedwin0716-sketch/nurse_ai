@@ -3,7 +3,7 @@
 
 const Ed = (() => {
   const el = document.getElementById('doc');
-  const masksEl = document.getElementById('masks');
+  const masksEl = document.getElementById('masks'), gridEl = document.getElementById('grid');
   const stage = document.getElementById('stage'), sizer = document.getElementById('sizer'), sheetsEl = document.getElementById('sheets'), view = document.getElementById('view');
   const PX = 75;          // 1px = 75 HWPUNIT (96dpi)
   const GAP = 18, PAD = 18;
@@ -106,7 +106,7 @@ const Ed = (() => {
 
   // 쪽 나누기: 문서 위에서부터 쪽 끝을 넘는 첫 문단을 찾아 다음 쪽으로 넘기기를 되풀이한다.
   // 표 안(칸 안)의 문단도 똑같이 줄 단위로 넘긴다. 넘긴 자리는 .pgap(저장되지 않는 빈칸)으로 채운다.
-  function paginate(g) {
+  function paginate(g, reserve) {
     const scale = st.zoom;
     const stuck = new Set();
     const spacer = (before, h) => {
@@ -115,7 +115,7 @@ const Ed = (() => {
       d.style.height = Math.ceil(h + 0.5) + 'px';
       before.parentNode.insertBefore(d, before);
     };
-    const tries = new Map();
+    const tries = new Map(), pbDone = new Set();
     // 가운데·아래 맞춤 칸에서 글이 칸보다 짧아 떠 있으면 나누지 않는다 (밀수록 같이 내려가 끝이 없다)
     const floating = node => {
       const td = node.closest('td,th');
@@ -135,7 +135,7 @@ const Ed = (() => {
       const dt = el.getBoundingClientRect().top;
       let best = null;
       const pageOf = y => Math.max(0, Math.floor((y + 2) / g.stride));
-      const endOf = pg => pg * g.stride + g.bodyH;
+      const endOf = pg => pg * g.stride + g.bodyH - ((reserve && reserve[pg]) || 0);
       const rg = document.createRange();
       const consider = (node, kind) => {
         if (stuck.has(node)) return;
@@ -168,7 +168,7 @@ const Ed = (() => {
         if (best && line.lt >= best.top) return;
         best = { node, kind, top: line.lt, page: line.pg, whole: line.lt <= first + 2, pTop: top, bottom };
       };
-      for (const k of el.querySelectorAll(':scope > [data-pb]')) if (k !== el.firstElementChild) consider(k, 'pb');
+      for (const k of el.querySelectorAll(':scope > [data-pb]')) if (k !== el.firstElementChild && !pbDone.has(k)) consider(k, 'pb');
       for (const p of el.querySelectorAll('p')) consider(p, 'p');
       if (!best) break;
       const { node, kind, top, page } = best;
@@ -176,7 +176,7 @@ const Ed = (() => {
       const n = (tries.get(node) || 0) + 1;
       tries.set(node, n);
       if (n > 30) { stuck.add(node); continue; }
-      if (kind === 'pb') { spacer(node, next - top); stuck.add(node); continue; }
+      if (kind === 'pb') { spacer(node, next - top); pbDone.add(node); continue; }
       if (floating(node)) {
         // 가운데 맞춤 칸: 앞에 두 배 높이를 넣으면 글이 다음 쪽 맨 위로 온다 (한 번만)
         if (getComputedStyle(node.closest('td,th')).verticalAlign === 'middle' && n === 1) spacer(node, 2 * (next - top));
@@ -203,6 +203,26 @@ const Ed = (() => {
     }
   }
 
+  function groupNotes(g, fns) {
+    const dt = el.getBoundingClientRect().top, out = {};
+    fns.forEach((f, i) => {
+      const pg = Math.max(0, Math.floor(((f.getBoundingClientRect().top - dt) / st.zoom + 2) / g.stride));
+      (out[pg] = out[pg] || []).push({ n: i + 1, text: f.dataset.note || '' });
+    });
+    return out;
+  }
+  const notesHtml = list => list.map(x => `<p>${x.n}) ${Model.esc(x.text)}</p>`).join('');
+  function noteHeights(g, groups) {
+    const probe = document.createElement('div');
+    probe.className = 'fnotes';
+    probe.style.cssText = `position:absolute;visibility:hidden;width:${g.bodyW}px;left:0;top:0`;
+    masksEl.appendChild(probe);
+    const out = {};
+    for (const k in groups) { probe.innerHTML = notesHtml(groups[k]); out[k] = probe.offsetHeight + 6; }
+    probe.remove();
+    return out;
+  }
+
   function layout() {
     clearTimeout(pagTimer);
     const g = geo();
@@ -212,13 +232,25 @@ const Ed = (() => {
     const kids = [...el.children];
     let pages = 1;
     if (st.pageView) {
-      paginate(g);
+      paginate(g, null);
+      // 각주: 쪽마다 아래에 둘 자리를 비워 두고 다시 나눈다
+      st.noteGroups = null;
+      const fns = [...el.querySelectorAll('.fn:not([data-end])')];
+      if (fns.length) {
+        let groups = groupNotes(g, fns), reserve = noteHeights(g, groups);
+        clearPagination();
+        paginate(g, reserve);
+        groups = groupNotes(g, fns);
+        const again = noteHeights(g, groups);
+        for (const k in again) reserve[k] = Math.max(reserve[k] || 0, again[k]);
+        st.noteGroups = groups; st.noteReserve = reserve;
+      }
       const bottom = el.offsetHeight;
       pages = Math.max(pages, Math.floor(Math.max(0, bottom - 1) / g.stride) + 1);
     }
     restoreSelOffsets(sel);
     const contentH = el.offsetHeight;
-    const notes = [...el.querySelectorAll('.fn')];
+    const notes = [...el.querySelectorAll(st.pageView ? '.fn[data-end]' : '.fn')];      // 쪽 윤곽에선 미주만 끝에
     const notesH = notes.length ? 20 + notes.length * 18 : 0;
     if (!st.pageView) pages = 1;
     const totalH = st.pageView ? pages * g.stride - GAP : Math.max(g.H, g.top + contentH + notesH + st.doc.page.mb / PX + 40);
@@ -228,13 +260,23 @@ const Ed = (() => {
     }
     st.pages = pages;
     drawSheets(g, pages, st.pageView ? null : totalH, notes);
-    const w = g.W + PAD * 2, h = (st.pageView ? pages * g.stride - GAP : totalH) + PAD * 2;
+    let w = g.W + PAD * 2, h = (st.pageView ? pages * g.stride - GAP : totalH) + PAD * 2;
+    const cols = gridCols(g);
+    st.grid = cols >= 2;
+    el.style.visibility = st.grid ? 'hidden' : '';
+    sheetsEl.style.display = masksEl.style.display = st.grid ? 'none' : '';
+    if (st.grid) {
+      drawGrid(g, pages, cols);
+      const rows = Math.ceil(pages / cols);
+      w = cols * (g.W + GAP) - GAP + PAD * 2; h = rows * (g.H + GAP) - GAP + PAD * 2;
+    } else if (gridEl.firstChild) { gridEl.innerHTML = ''; if (gridObs) gridObs.disconnect(); }
     stage.style.width = w + 'px'; stage.style.height = h + 'px';
     stage.style.transform = `scale(${st.zoom})`;
     sizer.style.width = w * st.zoom + 'px'; sizer.style.height = h * st.zoom + 'px';
     if (st.onLayout) st.onLayout();
   }
 
+  const toRoman = n => ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x'][n - 1] || String(n);
   function hfHtml(blocks, pageNo) {
     if (!blocks || !blocks.length) return '';
     return Model.toHtml(blocks, st.doc, binUrl).replace(/<span class="pgn"[^>]*>#<\/span>/g, String(pageNo));
@@ -264,25 +306,78 @@ const Ed = (() => {
         if (/TOP/.test(pos)) hf += num; else ff += num;
       }
       if (contHeight) { h = h.replace(/<\/div>$/, hf + ff + '</div>'); continue; }
-      m += `<div class="mask" style="top:${top}px;left:${PAD}px;width:${g.W}px;height:${g.top}px">${hf}</div>`;
-      m += `<div class="mask" style="top:${top + bodyBottom}px;left:${PAD}px;width:${g.W}px;height:${g.H - bodyBottom}px">${ff}</div>`;
+      m += `<div class="mask mtop" style="top:${top}px;left:${PAD}px;width:${g.W}px;height:${g.top}px">${hf}</div>`;
+      m += `<div class="mask mbot" style="top:${top + bodyBottom}px;left:${PAD}px;width:${g.W}px;height:${g.H - bodyBottom}px">${ff}</div>`;
       if (i < n - 1) m += `<div class="mask gapm" style="top:${top + g.H}px;left:0;width:100%;height:${GAP}px"></div>`;
+      const fg = st.noteGroups && st.noteGroups[i];
+      if (fg) { const rh = st.noteReserve[i]; m += `<div class="mask fnotes" data-page="${i}" style="top:${top + bodyBottom - rh}px;left:${PAD + g.left}px;width:${g.bodyW}px;height:${rh}px">${notesHtml(fg)}</div>`; }
     }
     if (notes.length) {
       // 각주·미주는 문서 끝에 모아서 보여 준다
       const y = PAD + g.top + el.offsetHeight + 12;
       h += `<div class="sheet-notes" style="position:absolute;left:${PAD + g.left}px;top:${y}px;width:${g.bodyW * 0.5}px;font:9pt/1.5 '함초롬바탕',serif;color:#000;border-top:0.5pt solid #000;padding-top:3pt">` +
-        notes.map((f, i) => `<p style="margin:0">${i + 1}) ${Model.esc(f.dataset.note || '')}</p>`).join('') + '</div>';
+        notes.map((f, i) => `<p style="margin:0">${st.pageView ? toRoman(i + 1) : i + 1}) ${Model.esc(f.dataset.note || '')}</p>`).join('') + '</div>';
     }
     sheetsEl.innerHTML = h;
     masksEl.innerHTML = m;
   }
 
+  // 쪽 모아보기: 화면을 줄여 두 쪽 이상이 옆으로 들어가면 쪽을 바둑판처럼 늘어놓는다
+  function gridCols(g) {
+    if (!st.pageView || st.pages < 2) return 1;
+    const room = view.clientWidth / st.zoom - PAD * 2 + GAP;
+    return Math.max(1, Math.min(st.pages, Math.floor(room / (g.W + GAP))));
+  }
+  let gridObs = null;
+  function drawGrid(g, n, cols) {
+    if (gridObs) gridObs.disconnect();
+    const p = st.doc.page;
+    let h = '';
+    for (let i = 0; i < n; i++) {
+      const x = PAD + (i % cols) * (g.W + GAP), y = PAD + Math.floor(i / cols) * (g.H + GAP);
+      h += `<div class="sheet" data-page="${i + 1}" style="top:${y}px;left:${x}px;width:${g.W}px;height:${g.H}px"><div class="pcard" style="width:${g.W}px;height:${g.H}px"></div></div>`;
+    }
+    gridEl.innerHTML = h;
+    gridEl.className = 'pagegrid';
+    // 보이는 쪽만 내용을 채운다 (쪽이 많아도 가볍게)
+    const fill = card => {
+      if (card.dataset.filled) return;
+      card.dataset.filled = '1';
+      const i = +card.parentNode.dataset.page - 1;
+      const c = el.cloneNode(true);
+      c.removeAttribute('contenteditable'); c.style.visibility = 'visible';
+      c.style.left = g.left + 'px'; c.style.top = (g.top - i * g.stride) + 'px';
+      c.querySelectorAll('[contenteditable]').forEach(e => e.removeAttribute('contenteditable'));
+      const top = `<div class="mask" style="top:0;left:0;width:${g.W}px;height:${g.top}px"></div>`;
+      const bot = `<div class="mask" style="top:${g.top + g.bodyH}px;left:0;width:${g.W}px;height:${g.H - g.top - g.bodyH}px"></div>`;
+      card.appendChild(c);
+      card.insertAdjacentHTML('beforeend', top + bot);
+      const mt = masksEl.querySelectorAll('.mtop')[i], mb = masksEl.querySelectorAll('.mbot')[i];
+      if (mt) card.lastElementChild.previousElementSibling.innerHTML = mt.innerHTML;
+      if (mb) card.lastElementChild.innerHTML = mb.innerHTML;
+      const fn = masksEl.querySelector(`.fnotes[data-page="${i}"]`);
+      if (fn) { const d = fn.cloneNode(true); d.style.top = (parseFloat(fn.style.top) - PAD - i * g.stride) + 'px'; d.style.left = g.left + 'px'; card.appendChild(d); }
+    };
+    gridObs = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) fill(e.target); }), { root: view, rootMargin: '400px' }) : null;
+    gridEl.querySelectorAll('.pcard').forEach(c => gridObs ? gridObs.observe(c) : fill(c));
+  }
+  gridEl.addEventListener('click', e => {
+    const sh = e.target.closest('.sheet'); if (!sh) return;
+    const n = +sh.dataset.page;
+    fitWidth();
+    if (st.grid) setZoom(Math.max(st.zoom, 0.5), false);
+    gotoPage(n);
+  });
+
   function setZoom(z, keepCenter) {
-    z = Math.max(0.25, Math.min(3, z));
-    const cx = view.scrollLeft + view.clientWidth / 2, cy = view.scrollTop + view.clientHeight / 2;
-    const ratio = z / st.zoom;
+    z = Math.max(0.1, Math.min(3, z));
+    const g0 = geo(), old = st.zoom;
+    const wasCols = st.grid ? gridCols(g0) : 1;
     st.zoom = z;
+    const nowCols = gridCols(g0);
+    if (nowCols !== wasCols && (nowCols >= 2 || wasCols >= 2)) { layout(); return; }
+    const cx = view.scrollLeft + view.clientWidth / 2, cy = view.scrollTop + view.clientHeight / 2;
+    const ratio = z / old;
     const g = geo();
     stage.style.transform = `scale(${z})`;
     const w = parseFloat(stage.style.width) || g.W + PAD * 2, h = parseFloat(stage.style.height) || g.H + PAD * 2;
@@ -528,6 +623,7 @@ const Ed = (() => {
       if (!out.ratio && e.dataset && e.dataset.ratio) out.ratio = +e.dataset.ratio;
     }
     if (out.sup || out.sub) out.size = Math.round(out.size / 0.83 * 10) / 10;
+    out.spacing = Math.round(out.spacing - ((out.ratio || 100) - 100) * Model.RATIO_K);
     return out;
   }
 
@@ -538,7 +634,7 @@ const Ed = (() => {
       const r = range();
       if (!r) return;
       const css = { fontFamily: Model.fontCss(cs.font), fontSize: cs.size + 'pt', fontWeight: cs.bold ? 'bold' : 'normal', fontStyle: cs.italic ? 'italic' : 'normal',
-        color: cs.color, letterSpacing: (cs.spacing || 0) / 100 + 'em', textDecoration: [cs.underline && 'underline', cs.strike && 'line-through'].filter(Boolean).join(' ') || 'none',
+        color: cs.color, letterSpacing: +Model.spacingEm(cs.spacing, cs.ratio).toFixed(4) + 'em', textDecoration: [cs.underline && 'underline', cs.strike && 'line-through'].filter(Boolean).join(' ') || 'none',
         backgroundColor: cs.bg || '' };
       hist.push();
       applyCssNoHist(css, cs.ratio);
@@ -571,6 +667,8 @@ const Ed = (() => {
       if (ratio && ratio !== 100) span.dataset.ratio = ratio;
       f.querySelectorAll('[style]').forEach(e => { for (const k in styles) e.style[k] = ''; });
       f.querySelectorAll('u,s,strike,b,i,strong,em').forEach(e => { e.replaceWith(...e.childNodes); });
+      f.querySelectorAll('[data-ratio]').forEach(e => e.removeAttribute('data-ratio'));
+      if (ratio === 100) span.dataset.ratio = '100';
       while (f.firstChild) span.appendChild(f.firstChild);
       f.replaceWith(span);
       made.push(span);
@@ -1101,7 +1199,11 @@ const Ed = (() => {
   }
   function caretPage() {
     const r = range();
-    if (!r) return 1;
+    if (!r || st.readOnly) {
+      // 커서가 없으면(보기 모드) 화면 가운데 보이는 쪽
+      const y = (view.scrollTop + view.clientHeight / 3) / st.zoom - PAD;
+      return Math.max(1, Math.min(st.pages, Math.floor(y / geo().stride) + 1));
+    }
     let rc = r.getBoundingClientRect();
     if (!rc.height) { const n = r.startContainer.nodeType === 3 ? r.startContainer.parentElement : r.startContainer; rc = n.getBoundingClientRect(); }
     const y = (rc.top - stage.getBoundingClientRect().top) / st.zoom - PAD;

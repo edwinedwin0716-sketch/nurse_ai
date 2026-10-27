@@ -7,7 +7,7 @@
   const Native = window.Android || null;              // 안드로이드 앱 안이면 Java 다리
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const narrow = () => window.innerWidth <= 700;
-  const VERSION = '1.0.4';
+  const VERSION = '1.1.0';
   const app = { name: '새 문서.hwpx', writable: false, kind: 'new' };
   const pref = (k, v) => { try { if (v === undefined) return localStorage.getItem('hwped.' + k); localStorage.setItem('hwped.' + k, v); } catch (e) { return null; } };
 
@@ -65,6 +65,13 @@
   cmd('zoom100', '100%', 'fitp', 'Ctrl+0', () => Ed.setZoom(1));
   cmd('fitWidth', '폭 맞춤', 'fitw', '', Ed.fitWidth);
   cmd('fitPage', '쪽 맞춤', 'fitp', '', Ed.fitPage);
+  cmd('pageGrid', '쪽 모아보기', 'columns', '', () => {
+    if (st.grid) { Ed.fitWidth(); return; }
+    if (!st.pageView) { st.pageView = true; }
+    if (st.pages < 2) { toast('쪽이 하나뿐이에요'); return; }
+    const g = Ed.geo(), cols = Math.min(st.pages, narrow() ? 2 : 3);
+    Ed.setZoom((Ed.view.clientWidth - 8) / (cols * (g.W + 18) + 36));
+  }, { on: () => !!st.grid });
   cmd('pageView', '쪽 윤곽', 'outline', 'Ctrl+G,L', () => { st.pageView = !st.pageView; Ed.layout(); toast(st.pageView ? '쪽 윤곽을 켰어요' : '쪽 윤곽을 껐어요(이어서 보기)'); }, { on: () => st.pageView });
   cmd('showMarks', '문단 부호', 'marks', 'Ctrl+G,T', () => document.body.classList.toggle('show-marks'), { on: () => document.body.classList.contains('show-marks') });
   cmd('showCodes', '조판 부호', 'codes', 'Ctrl+G,C', () => document.body.classList.toggle('show-codes'), { on: () => document.body.classList.contains('show-codes') });
@@ -152,7 +159,7 @@
   const MENUS = [
     { id: 'file', label: '파일', groups: [['newDoc', 'open'], ['save', 'saveAs', 'share'], ['exportPdf', 'exportHtml', 'exportTxt'], ['print', 'docInfo'], ['closeDoc']] },
     { id: 'edit', label: '편집', groups: [['undo', 'redo'], ['cut', 'copy', 'paste', 'pastePlain'], ['selectAll', 'painter', 'clearFormat'], ['find', 'replace', 'goto']] },
-    { id: 'view', label: '보기', groups: [['toggleEdit'], ['zoomIn', 'zoomOut', 'zoom100', 'fitWidth', 'fitPage'], ['pageView', 'showMarks', 'showCodes', 'showGuide'], ['theme']] },
+    { id: 'view', label: '보기', groups: [['toggleEdit'], ['zoomIn', 'zoomOut', 'zoom100', 'fitWidth', 'fitPage', 'pageGrid'], ['pageView', 'showMarks', 'showCodes', 'showGuide'], ['theme']] },
     { id: 'insert', label: '입력', groups: [['table', 'image', 'textbox'], ['symbol', 'equation', 'date'], ['link', 'footnote'], ['pageBreak']] },
     { id: 'format', label: '서식', groups: [['charShape', 'paraShape', 'styles'], ['bold', 'italic', 'underline', 'strike', 'sup', 'sub'], ['sizeUp', 'sizeDown', 'spaceWide', 'spaceNarrow'], ['numbers', 'bullets', 'outdent', 'indent', 'lsWide', 'lsNarrow'], ['painter', 'clearFormat']] },
     { id: 'page', label: '쪽', groups: [['paper', 'portrait', 'landscape'], ['header', 'pageNum'], ['pageBreak']] },
@@ -289,7 +296,7 @@
     });
   }
   function status() {
-    $('#stPage').textContent = `${Ed.caretPage()}/${st.pages}쪽`;
+    $('#stPage').textContent = st.grid ? `쪽 모아보기 · ${st.pages}쪽` : `${Ed.caretPage()}/${st.pages}쪽`;
     $('#zoomPct').textContent = Math.round(st.zoom * 100) + '%';
     $('#zoomRange').value = Math.round(st.zoom * 100);
     $('#insMode').textContent = st.overwrite ? '수정' : '삽입';
@@ -327,12 +334,19 @@
     el.contentEditable = ro ? 'false' : 'true';
     el.dataset.ro = ro ? '1' : '';
     document.body.classList.toggle('ro', ro);
+    const was = document.body.classList.contains('hlines');
+    document.body.classList.toggle('hlines', ro);          // 보기 모드: 한글이 정한 줄 바꿈 그대로
+    if (was !== ro) Ed.layout();
     if (ro) el.blur();
     title();
   }
 
   // ---------- 입력 처리 ----------
-  el.addEventListener('input', () => { Ed.hist.later(); Ed.paginateSoon(); if (!st.dirty) { st.dirty = true; title(); } scheduleDraft(); });
+  el.addEventListener('input', () => {
+    // 고친 문단은 한글이 정해 둔 줄 바꿈을 버린다(글이 바뀌어 맞지 않으니까)
+    const cp = Ed.curPara();
+    if (cp && cp.querySelector('.hlb,.hll')) { cp.querySelectorAll('.hlb').forEach(x => x.remove()); cp.querySelectorAll('.hll').forEach(x => x.replaceWith(...x.childNodes)); }
+    Ed.hist.later(); Ed.paginateSoon(); if (!st.dirty) { st.dirty = true; title(); } scheduleDraft(); });
   el.addEventListener('beforeinput', e => {
     if (st.readOnly) { e.preventDefault(); return; }
     // 수정(덮어쓰기) 모드
@@ -518,10 +532,11 @@
     }
   });
   C.toggleOverwrite = { label: '삽입/수정', keys: 'Insert', run: () => { st.overwrite = !st.overwrite; toast(st.overwrite ? '수정 모드: 쓰는 글자가 뒤 글자를 덮어요' : '삽입 모드'); } };
-  C.zoomMenu = { label: '확대', run: () => { const r = $('#zoomPct').getBoundingClientRect(); const p = showPop([50, 75, 100, 125, 150, 200].map(z => `<button data-z="${z}">${z}%</button>`).join('') + '<hr><button data-cmd="fitWidth">폭 맞춤</button><button data-cmd="fitPage">쪽 맞춤</button>', r.left - 60, r.top - 260); p.addEventListener('click', e => { const b = e.target.closest('[data-z]'); if (b) { Ed.setZoom(b.dataset.z / 100); closePop(); } }); } };
+  C.zoomMenu = { label: '확대', run: () => { const r = $('#zoomPct').getBoundingClientRect(); const p = showPop([50, 75, 100, 125, 150, 200].map(z => `<button data-z="${z}">${z}%</button>`).join('') + '<hr><button data-cmd="fitWidth">폭 맞춤</button><button data-cmd="fitPage">쪽 맞춤</button><button data-cmd="pageGrid">쪽 모아보기</button>', r.left - 60, r.top - 260); p.addEventListener('click', e => { const b = e.target.closest('[data-z]'); if (b) { Ed.setZoom(b.dataset.z / 100); closePop(); } }); } };
   $('#zoomRange').addEventListener('input', e => Ed.setZoom(e.target.value / 100));
 
   // 확대·축소: Ctrl+휠, 두 손가락
+  Ed.view.addEventListener('scroll', () => { if (st.readOnly && !st.grid) { cancelAnimationFrame(refreshT); refreshT = requestAnimationFrame(status); } }, { passive: true });
   Ed.view.addEventListener('wheel', e => { if (e.ctrlKey) { e.preventDefault(); Ed.setZoom(st.zoom * (e.deltaY < 0 ? 1.1 : 0.9)); } }, { passive: false });
   let pinch = null;
   Ed.view.addEventListener('touchstart', e => { if (e.touches.length === 2) { const [a, b] = e.touches; pinch = { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), z: st.zoom }; } }, { passive: true });
@@ -1029,6 +1044,7 @@
   const hwpxName = () => app.name.replace(/\.(hwp|hwpx|txt|html?)$/i, '') + '.hwpx';
   function bytesOut() {
     const doc = Ed.toModel();
+    if (doc.blocks.lost) toast(`차트 같은 개체 ${doc.blocks.lost}개는 이 앱에서 저장하지 못해 빠져요`, 4000);
     return Hwpx.write(doc, { title: app.name.replace(/\.[^.]+$/, '') });
   }
   const b64 = bytes => { let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s); };
@@ -1236,6 +1252,8 @@
   setReadOnly(false);
   showWelcome(true);
   $('#ver').textContent = '버전 ' + VERSION;
+  // 글꼴을 다 받으면 줄이 바뀌니 쪽을 다시 나눈다
+  if (document.fonts) { document.fonts.ready.then(() => Ed.layout()); document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', () => Ed.paginateSoon()); }
   window.addEventListener('resize', () => { if (narrow() && st.zoom > 1.2) Ed.fitWidth(); status(); });
   // 다른 앱에서 연 파일
   if (Native && Native.pendingFile) setTimeout(() => Native.pendingFile(), 50);

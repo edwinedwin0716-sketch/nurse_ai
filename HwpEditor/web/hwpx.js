@@ -10,6 +10,14 @@ const Hwpx = (() => {
   const col = v => !v || v === 'none' || !/^#[0-9a-f]{6}/i.test(v) ? null : v.slice(0, 7).toLowerCase();
   const ALIGN = { JUSTIFY: 'justify', LEFT: 'left', RIGHT: 'right', CENTER: 'center', DISTRIBUTE: 'distribute', DISTRIBUTE_SPACE: 'distribute' };
   const parse = s => new DOMParser().parseFromString(s, 'application/xml');
+  const placeOf = el => {
+    const pos = kid(el, 'pos');
+    if (!pos || pos.getAttribute('treatAsChar') === '1') return null;
+    const rel = pos.getAttribute('horzRelTo');
+    return { align: { CENTER: 'center', RIGHT: 'right', OUTSIDE: 'right' }[pos.getAttribute('horzAlign')] || 'left',
+      wrap: { SQUARE: 'square', TOP_AND_BOTTOM: 'block', BEHIND_TEXT: 'behind', IN_FRONT_OF_TEXT: 'front' }[el.getAttribute('textWrap')] || 'block',
+      x: rel === 'COLUMN' || rel === 'PARA' ? Math.max(0, num(pos, 'horzOffset')) : 0 };
+  };
 
   // ---------- 읽기 ----------
   function readHeader(xml) {
@@ -154,6 +162,7 @@ const Hwpx = (() => {
         case 'tbl': p.runs.push(table(ctx, n)); break;
         case 'pic': { const im = picture(ctx, n); if (im) p.runs.push(im); break; }
         case 'container': for (const pic of desc(n, 'pic')) { const im = picture(ctx, pic); if (im) p.runs.push(im); } break;
+        case 'ole': case 'chart': { const sz = kid(n, 'sz') || kid(n, 'curSz'); p.runs.push({ t: 'ph', w: num(sz, 'width', 20000), h: num(sz, 'height', 10000), label: '차트·개체' }); break; }
         case 'equation': { const s = kid(n, 'script'); p.runs.push({ t: 'eq', script: s ? s.textContent : '', cs: cs() }); break; }
         case 'rect': case 'ellipse': case 'polygon': case 'curve': case 'arc': {
           const dt = kid(n, 'drawText');
@@ -190,12 +199,16 @@ const Hwpx = (() => {
 
   function table(ctx, el) {
     const t = { t: 'table', rows: num(el, 'rowCnt'), cols: num(el, 'colCnt'), cells: [], w: num(kid(el, 'sz'), 'width') };
+    const m4 = e => e ? [num(e, 'left', 510), num(e, 'right', 510), num(e, 'top', 141), num(e, 'bottom', 141)] : null;
+    t.pad = m4(kid(el, 'inMargin')) || [510, 510, 141, 141];
+    t.place = placeOf(el);
     for (const tr of kids(el, 'tr')) for (const tc of kids(tr, 'tc')) {
       const a = kid(tc, 'cellAddr'), sp = kid(tc, 'cellSpan'), sz = kid(tc, 'cellSz'), sl = kid(tc, 'subList');
       const fill = ctx.head.fills[tc.getAttribute('borderFillIDRef')];
       t.cells.push({ r: num(a, 'rowAddr'), c: num(a, 'colAddr'), rs: num(sp, 'rowSpan', 1), cs: num(sp, 'colSpan', 1), w: num(sz, 'width'), h: num(sz, 'height'),
         valign: { TOP: 'top', BOTTOM: 'bottom' }[sl && sl.getAttribute('vertAlign')] || 'middle',
-        bg: fill ? fill.bg : null, border: fill ? fill.border : null, blocks: sl ? blocks(ctx, sl) : [] });
+        bg: fill ? fill.bg : null, border: fill ? fill.border : null, blocks: sl ? blocks(ctx, sl) : [],
+        pad: tc.getAttribute('hasMargin') === '1' && kid(tc, 'cellMargin') ? m4(kid(tc, 'cellMargin')) : t.pad });
     }
     return t;
   }
@@ -214,7 +227,7 @@ const Hwpx = (() => {
       ctx.binMap[ref] = key;
     }
     const sz = kid(el, 'curSz') || kid(el, 'sz');
-    return { t: 'img', bin: ctx.binMap[ref], w: num(sz, 'width', 10000), h: num(sz, 'height', 10000) };
+    return { t: 'img', bin: ctx.binMap[ref], w: num(sz, 'width', 10000), h: num(sz, 'height', 10000), place: placeOf(el) };
   }
 
   // ---------- 저장 ----------
@@ -326,12 +339,12 @@ const Hwpx = (() => {
         case 'img': {
           if (!doc.bins[r.bin]) return '';
           const id = binOf(r.bin), w = Math.max(1, Math.round(r.w)), h = Math.max(1, Math.round(r.h)), o = nid();
-          return `<hp:pic textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" reverse="0" id="${o}" zOrder="0" numberingType="PICTURE" lock="0" dropcapstyle="None" href="" groupLevel="0" instid="${o}">` +
+          return `<hp:pic textWrap="${r.place && r.place.wrap === 'square' ? 'SQUARE' : 'TOP_AND_BOTTOM'}" textFlow="BOTH_SIDES" reverse="0" id="${o}" zOrder="0" numberingType="PICTURE" lock="0" dropcapstyle="None" href="" groupLevel="0" instid="${o}">` +
             `<hp:offset x="0" y="0"/><hp:orgSz width="${w}" height="${h}"/><hp:curSz width="${w}" height="${h}"/><hp:flip horizontal="0" vertical="0"/>` +
             `<hp:rotationInfo angle="0" centerX="${w >> 1}" centerY="${h >> 1}" rotateimage="1"/><hp:renderingInfo><hc:transMatrix e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/><hc:scaMatrix e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/><hc:rotMatrix e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/></hp:renderingInfo>` +
             `<hp:imgRect><hc:pt0 x="0" y="0"/><hc:pt1 x="${w}" y="0"/><hc:pt2 x="${w}" y="${h}"/><hc:pt3 x="0" y="${h}"/></hp:imgRect><hp:imgClip left="0" right="${w}" top="0" bottom="${h}"/>` +
             `<hp:inMargin left="0" right="0" top="0" bottom="0"/><hp:imgDim dimwidth="${w}" dimheight="${h}"/><hc:img binaryItemIDRef="${id}" bright="0" contrast="0" effect="REAL_PIC" alpha="0"/><hp:effects/>` +
-            `<hp:sz width="${w}" widthRelTo="ABSOLUTE" height="${h}" heightRelTo="ABSOLUTE" protect="0"/><hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>` +
+            `<hp:sz width="${w}" widthRelTo="ABSOLUTE" height="${h}" heightRelTo="ABSOLUTE" protect="0"/>${posXml(r.place)}` +
             '<hp:outMargin left="0" right="0" top="0" bottom="0"/><hp:shapeComment>그림입니다.</hp:shapeComment></hp:pic>';
         }
         case 'note': {
@@ -356,26 +369,37 @@ const Hwpx = (() => {
       return '';
     }
 
+    // 글자처럼 취급(기본) 또는 단(column) 기준 왼쪽·가운데·오른쪽
+    function posXml(pl) {
+      if (!pl) return '<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>';
+      return `<hp:pos treatAsChar="0" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="${{ center: 'CENTER', right: 'RIGHT' }[pl.align] || 'LEFT'}" vertOffset="0" horzOffset="${pl.align === 'left' ? Math.round(pl.x || 0) : 0}"/>`;
+    }
+
     function tableXml(t) {
       const o = nid();
       const rows = [];
       for (const c of t.cells) (rows[c.r] = rows[c.r] || []).push(c);
+      const PAD0 = [510, 510, 141, 141];
+      const tp = (t.pad || PAD0).map(v => Math.max(0, Math.round(v)));
+      const same = (a, b) => a.every((v, i) => Math.abs(v - b[i]) < 2);
       const nRows = Math.max(1, rows.length), nCols = Math.max(1, t.cols || 1);
       const width = Math.round(t.w || t.cells.filter(c => c.r === 0).reduce((s, c) => s + (c.w || 0), 0) || 42520);
       let height = 0;
       for (let r = 0; r < nRows; r++) height += Math.max(...(rows[r] || [{ h: 282 }]).filter(c => c.rs === 1).map(c => c.h || 282), 282);
       let h = `<hp:tbl id="${o}" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="CELL" repeatHeader="0" rowCnt="${nRows}" colCnt="${nCols}" cellSpacing="0" borderFillIDRef="${tableFill}" noAdjust="0">` +
         `<hp:sz width="${width}" widthRelTo="ABSOLUTE" height="${height}" heightRelTo="ABSOLUTE" protect="0"/>` +
-        '<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>' +
-        '<hp:outMargin left="0" right="0" top="0" bottom="0"/><hp:inMargin left="510" right="510" top="141" bottom="141"/>';
+        posXml(t.place) +
+        `<hp:outMargin left="0" right="0" top="0" bottom="0"/><hp:inMargin left="${tp[0]}" right="${tp[1]}" top="${tp[2]}" bottom="${tp[3]}"/>`;
       for (let r = 0; r < nRows; r++) {
         h += '<hp:tr>';
         for (const c of (rows[r] || []).sort((a, b) => a.c - b.c)) {
           const va = { top: 'TOP', bottom: 'BOTTOM' }[c.valign] || 'CENTER';
-          h += `<hp:tc name="" header="0" hasMargin="0" protect="0" editable="0" dirty="0" borderFillIDRef="${fillId(c)}">` +
+          const cp = (c.pad || tp).map(v => Math.max(0, Math.round(v)));
+          const own = !same(cp, tp);
+          h += `<hp:tc name="" header="0" hasMargin="${own ? 1 : 0}" protect="0" editable="0" dirty="0" borderFillIDRef="${fillId(c)}">` +
             subList(c.blocks && c.blocks.length ? c.blocks : [Model.para()], va) +
             `<hp:cellAddr colAddr="${c.c}" rowAddr="${c.r}"/><hp:cellSpan colSpan="${c.cs || 1}" rowSpan="${c.rs || 1}"/><hp:cellSz width="${Math.round(c.w || width / nCols)}" height="${Math.round(c.h || 282)}"/>` +
-            '<hp:cellMargin left="510" right="510" top="141" bottom="141"/></hp:tc>';
+            `<hp:cellMargin left="${cp[0]}" right="${cp[1]}" top="${cp[2]}" bottom="${cp[3]}"/></hp:tc>`;
         }
         h += '</hp:tr>';
       }
