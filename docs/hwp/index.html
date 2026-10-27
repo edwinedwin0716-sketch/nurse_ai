@@ -3882,15 +3882,25 @@ const Ed = (() => {
     onExported(ok, msg) { toast(msg || (ok ? '저장했어요' : '저장하지 못했어요'), 3000); },
     // 고른 파일을 조각(base64)으로 받아 연다
     onOpened(name, size, writable, uri) {
-      const parts = [];
-      const step = 512 * 1024;
-      for (let off = 0; off < size; off += step) parts.push(Native.chunk(off, step));
-      Native.chunkDone();
-      if (size > 0 && !parts.join('')) return;          // 같은 파일을 두 번 받은 경우
-      const bin = atob(parts.join(''));
-      const bytes = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      openBytes(bytes, name, writable, uri);
+      // 조각마다 따로 base64를 풀어 이어 붙인다 (큰 파일도 깨지지 않게)
+      try {
+        if (size > 3 * 1024 * 1024) toast('큰 문서를 여는 중이에요…', 8000);
+        const bytes = new Uint8Array(size);
+        const step = 3 * 256 * 1024;
+        let got = 0;
+        for (let off = 0; off < size; off += step) {
+          const bin = atob(Native.chunk(off, step));
+          for (let i = 0; i < bin.length; i++) bytes[off + i] = bin.charCodeAt(i);
+          got += bin.length;
+          if (!bin.length) break;
+        }
+        Native.chunkDone();
+        if (size > 0 && !got) return;                    // 같은 파일을 두 번 받은 경우
+        setTimeout(() => { if ($('#toast').textContent.startsWith('큰 문서')) $('#toast').classList.remove('show'); openBytes(got === size ? bytes : bytes.subarray(0, got), name, writable, uri); }, 0);
+      } catch (e) {
+        console.error(e);
+        toast('파일을 받지 못했어요: ' + e.message, 5000);
+      }
     },
     onBack() {
       if ($('#dlgBack').classList.contains('open')) { closeDlg(); return true; }
