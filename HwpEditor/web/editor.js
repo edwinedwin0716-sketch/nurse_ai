@@ -3,6 +3,7 @@
 
 const Ed = (() => {
   const el = document.getElementById('doc');
+  const masksEl = document.getElementById('masks');
   const stage = document.getElementById('stage'), sizer = document.getElementById('sizer'), sheetsEl = document.getElementById('sheets'), view = document.getElementById('view');
   const PX = 75;          // 1px = 75 HWPUNIT (96dpi)
   const GAP = 18, PAD = 18;
@@ -67,7 +68,7 @@ const Ed = (() => {
   };
 
   function clearPagination() {
-    el.querySelectorAll('.pgap').forEach(s => { const p = s.parentNode; s.remove(); p && p.normalize(); });
+    el.querySelectorAll('.pgap').forEach(s => { const p = s.parentNode; s.remove(); if (p && p.tagName === 'P') p.normalize(); });
     el.querySelectorAll('[data-push]').forEach(e => { e.style.marginTop = ''; e.removeAttribute('data-push'); if (!e.getAttribute('style')) e.removeAttribute('style'); });
   }
 
@@ -103,6 +104,105 @@ const Ed = (() => {
   let pagTimer = 0;
   function paginateSoon() { clearTimeout(pagTimer); pagTimer = setTimeout(layout, 120); }
 
+  // 쪽 나누기: 문서 위에서부터 쪽 끝을 넘는 첫 문단을 찾아 다음 쪽으로 넘기기를 되풀이한다.
+  // 표 안(칸 안)의 문단도 똑같이 줄 단위로 넘긴다. 넘긴 자리는 .pgap(저장되지 않는 빈칸)으로 채운다.
+  function paginate(g) {
+    const scale = st.zoom;
+    const stuck = new Set();
+    const spacer = (before, h) => {
+      const d = document.createElement('div');
+      d.className = 'pgap'; d.contentEditable = 'false';
+      d.style.height = Math.ceil(h + 0.5) + 'px';
+      before.parentNode.insertBefore(d, before);
+    };
+    const tries = new Map();
+    // 가운데·아래 맞춤 칸에서 글이 칸보다 짧아 떠 있으면 나누지 않는다 (밀수록 같이 내려가 끝이 없다)
+    const floating = node => {
+      const td = node.closest('td,th');
+      if (!td || !el.contains(td)) return false;
+      const va = getComputedStyle(td).verticalAlign;
+      if (va === 'top' || va === 'baseline') return false;
+      const kids = [...td.children].filter(k => !k.classList.contains('pgap'));
+      if (!kids.length) return false;
+      const used = kids[kids.length - 1].getBoundingClientRect().bottom - kids[0].getBoundingClientRect().top;
+      const cs = getComputedStyle(td);
+      const room = td.getBoundingClientRect().height - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      return room - used > 2 * scale;
+    };
+    const t0 = performance.now();
+    for (let iter = 0; iter < 3000; iter++) {
+      if (performance.now() - t0 > 6000) break;           // 아주 큰 문서에서 멈추지 않게
+      const dt = el.getBoundingClientRect().top;
+      let best = null;
+      const pageOf = y => Math.max(0, Math.floor((y + 2) / g.stride));
+      const endOf = pg => pg * g.stride + g.bodyH;
+      const rg = document.createRange();
+      const consider = (node, kind) => {
+        if (stuck.has(node)) return;
+        const r = node.getBoundingClientRect();
+        if (!r.height && !r.width) return;
+        const top = (r.top - dt) / scale, bottom = (r.bottom - dt) / scale;
+        if (best && top >= best.top) return;
+        const page = pageOf(top), start = page * g.stride, end = endOf(page);
+        if (kind === 'pb') { if (top > start + 2) best = { node, kind, top, page }; return; }
+        if (top <= end - 0.5 && bottom <= end + 1) return;          // 한 쪽 안에 다 들어 있다
+        // 줄마다 본다: 이미 나눠 둔 문단은 여러 쪽에 걸쳐 있어도 괜찮다
+        const w = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+        let first = null, line = null;
+        for (let t = w.nextNode(); t && !line; t = w.nextNode()) {
+          if (!t.length) continue;
+          rg.selectNodeContents(t);
+          for (const rc of rg.getClientRects()) {
+            if (!rc.height) continue;
+            const lt = (rc.top - dt) / scale, lb = (rc.bottom - dt) / scale;
+            if (first === null) first = lt;
+            const pg = pageOf(lt), e = endOf(pg);
+            if (lt > e - 0.5 || lb > e + 1) { line = { lt, pg }; break; }
+          }
+        }
+        if (first === null) {                                       // 글자 없는 문단(그림만 등)
+          if (!best || top < best.top) best = { node, kind, top, page, whole: true, bottom };
+          return;
+        }
+        if (!line) return;
+        if (best && line.lt >= best.top) return;
+        best = { node, kind, top: line.lt, page: line.pg, whole: line.lt <= first + 2, pTop: top, bottom };
+      };
+      for (const k of el.querySelectorAll(':scope > [data-pb]')) if (k !== el.firstElementChild) consider(k, 'pb');
+      for (const p of el.querySelectorAll('p')) consider(p, 'p');
+      if (!best) break;
+      const { node, kind, top, page } = best;
+      const next = (page + 1) * g.stride;
+      const n = (tries.get(node) || 0) + 1;
+      tries.set(node, n);
+      if (n > 30) { stuck.add(node); continue; }
+      if (kind === 'pb') { spacer(node, next - top); stuck.add(node); continue; }
+      if (floating(node)) {
+        // 가운데 맞춤 칸: 앞에 두 배 높이를 넣으면 글이 다음 쪽 맨 위로 온다 (한 번만)
+        if (getComputedStyle(node.closest('td,th')).verticalAlign === 'middle' && n === 1) spacer(node, 2 * (next - top));
+        else stuck.add(node);
+        continue;
+      }
+      if (best.whole) {
+        // 첫 줄부터 넘치면 문단째 다음 쪽으로 (이미 쪽 맨 위면 그대로 둔다)
+        const pTop = best.pTop !== undefined ? best.pTop : top;
+        const pg = pageOf(pTop);
+        if (pTop > pg * g.stride + 2) spacer(node, (pg + 1) * g.stride - pTop);
+        else stuck.add(node);
+        continue;
+      }
+      // 줄 단위로 나누기: 넘치는 줄 앞에 빈칸을 끼운다
+      const ls = lineOver(node, endOf(page), dt, scale);
+      if (ls && ls.top < next) {
+        const rest = ls.offset > 0 ? ls.node.splitText(ls.offset) : ls.node;
+        const gap = document.createElement('span');
+        gap.className = 'pgap'; gap.contentEditable = 'false';
+        gap.style.cssText = `display:block;height:${Math.max(1, Math.ceil(next - ls.top + 0.5))}px;text-indent:0`;
+        rest.parentNode.insertBefore(gap, rest);
+      } else stuck.add(node);
+    }
+  }
+
   function layout() {
     clearTimeout(pagTimer);
     const g = geo();
@@ -112,53 +212,7 @@ const Ed = (() => {
     const kids = [...el.children];
     let pages = 1;
     if (st.pageView) {
-      const docRect = el.getBoundingClientRect();
-      const scale = st.zoom;
-      const tops = kids.map(k => k.offsetTop), hs = kids.map(k => k.offsetHeight);
-      let shift = 0;
-      const pushes = [];
-      for (let i = 0; i < kids.length; i++) {
-        const k = kids[i];
-        let top = tops[i] + shift;
-        const h = hs[i];
-        let page = Math.floor(top / g.stride);
-        const start = page * g.stride, end = start + g.bodyH;
-        let to = top;
-        if (k.dataset.pb && i > 0 && top > start + 0.5) to = (page + 1) * g.stride;
-        else if (top > end - 1) to = (page + 1) * g.stride;
-        else if (top + h > end + 0.5) {
-          if (k.tagName === 'P' && !k.style.textIndent) {
-            // 문단은 줄 단위로 다음 쪽에 넘긴다 (한 문단이 여러 쪽에 걸칠 수 있다)
-            let limit = end, moved = false;
-            for (let guard = 0; guard < 50; guard++) {
-              const ls = lineOver(k, limit - shift, docRect.top, scale);
-              if (!ls) break;
-              const lineTop = ls.top + shift;
-              const pg = Math.floor(lineTop / g.stride);
-              const gap = (pg + 1) * g.stride - lineTop;
-              if (gap <= 0) break;
-              pushes.push({ split: ls, gap });
-              shift += gap;
-              limit = (pg + 1) * g.stride + g.bodyH;
-              moved = true;
-            }
-            if (moved) continue;
-          }
-          if (h <= g.bodyH && top > start + 0.5) to = (page + 1) * g.stride;
-        }
-        if (to > top) { pushes.push({ el: k, by: to - top }); shift += to - top; }
-      }
-      for (const p of pushes.reverse()) {
-        if (p.el) { p.el.style.marginTop = p.by + 'px'; p.el.dataset.push = '1'; }
-        else {
-          const { node, offset } = p.split;
-          const rest = offset > 0 ? node.splitText(offset) : node;
-          const gap = document.createElement('span');
-          gap.className = 'pgap'; gap.contentEditable = 'false';
-          gap.style.cssText = `display:block;height:${p.gap}px;text-indent:0`;
-          rest.parentNode.insertBefore(gap, rest);
-        }
-      }
+      paginate(g);
       const bottom = el.offsetHeight;
       pages = Math.max(pages, Math.floor(Math.max(0, bottom - 1) / g.stride) + 1);
     }
@@ -188,25 +242,31 @@ const Ed = (() => {
 
   function drawSheets(g, n, contHeight, notes) {
     const p = st.doc.page;
-    let h = '';
+    let h = '', m = '';
     const hdr = st.doc.header, ftr = st.doc.footer;
+    const bodyBottom = g.top + g.bodyH;                     // 쪽 위에서 본문 끝까지
     for (let i = 0; i < n; i++) {
       const top = PAD + i * g.stride, H = contHeight || g.H;
-      h += `<div class="sheet" style="top:${top}px;left:${PAD}px;width:${g.W}px;height:${H}px">`;
-      h += `<div class="guide" style="left:${g.left}px;top:${g.top}px;width:${g.bodyW}px;height:${contHeight ? H - g.top - (p.mb + p.mf) / PX : g.bodyH}px"></div>`;
-      if (hdr && hdr.length) h += `<div class="hf" style="left:${g.left}px;top:${p.mt / PX}px;width:${g.bodyW}px;height:${p.mh / PX}px">${hfHtml(hdr, i + 1)}</div>`;
-      if (ftr && ftr.length) h += `<div class="hf" style="left:${g.left}px;top:${H - (p.mb + p.mf) / PX}px;width:${g.bodyW}px;height:${p.mf / PX}px;display:flex;flex-direction:column;justify-content:flex-end">${hfHtml(ftr, i + 1)}</div>`;
+      h += `<div class="sheet" style="top:${top}px;left:${PAD}px;width:${g.W}px;height:${H}px">` +
+        `<div class="guide" style="left:${g.left}px;top:${g.top}px;width:${g.bodyW}px;height:${contHeight ? H - g.top - (p.mb + p.mf) / PX : g.bodyH}px"></div></div>`;
+      // 본문 위·아래 여백과 쪽 사이 틈은 글 위에 덮는다 (쪽을 넘는 표 테두리 등이 비치지 않게)
+      let hf = '';
+      if (hdr && hdr.length) hf += `<div class="hf" style="left:${g.left}px;top:${p.mt / PX}px;width:${g.bodyW}px;height:${p.mh / PX}px">${hfHtml(hdr, i + 1)}</div>`;
+      let ff = '';
+      if (ftr && ftr.length) ff += `<div class="hf" style="left:${g.left}px;bottom:${p.mb / PX}px;width:${g.bodyW}px;height:${p.mf / PX}px;display:flex;flex-direction:column;justify-content:flex-end">${hfHtml(ftr, i + 1)}</div>`;
       if (st.doc.pageNum) {
         const pos = st.doc.pageNum;
-        const isTop = /TOP/.test(pos);
-        const y = isTop ? p.mt / PX : H - (p.mb + p.mf / 2) / PX;
         let align = /LEFT/.test(pos) ? 'left' : /RIGHT/.test(pos) ? 'right' : 'center';
         if (/OUTSIDE/.test(pos)) align = (i % 2 === 0) ? 'right' : 'left';
         if (/INSIDE/.test(pos)) align = (i % 2 === 0) ? 'left' : 'right';
         const style = align === 'center' ? `left:${g.left}px;width:${g.bodyW}px;text-align:center` : align === 'left' ? `left:${g.left}px` : `right:${p.mr / PX}px`;
-        h += `<div class="pgno" style="top:${y}px;${style}">- ${i + 1} -</div>`;
+        const num = `<div class="pgno" style="${style};${/TOP/.test(pos) ? `top:${p.mt / PX}px` : `bottom:${(p.mb + p.mf / 2) / PX}px`}">- ${i + 1} -</div>`;
+        if (/TOP/.test(pos)) hf += num; else ff += num;
       }
-      h += '</div>';
+      if (contHeight) { h = h.replace(/<\/div>$/, hf + ff + '</div>'); continue; }
+      m += `<div class="mask" style="top:${top}px;left:${PAD}px;width:${g.W}px;height:${g.top}px">${hf}</div>`;
+      m += `<div class="mask" style="top:${top + bodyBottom}px;left:${PAD}px;width:${g.W}px;height:${g.H - bodyBottom}px">${ff}</div>`;
+      if (i < n - 1) m += `<div class="mask gapm" style="top:${top + g.H}px;left:0;width:100%;height:${GAP}px"></div>`;
     }
     if (notes.length) {
       // 각주·미주는 문서 끝에 모아서 보여 준다
@@ -215,6 +275,7 @@ const Ed = (() => {
         notes.map((f, i) => `<p style="margin:0">${i + 1}) ${Model.esc(f.dataset.note || '')}</p>`).join('') + '</div>';
     }
     sheetsEl.innerHTML = h;
+    masksEl.innerHTML = m;
   }
 
   function setZoom(z, keepCenter) {

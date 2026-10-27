@@ -306,7 +306,7 @@ const Model = (() => {
         flushLoose();
         if ([...n.children].some(c => BLOCK.test(c.tagName) || c.tagName === 'TABLE' || c.tagName === 'UL' || c.tagName === 'OL')) out.push(...blocksOf(n, ctx));
         else out.push(runsOf(n, paraOf(n), ctx));
-      } else if (n.nodeType === 1 && /^(STYLE|SCRIPT|META)$/.test(n.tagName)) {
+      } else if (n.nodeType === 1 && (/^(STYLE|SCRIPT|META)$/.test(n.tagName) || n.classList.contains('pgap'))) {
         continue;
       } else {
         if (!loose) loose = document.createElement('span');

@@ -68,6 +68,12 @@ button, select, input, textarea { font: inherit; color: inherit; }
 #sizer { position: relative; margin: 0 auto; }
 #stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .sheet { position: absolute; left: 0; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .35); color: #000; overflow: hidden; }
+.mask { position: absolute; background: #fff; pointer-events: none; overflow: hidden; z-index: 2; }
+.mask.gapm { background: var(--desk); }
+#masks .hf, #masks .pgno { position: absolute; }
+.mask .hf { overflow: hidden; font: 10pt/1.6 "함초롬바탕", "Noto Serif KR", serif; white-space: pre-wrap; color: #000; }
+.mask .hf p { margin: 0; }
+.mask .pgno { font: 10pt "함초롬바탕", "Noto Serif KR", serif; color: #000; white-space: nowrap; }
 .sheet .hf { position: absolute; overflow: hidden; font: 10pt/1.6 "함초롬바탕", "Noto Serif KR", serif; white-space: pre-wrap; color: #000; }
 .sheet .hf p { margin: 0; }
 .sheet .guide { position: absolute; border: 1px dashed transparent; pointer-events: none; }
@@ -81,6 +87,8 @@ button, select, input, textarea { font: inherit; color: inherit; }
   tab-size: 40pt; -moz-tab-size: 40pt; counter-reset: o1 o2 o3 o4 o5 o6 o7 fn ln; }
 #doc p { margin: 0; min-height: 1em; }
 #doc table.tb { border-collapse: collapse; table-layout: fixed; margin: 0; }
+#doc td table.tb, #doc th table.tb, #doc .box table.tb { table-layout: auto; max-width: 100%; }
+#doc .pgap { pointer-events: none; }
 #doc table.tb td { border: 0.12mm solid #000; padding: 1.41mm 1.8mm; vertical-align: middle; overflow-wrap: anywhere; }
 #doc table.tb td.cellsel { background-image: linear-gradient(rgba(37, 99, 201, .28), rgba(37, 99, 201, .28)); }
 #doc img { vertical-align: bottom; max-width: 100%; }
