@@ -41,6 +41,14 @@ button, select, input, textarea { font: inherit; color: inherit; }
 #modeBtn { border: 1px solid var(--line); padding: 0 10px; }
 #modeBtn.on { background: var(--accent); color: #fff; border-color: var(--accent); }
 
+/* 보기 모드 안내 막대 */
+#viewbar { display: none; align-items: center; gap: 8px; padding: 6px 10px; background: #fff7d6; color: #5a4300; border-bottom: 1px solid #ecd98a; font-size: 13px; }
+.ro #viewbar { display: flex; }
+#viewbar span { flex: 1; min-width: 0; }
+#viewbar button { border: 0; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+#viewbar .vb-main { background: var(--accent); color: #fff; }
+#viewbar .vb-sub { background: transparent; color: #5a4300; text-decoration: underline; font-weight: 500; padding: 6px 4px; }
+
 /* 메뉴 탭 + 도구 상자(리본) */
 #menus { display: flex; gap: 2px; padding: 2px 6px 0; background: var(--bar2); overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line); }
 #menus::-webkit-scrollbar { display: none; }
@@ -253,6 +261,7 @@ button, select, input, textarea { font: inherit; color: inherit; }
     <button class="fbtn" data-cmd="outdent" title="왼쪽 여백 줄이기"></button>
     <button class="fbtn" data-cmd="indent" title="왼쪽 여백 늘리기"></button>
   </div>
+  <div id="viewbar"><span>📖 보기 모드예요</span><button data-cmd="toggleEdit" class="vb-main">✏️ 편집하기</button><button data-cmd="alwaysEdit" class="vb-sub">다음부터 바로 편집</button></div>
   <div id="view">
     <div id="sizer"><div id="stage"><div id="sheets"></div><div id="doc" spellcheck="false"></div></div></div>
     <div id="welcome">
@@ -264,7 +273,7 @@ button, select, input, textarea { font: inherit; color: inherit; }
           <button data-cmd="newDoc"><span data-icon="new"></span>새 문서</button>
         </div>
         <div class="recent" id="recent"></div>
-        <div class="foot">가난한 간호학생이 만든 무료 앱이에요. <a href="https://qr.kakaopay.com/Ej8Yr8VXm" data-ext>☕ 1,000원 후원</a></div>
+        <div class="foot">가난한 간호학생이 만든 무료 앱이에요. <a href="https://qr.kakaopay.com/Ej8Yr8VXm" data-ext>☕ 1,000원 후원</a> · <span id="ver"></span></div>
       </div>
     </div>
   </div>
@@ -2840,7 +2849,9 @@ const Ed = (() => {
   const Native = window.Android || null;              // 안드로이드 앱 안이면 Java 다리
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const narrow = () => window.innerWidth <= 700;
+  const VERSION = '1.0.3';
   const app = { name: '새 문서.hwpx', writable: false, kind: 'new' };
+  const pref = (k, v) => { try { if (v === undefined) return localStorage.getItem('hwped.' + k); localStorage.setItem('hwped.' + k, v); } catch (e) { return null; } };
 
   // ---------- 알림 ----------
   let toastT = 0;
@@ -2902,6 +2913,7 @@ const Ed = (() => {
   cmd('showGuide', '본문 경계선', 'margin', '', () => document.body.classList.toggle('show-guide'), { on: () => document.body.classList.contains('show-guide') });
   cmd('theme', '어두운 화면', 'dark', '', toggleTheme);
   cmd('toggleEdit', '편집 / 보기', 'edit', '', () => setReadOnly(!st.readOnly));
+  cmd('alwaysEdit', '받은 문서 바로 편집', 'edit', '', () => { pref('directEdit', '1'); setReadOnly(false); toast('다음부터 문서를 열면 바로 편집 모드로 열려요 (보기 → 편집/보기로 바꿀 수 있어요)', 4000); });
   // 입력
   E('table', '표', 'table', 'Ctrl+N,T', tableDialog);
   E('image', '그림', 'image', 'Ctrl+N,I', () => { Ed.saveSel(); $('#imgIn').click(); });
@@ -3787,6 +3799,7 @@ const Ed = (() => {
         <li>"한글", "한컴"은 한글과컴퓨터의 상표예요. 이 앱은 한글과컴퓨터가 만든 앱이 아니에요.</li>
         <li>사용한 공개 프로그램: pako(MIT·Zlib), python-hwpx 뼈대 파일(Apache-2.0).</li>
       </ul>
+      <p style="font-size:12px;color:var(--sub)">버전 ${VERSION}</p>
       <p><a href="https://qr.kakaopay.com/Ej8Yr8VXm" data-ext>☕ 가난한 간호학생에게 커피 한 잔(1,000원) 후원하기</a></p>`, { ok: false });
   }
 
@@ -3834,14 +3847,15 @@ const Ed = (() => {
       app.kind = kind;
     } catch (e) {
       console.error(e);
-      toast(/열 수 없어요|아니에요/.test(e.message) ? e.message : '문서를 열지 못했어요: ' + e.message, 4000);
+      dialog('문서를 열지 못했어요', `<p>${Model.esc(/열 수 없어요|아니에요/.test(e.message) ? e.message : '문서를 읽다가 문제가 생겼어요: ' + e.message)}</p><p style="font-size:12px;color:var(--sub)">${Model.esc(name)} · ${(bytes.length / 1048576).toFixed(1)}MB · 버전 ${VERSION}</p>`, { ok: false });
       return false;
     }
     const outName = name;
     openModel(doc, outName, app.kind);
     app.writable = !!writable && app.kind === 'hwpx';
     app.uri = uri || null;
-    if (narrow()) { setReadOnly(true); Ed.fitWidth(); } else setReadOnly(false);
+    if (narrow()) Ed.fitWidth();
+    setReadOnly(narrow() && pref('directEdit') !== '1');      // 휴대폰은 먼저 보기 모드(뷰어)로
     if (app.kind === 'hwp') toast('.hwp 문서예요. 저장하면 같은 이름의 .hwpx로 저장돼요', 3500);
     addRecent(name, uri);
     return true;
@@ -3899,7 +3913,7 @@ const Ed = (() => {
         setTimeout(() => { if ($('#toast').textContent.startsWith('큰 문서')) $('#toast').classList.remove('show'); openBytes(got === size ? bytes : bytes.subarray(0, got), name, writable, uri); }, 0);
       } catch (e) {
         console.error(e);
-        toast('파일을 받지 못했어요: ' + e.message, 5000);
+        dialog('파일을 받지 못했어요', `<p>${Model.esc(e.message)}</p><p style="font-size:12px;color:var(--sub)">${Model.esc(name)} · 버전 ${VERSION}</p>`, { ok: false });
       }
     },
     onBack() {
@@ -4063,6 +4077,7 @@ const Ed = (() => {
   openModel(Model.empty(), '새 문서.hwpx', 'new');
   setReadOnly(false);
   showWelcome(true);
+  $('#ver').textContent = '버전 ' + VERSION;
   window.addEventListener('resize', () => { if (narrow() && st.zoom > 1.2) Ed.fitWidth(); status(); });
   // 다른 앱에서 연 파일
   if (Native && Native.pendingFile) setTimeout(() => Native.pendingFile(), 50);

@@ -34,17 +34,17 @@ import java.io.OutputStream;
 // HWP 편집기: 편집 화면(웹)을 띄우고, 파일 열기·저장·인쇄·공유를 맡는다.
 public class MainActivity extends Activity {
     private static final int OPEN = 11, SAVE_AS = 12, EXPORT = 13, PICK = 14;
+    static final String OPEN_CACHED = "kr.nursing.hwp.OPEN_CACHED";
     private WebView web;
     private WebView printView;
     private ValueCallback<Uri[]> chooser;
 
-    private byte[] loaded;           // 연 파일 (JS가 조각으로 가져간다)
+    private volatile byte[] loaded;           // 연 파일 (JS가 조각으로 가져간다)
     private Uri currentUri;          // 덮어쓸 수 있는 지금 문서
     private byte[] pending;          // 저장 위치를 고르는 동안 기다리는 내용
     private String pendingName = "";
-    private Intent startIntent;
-    private String openCall;         // 화면이 준비되기 전에 연 파일을 다시 알려 줄 때 쓴다
-    private boolean pageReady;
+    private volatile String openCall;         // 화면이 준비되기 전에 연 파일을 다시 알려 줄 때 쓴다
+    private volatile boolean pageReady;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -72,8 +72,7 @@ public class MainActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 pageReady = true;
-                if (startIntent != null) { Intent i = startIntent; startIntent = null; readIntent(i); }
-                else if (openCall != null && loaded != null) js(openCall);
+                if (openCall != null && loaded != null) js(openCall);
             }
         });
         web.setWebChromeClient(new WebChromeClient() {
@@ -94,13 +93,13 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new Bridge(), "Android");
         web.loadUrl("file:///android_asset/index.html");
         setContentView(web);
-        startIntent = getIntent();
+        readIntent(getIntent());
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        if (pageReady) readIntent(intent); else startIntent = intent;
+        readIntent(intent);
     }
 
     @Override
@@ -111,18 +110,47 @@ public class MainActivity extends Activity {
         });
     }
 
-    // 다른 앱에서 '열기'·'공유'로 받은 파일
+    // 다른 앱에서 '열기'로 받은 파일: OpenActivity가 캐시에 복사해 넘겨 준다
     private void readIntent(Intent intent) {
         if (intent == null) return;
-        Uri uri = null;
-        if (Intent.ACTION_SEND.equals(intent.getAction())) uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
-        else if (Intent.ACTION_VIEW.equals(intent.getAction())) uri = intent.getData();
-        // 카카오톡 등은 주소를 ClipData에만 담아 보내기도 한다
-        if (uri == null && intent.getClipData() != null && intent.getClipData().getItemCount() > 0) uri = intent.getClipData().getItemAt(0).getUri();
-        if (uri == null) return;
-        setIntent(new Intent(Intent.ACTION_MAIN));     // 화면을 돌려도 다시 열지 않게
+        if (OPEN_CACHED.equals(intent.getAction())) {
+            setIntent(new Intent(Intent.ACTION_MAIN));     // 화면을 돌려도 다시 열지 않게
+            String path = intent.getStringExtra("path");
+            String name = intent.getStringExtra("name");
+            boolean writable = intent.getBooleanExtra("writable", false) && intent.getData() != null;
+            try {
+                File f = new File(path);
+                byte[] body = new byte[(int) f.length()];
+                java.io.FileInputStream in = new java.io.FileInputStream(f);
+                int off = 0, n;
+                while (off < body.length && (n = in.read(body, off, body.length - off)) > 0) off += n;
+                in.close();
+                f.delete();
+                deliver(body, name == null ? "문서.hwp" : name, writable ? intent.getData() : null, writable ? intent.getData() : null);
+            } catch (Exception e) {
+                showError("받은 파일을 읽지 못했어요: " + e.getMessage());
+            }
+            return;
+        }
+        Uri uri = OpenActivity.uriOf(intent);
+        if (uri == null || Intent.ACTION_MAIN.equals(intent.getAction())) return;
+        setIntent(new Intent(Intent.ACTION_MAIN));
         boolean writable = (intent.getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != 0;
         openUri(uri, writable);
+    }
+
+    // 파일 내용을 편집 화면에 넘긴다. 화면이 아직 준비 중이면 화면이 다 뜬 뒤 스스로 가져간다(pendingFile)
+    private void deliver(byte[] body, String name, Uri writeUri, Uri recentUri) {
+        loaded = body;
+        currentUri = writeUri;
+        openCall = "window.HwpNative && window.HwpNative.onOpened(" + q(name) + "," + body.length + "," + (writeUri != null) + "," + q(recentUri == null ? "" : recentUri.toString()) + ")";
+        if (pageReady) js(openCall);
+    }
+
+    private void showError(final String msg) {
+        runOnUiThread(new Runnable() { @Override public void run() {
+            new android.app.AlertDialog.Builder(MainActivity.this).setTitle("문서를 열지 못했어요").setMessage(msg).setPositiveButton("확인", null).show();
+        }});
     }
 
     private boolean openUri(Uri uri, boolean writable) {
@@ -133,14 +161,10 @@ public class MainActivity extends Activity {
             int n;
             while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
             in.close();
-            loaded = out.toByteArray();
-            currentUri = writable ? uri : null;
-            String name = displayName(uri);
-            openCall = "window.HwpNative && window.HwpNative.onOpened(" + q(name) + "," + loaded.length + "," + writable + "," + q(uri.toString()) + ")";
-            js(openCall);
+            deliver(out.toByteArray(), displayName(uri), writable ? uri : null, uri);
             return true;
         } catch (Exception e) {
-            toast("파일을 열 수 없어요: " + e.getMessage());
+            showError("파일을 열 수 없어요: " + e.getMessage());
             return false;
         }
     }
@@ -280,7 +304,7 @@ public class MainActivity extends Activity {
 
         // 편집 화면이 다 뜬 뒤 아직 못 받은 파일이 있으면 다시 보낸다
         @JavascriptInterface
-        public void pendingFile() { if (loaded != null && openCall != null) js(openCall); }
+        public void pendingFile() { pageReady = true; if (loaded != null && openCall != null) js(openCall); }
 
         @JavascriptInterface
         public boolean openRecent(final String uri) {

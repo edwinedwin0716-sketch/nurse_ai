@@ -25,6 +25,14 @@ button, select, input, textarea { font: inherit; color: inherit; }
 #modeBtn { border: 1px solid var(--line); padding: 0 10px; }
 #modeBtn.on { background: var(--accent); color: #fff; border-color: var(--accent); }
 
+/* 보기 모드 안내 막대 */
+#viewbar { display: none; align-items: center; gap: 8px; padding: 6px 10px; background: #fff7d6; color: #5a4300; border-bottom: 1px solid #ecd98a; font-size: 13px; }
+.ro #viewbar { display: flex; }
+#viewbar span { flex: 1; min-width: 0; }
+#viewbar button { border: 0; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+#viewbar .vb-main { background: var(--accent); color: #fff; }
+#viewbar .vb-sub { background: transparent; color: #5a4300; text-decoration: underline; font-weight: 500; padding: 6px 4px; }
+
 /* 메뉴 탭 + 도구 상자(리본) */
 #menus { display: flex; gap: 2px; padding: 2px 6px 0; background: var(--bar2); overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line); }
 #menus::-webkit-scrollbar { display: none; }

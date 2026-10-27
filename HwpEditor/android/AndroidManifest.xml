@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="kr.nursing.hwp"
-    android:versionCode="3"
-    android:versionName="1.0.2">
+    android:versionCode="4"
+    android:versionName="1.0.3">
     <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="34" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <application
@@ -25,6 +25,13 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <!-- 다른 앱에서 '열기'·'공유'로 온 문서를 받아 앱 안에 복사한 뒤 편집기로 넘긴다 -->
+        <activity android:name=".OpenActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode|fontScale">
             <!-- 파일 앱·카카오톡 등에서 '열기' (형식이 붙어 오는 경우) -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

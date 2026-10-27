@@ -7,7 +7,9 @@
   const Native = window.Android || null;              // 안드로이드 앱 안이면 Java 다리
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const narrow = () => window.innerWidth <= 700;
+  const VERSION = '1.0.3';
   const app = { name: '새 문서.hwpx', writable: false, kind: 'new' };
+  const pref = (k, v) => { try { if (v === undefined) return localStorage.getItem('hwped.' + k); localStorage.setItem('hwped.' + k, v); } catch (e) { return null; } };
 
   // ---------- 알림 ----------
   let toastT = 0;
@@ -69,6 +71,7 @@
   cmd('showGuide', '본문 경계선', 'margin', '', () => document.body.classList.toggle('show-guide'), { on: () => document.body.classList.contains('show-guide') });
   cmd('theme', '어두운 화면', 'dark', '', toggleTheme);
   cmd('toggleEdit', '편집 / 보기', 'edit', '', () => setReadOnly(!st.readOnly));
+  cmd('alwaysEdit', '받은 문서 바로 편집', 'edit', '', () => { pref('directEdit', '1'); setReadOnly(false); toast('다음부터 문서를 열면 바로 편집 모드로 열려요 (보기 → 편집/보기로 바꿀 수 있어요)', 4000); });
   // 입력
   E('table', '표', 'table', 'Ctrl+N,T', tableDialog);
   E('image', '그림', 'image', 'Ctrl+N,I', () => { Ed.saveSel(); $('#imgIn').click(); });
@@ -954,6 +957,7 @@
         <li>"한글", "한컴"은 한글과컴퓨터의 상표예요. 이 앱은 한글과컴퓨터가 만든 앱이 아니에요.</li>
         <li>사용한 공개 프로그램: pako(MIT·Zlib), python-hwpx 뼈대 파일(Apache-2.0).</li>
       </ul>
+      <p style="font-size:12px;color:var(--sub)">버전 ${VERSION}</p>
       <p><a href="https://qr.kakaopay.com/Ej8Yr8VXm" data-ext>☕ 가난한 간호학생에게 커피 한 잔(1,000원) 후원하기</a></p>`, { ok: false });
   }
 
@@ -1001,14 +1005,15 @@
       app.kind = kind;
     } catch (e) {
       console.error(e);
-      toast(/열 수 없어요|아니에요/.test(e.message) ? e.message : '문서를 열지 못했어요: ' + e.message, 4000);
+      dialog('문서를 열지 못했어요', `<p>${Model.esc(/열 수 없어요|아니에요/.test(e.message) ? e.message : '문서를 읽다가 문제가 생겼어요: ' + e.message)}</p><p style="font-size:12px;color:var(--sub)">${Model.esc(name)} · ${(bytes.length / 1048576).toFixed(1)}MB · 버전 ${VERSION}</p>`, { ok: false });
       return false;
     }
     const outName = name;
     openModel(doc, outName, app.kind);
     app.writable = !!writable && app.kind === 'hwpx';
     app.uri = uri || null;
-    if (narrow()) { setReadOnly(true); Ed.fitWidth(); } else setReadOnly(false);
+    if (narrow()) Ed.fitWidth();
+    setReadOnly(narrow() && pref('directEdit') !== '1');      // 휴대폰은 먼저 보기 모드(뷰어)로
     if (app.kind === 'hwp') toast('.hwp 문서예요. 저장하면 같은 이름의 .hwpx로 저장돼요', 3500);
     addRecent(name, uri);
     return true;
@@ -1066,7 +1071,7 @@
         setTimeout(() => { if ($('#toast').textContent.startsWith('큰 문서')) $('#toast').classList.remove('show'); openBytes(got === size ? bytes : bytes.subarray(0, got), name, writable, uri); }, 0);
       } catch (e) {
         console.error(e);
-        toast('파일을 받지 못했어요: ' + e.message, 5000);
+        dialog('파일을 받지 못했어요', `<p>${Model.esc(e.message)}</p><p style="font-size:12px;color:var(--sub)">${Model.esc(name)} · 버전 ${VERSION}</p>`, { ok: false });
       }
     },
     onBack() {
@@ -1230,6 +1235,7 @@
   openModel(Model.empty(), '새 문서.hwpx', 'new');
   setReadOnly(false);
   showWelcome(true);
+  $('#ver').textContent = '버전 ' + VERSION;
   window.addEventListener('resize', () => { if (narrow() && st.zoom > 1.2) Ed.fitWidth(); status(); });
   // 다른 앱에서 연 파일
   if (Native && Native.pendingFile) setTimeout(() => Native.pendingFile(), 50);
