@@ -51,8 +51,10 @@ const Ed = (() => {
   }
   function cleanHtml() {
     const c = el.cloneNode(true);
-    c.querySelectorAll('.pgap').forEach(e => e.remove());
+    c.querySelectorAll('.pgap, tr.pgap-row').forEach(e => e.remove());
+    c.querySelectorAll('[data-rsadd]').forEach(td => { td.rowSpan = Math.max(1, td.rowSpan - (+td.dataset.rsadd || 0)); td.removeAttribute('data-rsadd'); });
     c.querySelectorAll('[data-push]').forEach(e => { e.style.marginTop = ''; e.removeAttribute('data-push'); if (!e.getAttribute('style')) e.removeAttribute('style'); });
+    c.querySelectorAll('[data-shift]').forEach(e => { e.style.position = ''; e.style.top = ''; e.removeAttribute('data-shift'); if (!e.getAttribute('style')) e.removeAttribute('style'); });
     c.querySelectorAll('.cellsel').forEach(e => e.classList.remove('cellsel'));
     c.querySelectorAll('.picked').forEach(e => e.classList.remove('picked'));
     c.normalize();
@@ -67,9 +69,51 @@ const Ed = (() => {
       bodyH: Math.max(40, (p.h - p.mt - p.mh - p.mb - p.mf) / PX), stride: H + GAP };
   };
 
+  // 표 줄 앞에 빈 줄을 끼운다. 위에서 이 자리를 가로질러 내려오는(줄 합친) 칸은 한 줄 더 차지하게 한다
+  function rowSpacer(tr, h) {
+    const table = tr.closest('table'), idx = [...table.rows].indexOf(tr);
+    // 빈 줄까지 넣어 센 실제 칸 배치
+    const raw = new Map(), occ = [];
+    let nCols = 0;
+    [...table.rows].forEach((row, r) => {
+      occ[r] = occ[r] || [];
+      let c = 0;
+      for (const td of row.cells) {
+        while (occ[r][c]) c++;
+        const i = { r, c, rs: td.rowSpan || 1, cs: td.colSpan || 1 };
+        raw.set(td, i);
+        for (let a = 0; a < i.rs; a++) for (let b = 0; b < i.cs; b++) (occ[r + a] = occ[r + a] || [])[c + b] = true;
+        c += i.cs;
+        nCols = Math.max(nCols, c);
+      }
+    });
+    const g = { nCols }, covered = new Set();
+    for (const [td, i] of raw) {
+      if (i.r < idx && i.r + i.rs > idx) {
+        td.rowSpan = i.rs + 1; td.dataset.rsadd = (+td.dataset.rsadd || 0) + 1;
+        for (let c = i.c; c < i.c + i.cs; c++) covered.add(c);
+      }
+    }
+    const row = document.createElement('tr');
+    row.className = 'pgap-row'; row.contentEditable = 'false';
+    let first = true;
+    for (let c = 0; c < g.nCols; c++) {
+      if (covered.has(c)) continue;
+      const td = document.createElement('td');
+      td.style.cssText = `height:${first ? h : 0}px;padding:0;border:none;background:transparent`;
+      first = false;
+      row.appendChild(td);
+    }
+    if (first) { const td = document.createElement('td'); td.style.cssText = `height:${h}px;padding:0;border:none`; row.appendChild(td); }
+    tr.parentNode.insertBefore(row, tr);
+  }
+
   function clearPagination() {
+    el.querySelectorAll('tr.pgap-row').forEach(r => r.remove());
+    el.querySelectorAll('[data-rsadd]').forEach(td => { td.rowSpan = Math.max(1, td.rowSpan - (+td.dataset.rsadd || 0)); td.removeAttribute('data-rsadd'); });
     el.querySelectorAll('.pgap').forEach(s => { const p = s.parentNode; s.remove(); if (p && p.tagName === 'P') p.normalize(); });
     el.querySelectorAll('[data-push]').forEach(e => { e.style.marginTop = ''; e.removeAttribute('data-push'); if (!e.getAttribute('style')) e.removeAttribute('style'); });
+    el.querySelectorAll('[data-shift]').forEach(e => { e.style.position = ''; e.style.top = ''; e.removeAttribute('data-shift'); if (!e.getAttribute('style')) e.removeAttribute('style'); });
   }
 
   // 문단 p 안에서 아래 끝이 y(쪽 나누기 전 문서 좌표)를 넘는 첫 줄의 시작 글자
@@ -169,6 +213,16 @@ const Ed = (() => {
         best = { node, kind, top: line.lt, page: line.pg, whole: line.lt <= first + 2, pTop: top, bottom };
       };
       for (const k of el.querySelectorAll(':scope > [data-pb]')) if (k !== el.firstElementChild && !pbDone.has(k)) consider(k, 'pb');
+      // 표 줄: 한 쪽에 들어가는 줄이 쪽 끝에 걸리면 줄째 다음 쪽으로 (한글처럼)
+      for (const tr of el.querySelectorAll('tr')) {
+        if (tr.classList.contains('pgap-row') || stuck.has(tr)) continue;
+        const r = tr.getBoundingClientRect();
+        const top = (r.top - dt) / scale, bottom = (r.bottom - dt) / scale;
+        if (best && top >= best.top) continue;
+        const page = pageOf(top), start = page * g.stride, end = endOf(page);
+        if (bottom - top > g.bodyH - 2 || top <= start + 2) continue;
+        if (top > end - 0.5 || bottom > end + 1) best = { node: tr, kind: 'row', top, page };
+      }
       for (const p of el.querySelectorAll('p')) consider(p, 'p');
       if (!best) break;
       const { node, kind, top, page } = best;
@@ -177,10 +231,25 @@ const Ed = (() => {
       tries.set(node, n);
       if (n > 30) { stuck.add(node); continue; }
       if (kind === 'pb') { spacer(node, next - top); pbDone.add(node); continue; }
+      if (kind === 'row') { rowSpacer(node, Math.ceil(next - top + 0.5)); stuck.add(node); continue; }
       if (floating(node)) {
-        // 가운데 맞춤 칸: 앞에 두 배 높이를 넣으면 글이 다음 쪽 맨 위로 온다 (한 번만)
-        if (getComputedStyle(node.closest('td,th')).verticalAlign === 'middle' && n === 1) spacer(node, 2 * (next - top));
-        else stuck.add(node);
+        // 가운데·아래 맞춤 칸에 떠 있는 글(여러 줄에 걸친 '활력징후' 같은 제목 칸):
+        // 칸 크기는 그대로 두고, 보이는 위치만 같은 칸 안에서 쪽 위나 아래로 옮긴다
+        const td = node.closest('td,th');
+        const kids = [...td.children].filter(k => !k.classList.contains('pgap'));
+        const tr = td.getBoundingClientRect(), cs = getComputedStyle(td);
+        const cTop = (tr.top - dt) / scale + parseFloat(cs.paddingTop), cBot = (tr.bottom - dt) / scale - parseFloat(cs.paddingBottom);
+        const bTop = (kids[0].getBoundingClientRect().top - dt) / scale, bBot = (kids[kids.length - 1].getBoundingClientRect().bottom - dt) / scale;
+        const pg = pageOf(bTop), endA = endOf(pg), nextA = (pg + 1) * g.stride;
+        const up = endA - bBot, down = nextA - bTop;
+        let d = 0;
+        if (bBot <= endA) d = 0;
+        else if (bTop + up >= cTop - 0.5) d = up;
+        else if (bBot + down <= cBot + 0.5) d = down;
+        else d = Math.abs(cTop - bTop) < Math.abs(cBot - bBot) ? cTop - bTop : cBot - bBot;
+        if (Math.abs(d) > 0.5) for (const k of kids) { k.style.position = 'relative'; k.style.top = d + 'px'; k.dataset.shift = '1'; }
+        kids.forEach(k => stuck.add(k));
+        stuck.add(node);
         continue;
       }
       if (best.whole) {
@@ -521,6 +590,7 @@ const Ed = (() => {
   function act(fn) {
     if (st.readOnly) return;
     hist.push();
+    clearPagination();               // 쪽 나눔용 빈칸·빈 줄을 걷어 낸 깨끗한 표·문단에서 고친다
     const r = fn();
     hist.push();
     paginateSoon();
@@ -872,19 +942,20 @@ const Ed = (() => {
   function curCell() { const r = range() || saved; return r ? cellOf(r.startContainer) : null; }
   function gridOf(table) {
     const cells = new Map(), rows = [];
-    [...table.rows].forEach((tr, r) => {
+    // 쪽 나눔용 빈 줄(pgap-row)은 빼고 센다
+    [...table.rows].filter(tr => !tr.classList.contains('pgap-row')).forEach((tr, r) => {
       rows[r] = rows[r] || [];
       let c = 0;
       for (const td of tr.cells) {
         while (rows[r][c]) c++;
-        const info = { td, r, c, rs: td.rowSpan || 1, cs: td.colSpan || 1 };
+        const info = { td, r, c, rs: Math.max(1, (td.rowSpan || 1) - (+td.dataset.rsadd || 0)), cs: td.colSpan || 1 };
         cells.set(td, info);
         for (let i = 0; i < info.rs; i++) for (let j = 0; j < info.cs; j++) (rows[r + i] = rows[r + i] || [])[c + j] = info;
         c += info.cs;
       }
     });
     const nCols = Math.max(0, ...rows.map(x => x.length));
-    return { cells, rows, nRows: table.rows.length, nCols };
+    return { cells, rows, nRows: rows.length, nCols };
   }
   function newCell(widthFrom) {
     const td = document.createElement('td');
