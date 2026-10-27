@@ -8,11 +8,11 @@ using Microsoft.Win32;
 
 [assembly: AssemblyTitle("HWP 편집기")]
 [assembly: AssemblyProduct("HWP 편집기")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.0.4.0")]
+[assembly: AssemblyFileVersion("1.0.4.0")]
 
 static class Launcher {
-    const string Version = "1.0";
+    const string Version = "1.0.4";
     const string Caption = "HWP 편집기";
     static string Dir { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HwpEditor"); } }
 

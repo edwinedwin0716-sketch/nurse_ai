@@ -7,7 +7,7 @@
   const Native = window.Android || null;              // 안드로이드 앱 안이면 Java 다리
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const narrow = () => window.innerWidth <= 700;
-  const VERSION = '1.0.3';
+  const VERSION = '1.0.4';
   const app = { name: '새 문서.hwpx', writable: false, kind: 'new' };
   const pref = (k, v) => { try { if (v === undefined) return localStorage.getItem('hwped.' + k); localStorage.setItem('hwped.' + k, v); } catch (e) { return null; } };
 
