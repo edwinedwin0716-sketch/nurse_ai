@@ -19,6 +19,7 @@
 | **🩺 간호과정 도우미** | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/NursingHelper/NursingHelper.apk) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-111111?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/nursing/) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/NursingHelper/NursingHelper-1.6.zip) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/nursing/) |
 | **📖 간호 공부방** (베타) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/NursingStudy/NursingStudy.apk) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-111111?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/study/) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/NursingStudy/NursingStudy-Windows-0.2.zip) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/study/) |
 | **🗂️ 플래시카드** | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/StudyHelper/StudyHelper.apk) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-111111?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/flashcards/) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/StudyHelper/Flashcards-Windows-2.1.2.zip) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/flashcards/) |
+| **📝 HWP 편집기** | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/HwpEditor/HwpEditor.apk) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-111111?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/hwp/) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/HwpEditor/HwpEditor-Windows-1.0.zip) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/hwp/) |
 | **🍽️ 맛·볼거리** | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/matjip-finder/raw/main/download/Matjip.apk) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-111111?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/matjip-finder/) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/matjip-finder/raw/main/download/Matjip-Windows-1.0.1.zip) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/matjip-finder/) |
 | **🚀 MySpace 런처** | — | — | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/MySpaceLauncher/MySpaceLauncher-1.3.1.zip) | [![M1~M4](https://img.shields.io/badge/M1~M4-555555?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/MySpaceMac/MySpace-mac-AppleSilicon.tar.xz) [![인텔](https://img.shields.io/badge/%EC%9D%B8%ED%85%94-555555?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/MySpaceMac/MySpace-mac-Intel.tar.xz) |
 | **🔍 Spotlight** | — | — | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/Spotlight/Spotlight-1.0.1.zip) | Mac에 기본으로 있어요 |
@@ -107,6 +108,25 @@ Mac의 Spotlight와 똑같은 모양의 검색창이에요. **Shift 키를 두 �
 |---|---|
 | 💻 Windows: [`Spotlight-1.0.1.zip`](Spotlight/Spotlight-1.0.1.zip) | 압축 해제 → `Spotlight.exe` 실행 (자동 설치 · 시작 시 자동 실행) |
 
+## 📝 HWP 편집기 (`HwpEditor/`)
+한글 문서(**.hwp · .hwpx**)를 열어 보고 고치는 앱이에요. 인터넷 없이 기기 안에서만 열어요.
+
+- 열기: .hwp(한글 5.0 이후) · .hwpx · .txt · .html — 글자 모양, 문단 모양, 표(합친 셀·배경·테두리), 그림, 머리말·꼬리말, 쪽 번호, 각주·미주, 하이퍼링크, 글상자, 수식(글자로)
+- 고치기: 글자 모양(Alt+L) · 문단 모양(Alt+T) · 스타일(바탕글·본문·개요 1~7, Ctrl+1~9) · 문단 번호·글머리표 · 표 만들기(Ctrl+N,T)·줄/칸 추가·지우기·셀 블록(F5)·합치기(M)·나누기(S)·테두리/배경(L) · 찾아 바꾸기(Ctrl+H) · 문자표(Ctrl+F10) · 편집 용지(F7) · 쪽 나누기(Ctrl+Enter) · 삽입/수정(Insert) · 되돌리기
+- 메뉴(파일·편집·보기·입력·서식·쪽·표·검토·도구) 배치와 **단축키는 한글 2022와 같게** 맞췄어요(도구 → 단축키 목록, F1). 아이콘·그림은 새로 그렸어요.
+- 쪽 화면: 실제 용지 크기로 쪽을 나눠 보여 주고(쪽 윤곽), 폭 맞춤·쪽 맞춤·두 손가락 확대
+- 저장: **.hwpx**(한글 2014 이상에서 열림) · PDF · 인쇄 · HTML · TXT · 카톡 등으로 보내기. .hwp로 연 문서도 .hwpx로 저장돼요.
+- 📱 안드로이드: 휴대폰에선 보기 모드로 열리고 [편집]을 누르면 고칠 수 있어요. 카톡·내 파일에서 hwp를 누르고 **HWP 편집기**를 고르면 바로 열려요. 연 .hwpx 파일에 그대로 덮어 저장돼요.
+- 🖥️ **삼성 덱스(DeX)**: 창 크기 조절, 키보드 단축키, 마우스 오른쪽 클릭 메뉴, Ctrl+휠 확대
+- 아직 못 하는 것: 암호·배포용 문서 열기, .hwp 형식으로 저장, 차트·그리기 개체 일부, 다단, 쪽 테두리, 변경 내용 추적. 중요한 문서는 저장 뒤 한글에서 한 번 확인해 주세요.
+- "한글"·"한컴"은 한글과컴퓨터의 상표예요. 이 앱은 한글과컴퓨터가 만든 앱이 아니에요. 쓴 공개 프로그램은 [`NOTICE.md`](HwpEditor/NOTICE.md)
+
+| 다운로드 | 설치 |
+|---|---|
+| 📱 Android(덱스 포함): [`HwpEditor.apk`](HwpEditor/HwpEditor.apk) | 받은 apk 눌러 설치 |
+| 💻 Windows 10/11: [`HwpEditor-Windows-1.0.zip`](HwpEditor/HwpEditor-Windows-1.0.zip) | 압축 해제 → `HWP편집기.exe` (바탕화면 아이콘 생성, Edge 앱 창) |
+| 📱 아이폰 · 🍎 Mac: [웹앱 열기](https://edwinedwin0716-sketch.github.io/nurse_ai/hwp/) | 사파리 → 홈 화면 / Dock에 추가 |
+
 ## 🍽️ 우리동네 맛·볼거리 ([`matjip-finder`](https://github.com/edwinedwin0716-sketch/matjip-finder) 저장소)
 주소나 현재 위치로 주변 음식점 · 볼거리를 모아서 오늘 먹을 곳을 추천해 줘요. 다운로드는 위 표에 있어요.
 
@@ -120,4 +140,5 @@ Mac의 Spotlight와 똑같은 모양의 검색창이에요. **Shift 키를 두 �
 - Mac: `cd MySpaceMac && npm install && node build/package.js && sh build/slim.sh` (Electron, rcodesign 임시 서명)
 - Android: `*/android/build-apk.sh` (Ubuntu `android-sdk-platform-23 aapt dalvik-exchange apksigner zipalign`)
 - 플래시카드 웹앱 묶기: `python3 StudyHelper/build.py`, Windows 실행기: `sh StudyHelper/windows/build.sh`
+- HWP 편집기 묶기: `python3 HwpEditor/build.py` → `sh HwpEditor/android/build-apk.sh`, `sh HwpEditor/windows/build.sh`
 - 깃허브 페이지(다운로드 페이지 · 아이폰/Mac 웹앱): `python3 tools/build_pages.py` → `docs/`

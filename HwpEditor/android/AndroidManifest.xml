@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="kr.nursing.hwp"
+    android:versionCode="1"
+    android:versionName="1.0">
+    <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="34" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <application
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:theme="@style/AppTheme"
+        android:largeHeap="true"
+        android:allowBackup="false">
+        <!-- 삼성 덱스: 창 크기·해상도 바뀔 때 다시 시작하지 않게 -->
+        <meta-data android:name="com.samsung.android.keepalive.density" android:value="true" />
+        <meta-data android:name="com.samsung.android.multidisplay.keep_process_alive" android:value="true" />
+        <meta-data android:name="com.samsung.android.dex.launchwidth" android:value="1280" />
+        <meta-data android:name="com.samsung.android.dex.launchheight" android:value="860" />
+        <activity android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode|fontScale"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- 파일 앱·카카오톡 등에서 '열기' -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/x-hwp" />
+                <data android:mimeType="application/haansofthwp" />
+                <data android:mimeType="application/vnd.hancom.hwp" />
+                <data android:mimeType="application/hwp" />
+                <data android:mimeType="application/hwp+zip" />
+                <data android:mimeType="application/haansofthwpx" />
+                <data android:mimeType="application/vnd.hancom.hwpx" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+            <!-- '공유' 로 받기 -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/x-hwp" />
+                <data android:mimeType="application/haansofthwp" />
+                <data android:mimeType="application/vnd.hancom.hwp" />
+                <data android:mimeType="application/hwp" />
+                <data android:mimeType="application/hwp+zip" />
+                <data android:mimeType="application/haansofthwpx" />
+                <data android:mimeType="application/vnd.hancom.hwpx" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+        </activity>
+        <provider android:name=".ShareProvider"
+            android:authorities="kr.nursing.hwp.share"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+    </application>
+</manifest>
