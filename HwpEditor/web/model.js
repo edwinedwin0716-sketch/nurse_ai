@@ -60,6 +60,11 @@ const Model = (() => {
     if (p.lsType === 'PERCENT' && p.ls && p.ls !== 160) s.push('line-height:' + (p.ls / 100));
     else if (p.lsType === 'FIXED' || p.lsType === 'AT_LEAST') s.push('line-height:' + pt(p.ls));
     else if (p.lsType === 'BETWEEN_LINES') s.push('line-height:calc(1.2em + ' + pt(p.ls) + ')');
+    if (p.box) {
+      if (p.box.bg && p.box.bg.toLowerCase() !== '#ffffff') s.push('background-color:' + p.box.bg);
+      const b = p.box.border || {};
+      for (const [k, side] of [['l', 'left'], ['r', 'right'], ['t', 'top'], ['b', 'bottom']]) if (b[k] && b[k] !== 'none') s.push(`border-${side}:${b[k]}`);
+    }
     return s.join(';');
   }
 
@@ -99,7 +104,7 @@ const Model = (() => {
           break;
         }
         case 'note': h += `<sup class="fn" contenteditable="false"${r.end ? ' data-end="1"' : ''} data-note="${esc(blocksText(r.blocks))}"></sup>`; break;
-        case 'eq': h += `<span class="eq" contenteditable="false" data-script="${esc(r.script)}">${esc(r.script)}</span>`; break;
+        case 'eq': h += `<span class="eq" contenteditable="false" data-script="${esc(r.script)}">${eqHtml(r.script)}</span>`; break;
         case 'pagenum': h += '<span class="pgn" contenteditable="false">#</span>'; break;
         case 'ph': h += `<span class="ph" contenteditable="false" style="width:${pt(r.w)};height:${pt(r.h)}">${esc(r.label || '개체')}<br><small>이 앱에선 못 보여요</small></span>`; break;
       }
@@ -121,6 +126,8 @@ const Model = (() => {
     if (p.style && p.style !== '바탕글') attrs.push(`data-style="${esc(p.style)}"`);
     if (p.outline) attrs.push(`data-outline="${p.outline}"`);
     if (p.list) attrs.push(`data-list="${p.list}"`);
+    if (p.num) attrs.push(`data-numid="${p.num.id}" data-numlv="${p.num.level}"`);
+    if (p.bullet) attrs.push(`data-bullet="${esc(bulletChar(p.bullet))}"`);
     if (p.pageBreak) attrs.push('data-pb="1"');
     const flow = p.runs.filter(r => r.t !== 'table' && r.t !== 'box');
     // 한글이 정한 줄 바꿈이 있으면 마지막 줄을 따로 묶는다(보기 모드에서 앞줄만 양쪽 정렬)
@@ -234,6 +241,10 @@ const Model = (() => {
     p.style = el.dataset.style || '바탕글';
     if (el.dataset.outline) p.outline = +el.dataset.outline;
     if (el.dataset.list) p.list = el.dataset.list;
+    if (el.dataset.numid) p.num = { id: +el.dataset.numid, level: +el.dataset.numlv || 0 };
+    if (el.dataset.bullet) p.bullet = el.dataset.bullet;
+    const bg = hex(s.backgroundColor), bd = ['Left', 'Right', 'Top', 'Bottom'].map(k => s['border' + k] || 'none');
+    if (bg || bd.some(x => x !== 'none' && x)) p.box = { bg, border: { l: bd[0], r: bd[1], t: bd[2], b: bd[3] } };
     if (el.dataset.pb) p.pageBreak = true;
     return p;
   }
@@ -357,5 +368,108 @@ const Model = (() => {
 
   function toHtml(blocks, doc, url) { return blocksHtml(blocks, { doc, url }); }
 
-  return { RATIO_K, spacingEm, BASE, A4, STYLES, empty, para, toHtml, fromDom, blocksText, csCss, paraCss, fontCss, esc, hex, huOf, ptOf };
+  // 문단 번호 글자: 번호 종류(가나다·①·Ⅰ 등)와 형식(^1. ^2) 등)
+  const SEQ = {
+    HANGUL_SYLLABLE: '가나다라마바사아자차카타파하', CIRCLED_HANGUL_SYLLABLE: '㉮㉯㉰㉱㉲㉳㉴㉵㉶㉷㉸㉹㉺㉻',
+    HANGUL_JAMO: 'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ', CIRCLED_HANGUL_JAMO: '㉠㉡㉢㉣㉤㉥㉦㉧㉨㉩㉪㉫㉬㉭',
+    CIRCLED_DIGIT: '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳', CIRCLED_LATIN_CAPITAL: 'ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ',
+    CIRCLED_LATIN_SMALL: 'ⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ', CIRCLED_IDEOGRAPH: '㊀㊁㊂㊃㊄㊅㊆㊇㊈㊉',
+  };
+  const roman = n => { let r = '', v = [[1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]; for (const [a, b] of v) while (n >= a) { r += b; n -= a; } return r; };
+  const phon = n => { const d = '영일이삼사오육칠팔구'; if (n < 10) return d[n]; if (n < 20) return '십' + (n % 10 ? d[n % 10] : ''); return d[Math.floor(n / 10)] + '십' + (n % 10 ? d[n % 10] : ''); };
+  const ideo = n => { const d = '〇一二三四五六七八九'; if (n < 10) return d[n]; if (n < 20) return '十' + (n % 10 ? d[n % 10] : ''); return d[Math.floor(n / 10)] + '十' + (n % 10 ? d[n % 10] : ''); };
+  function numText(n, type) {
+    const seq = SEQ[type];
+    if (seq) { const a = [...seq]; return n >= 1 && n <= a.length ? a[n - 1] : String(n); }
+    switch (type) {
+      case 'ROMAN_CAPITAL': return roman(n);
+      case 'ROMAN_SMALL': return roman(n).toLowerCase();
+      case 'LATIN_CAPITAL': return String.fromCharCode(64 + ((n - 1) % 26) + 1);
+      case 'LATIN_SMALL': return String.fromCharCode(96 + ((n - 1) % 26) + 1);
+      case 'HANGUL_PHONETIC': return phon(n);
+      case 'IDEOGRAPH': return ideo(n);
+      default: return String(n);
+    }
+  }
+  function numLabel(def, level, counters) {
+    const lv = def.levels[level] || { fmt: '^' + (level + 1) + '.', type: 'DIGIT' };
+    return (lv.fmt || '').replace(/\^(\d)/g, (m, d) => { const i = +d - 1; const l2 = def.levels[i] || { type: 'DIGIT' }; return numText(counters[i] || 1, l2.type); });
+  }
+
+  // 한글 수식 문법 → 보기용 HTML (분수 over, 루트 sqrt·root, 위·아래 첨자 ^ _, 그리스 문자, 기호)
+  const EQ_SYM = { times: '×', div: '÷', '+-': '±', pm: '±', '-+': '∓', mp: '∓', le: '≤', leq: '≤', ge: '≥', geq: '≥', '<=': '≤', '>=': '≥', ne: '≠', '!=': '≠', neq: '≠',
+    approx: '≈', sim: '∼', equiv: '≡', inf: '∞', infinity: '∞', cdot: '·', cdots: '⋯', ldots: '…', deg: '°', prime: '′', '->': '→', rarrow: '→', larrow: '←', '<->': '↔', lrarrow: '↔',
+    RARROW: '⇒', LARROW: '⇐', LRARROW: '⇔', therefore: '∴', because: '∵', partial: '∂', nabla: '∇', sum: '∑', SUM: '∑', prod: '∏', PROD: '∏', int: '∫', INT: '∫', oint: '∮', in: '∈', notin: '∉',
+    subset: '⊂', supset: '⊃', cup: '∪', cap: '∩', forall: '∀', exist: '∃', exists: '∃', angle: '∠', perp: '⊥', triangle: '△', circ: '∘', bullet: '•', emptyset: '∅', lim: 'lim', log: 'log', ln: 'ln',
+    sin: 'sin', cos: 'cos', tan: 'tan', exp: 'exp', max: 'max', min: 'min', mol: 'mol' };
+  const GREEK = 'alpha α beta β gamma γ delta δ epsilon ε zeta ζ eta η theta θ iota ι kappa κ lambda λ mu μ nu ν xi ξ omicron ο pi π rho ρ sigma σ tau τ upsilon υ phi φ chi χ psi ψ omega ω';
+  const GR = {};
+  GREEK.split(' ').forEach((w, i, a) => { if (i % 2 === 0) { GR[w] = a[i + 1]; GR[w.toUpperCase()] = a[i + 1].toUpperCase(); } });
+  function eqHtml(src) {
+    const toks = [];
+    const re = /\s+|[{}^_~`]|<->|->|<=|>=|!=|\+-|-\+|[A-Za-z]+|\d+(?:\.\d+)?|"[^"]*"|./g;
+    let m;
+    while ((m = re.exec(src || ''))) { if (!/^\s+$/.test(m[0])) toks.push(m[0]); else if (toks.length && toks[toks.length - 1] !== ' ') toks.push(' '); }
+    let i = 0;
+    const peek = () => toks[i], next = () => toks[i++];
+    const skipSp = () => { while (peek() === ' ') i++; };
+    function atom() {
+      skipSp();
+      const t = next();
+      if (t === undefined) return '';
+      if (t === '{') { const g = seq('}'); if (peek() === '}') i++; return g; }
+      if (t === '~') return '&nbsp;';
+      if (t === '`') return '&thinsp;';
+      if (/^"/.test(t)) return esc(t.slice(1, -1));
+      if (t === 'sqrt') return `<span class="eqr">√<span class="eqo">${atom()}</span></span>`;
+      if (t === 'root') { const n = atom(); skipSp(); if (peek() === 'of') i++; return `<span class="eqr"><sup class="eqrn">${n}</sup>√<span class="eqo">${atom()}</span></span>`; }
+      if (t === 'LEFT' || t === 'left') { skipSp(); const open = next() || ''; const body = seq('RIGHT'); if (/^right$/i.test(peek() || '')) i++; skipSp(); const close = next() || ''; return `${esc(open === '{' ? '{' : open)}${body}${esc(close === '}' ? '}' : close)}`; }
+      if (t === 'rm' || t === 'it' || t === 'bold') { const a = atom(); return t === 'rm' ? `<span class="eqrm">${a}</span>` : t === 'bold' ? `<b>${a}</b>` : `<i>${a}</i>`; }
+      if (t === 'bar' || t === 'overline') return `<span class="eqo">${atom()}</span>`;
+      if (t === 'vec') return `<span class="eqv">${atom()}</span>`;
+      if (t === 'hat') return `${atom()}&#770;`;
+      if (EQ_SYM[t]) return /^[a-z]{2,}$/.test(EQ_SYM[t]) ? `<span class="eqrm">${EQ_SYM[t]}</span>` : EQ_SYM[t];
+      if (GR[t]) return GR[t];
+      if (/^[A-Za-z]+$/.test(t)) return `<i>${esc(t)}</i>`;
+      if (t === '-') return '−';
+      return esc(t);
+    }
+    function item() {
+      let a = atom();
+      for (;;) {
+        const j = i; skipSp();
+        if (peek() === '^') { i++; a += `<sup>${atom()}</sup>`; }
+        else if (peek() === '_') { i++; a += `<sub>${atom()}</sub>`; }
+        else { i = j; break; }
+      }
+      return a;
+    }
+    // over는 바로 앞 덩어리와 바로 뒤 덩어리로 분수를 만든다 (여러 항은 { }로 묶는다)
+    function seq(end) {
+      const parts = [];
+      while (i < toks.length && peek() !== end && !(end === 'RIGHT' && /^right$/i.test(peek() || ''))) {
+        if (peek() === '}' && end !== '}') { i++; continue; }
+        if (peek() === ' ') { i++; parts.push(' '); continue; }
+        if (peek() === 'over') {
+          i++;
+          while (parts.length && parts[parts.length - 1] === ' ') parts.pop();
+          const num = parts.pop() || '';
+          const den = item();
+          parts.push(`<span class="eqf"><span class="eqn">${num}</span><span class="eqd">${den}</span></span>`);
+          continue;
+        }
+        parts.push(item());
+      }
+      return parts.join('');
+    }
+    return seq(null);
+  }
+
+  // 글머리표에 쓰인 윙딩(Wingdings) 기호(U+F0xx)를 보통 기호로
+  const WING = { 0x46: '☞', 0x4A: '☺', 0x6C: '●', 0x6D: '❍', 0x6E: '■', 0x6F: '□', 0x70: '◻', 0x71: '❑', 0x72: '❒', 0x73: '⬧', 0x74: '⧫', 0x75: '◆', 0x76: '❖', 0x77: '⬥',
+    0x9E: '·', 0x9F: '•', 0xA0: '▪', 0xA1: '○', 0xA2: '⭕', 0xA4: '◉', 0xA5: '◎', 0xA7: '▪', 0xA8: '◻', 0xAB: '★', 0xAC: '✶', 0xAE: '✹', 0xD8: '➢', 0xDC: '➤', 0xE0: '➔', 0xE8: '➔',
+    0xF0: '⇨', 0xFB: '✗', 0xFC: '✓', 0xFD: '☒', 0xFE: '☑' };
+  const bulletChar = ch => { const c = (ch || '').charCodeAt(0); return c >= 0xF000 && c <= 0xF0FF ? (WING[c & 0xFF] || '●') : (ch || '●'); };
+
+  return { eqHtml, bulletChar, numLabel, RATIO_K, spacingEm, BASE, A4, STYLES, empty, para, toHtml, fromDom, blocksText, csCss, paraCss, fontCss, esc, hex, huOf, ptOf };
 })();

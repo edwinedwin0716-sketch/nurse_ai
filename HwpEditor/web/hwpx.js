@@ -21,7 +21,7 @@ const Hwpx = (() => {
 
   // ---------- 읽기 ----------
   function readHeader(xml) {
-    const h = { fonts: {}, chars: {}, paras: {}, fills: {}, styles: {} };
+    const h = { fonts: {}, chars: {}, paras: {}, fills: {}, styles: {}, numberings: {}, bullets: {} };
     if (!xml) return h;
     const d = parse(xml);
     for (const ff of desc(d, 'fontface')) if (ff.getAttribute('lang') === 'HANGUL') for (const f of kids(ff, 'font')) h.fonts[f.getAttribute('id')] = f.getAttribute('face');
@@ -56,6 +56,9 @@ const Hwpx = (() => {
         indent: v('intent'), left: v('left'), right: v('right'), before: v('prev'), after: v('next'), lsType, ls: lsv,
         outline: head && head.getAttribute('type') === 'OUTLINE' ? num(head, 'level') + 1 : 0,
         list: head && head.getAttribute('type') === 'NUMBER' ? 'number' : head && head.getAttribute('type') === 'BULLET' ? 'bullet' : undefined,
+        num: head && head.getAttribute('type') === 'NUMBER' ? { id: num(head, 'idRef'), level: num(head, 'level') } : undefined,
+        bulletId: head && head.getAttribute('type') === 'BULLET' ? head.getAttribute('idRef') : undefined,
+        bfId: (kid(p, 'border') || p).getAttribute('borderFillIDRef'),
       };
     }
     const LINE = { SOLID: 'solid', DASH: 'dashed', DOT: 'dotted', DASH_DOT: 'dashed', DASH_DOT_DOT: 'dashed', LONG_DASH: 'dashed', DOUBLE_SLIM: 'double', SLIM_THICK: 'double', THICK_SLIM: 'double', SLIM_THICK_SLIM: 'double', CIRCLE: 'dotted' };
@@ -65,6 +68,12 @@ const Hwpx = (() => {
       h.fills[b.getAttribute('id')] = { border: { l: side('leftBorder'), r: side('rightBorder'), t: side('topBorder'), b: side('bottomBorder') }, bg: wb ? col(wb.getAttribute('faceColor')) : null };
     }
     for (const s of desc(d, 'style')) h.styles[s.getAttribute('id')] = s.getAttribute('name');
+    for (const nb of desc(d, 'numbering')) {
+      const def = { start: num(nb, 'start', 1) || 1, levels: [] };
+      for (const ph of kids(nb, 'paraHead')) def.levels[num(ph, 'level', 1) - 1] = { type: ph.getAttribute('numFormat') || 'DIGIT', fmt: ph.textContent || '', start: num(ph, 'start', 1) };
+      h.numberings[nb.getAttribute('id')] = def;
+    }
+    for (const b of desc(d, 'bullet')) h.bullets[b.getAttribute('id')] = b.getAttribute('char') || '●';
     return h;
   }
 
@@ -85,6 +94,7 @@ const Hwpx = (() => {
     if (!spine.length) throw new Error('한글 문서(.hwpx)가 아니라서 열 수 없어요');
     const headerPath = Object.keys(files).find(k => /^Contents\/header\.xml$/i.test(k));
     const ctx = { doc, files, manifest, head: readHeader(headerPath ? dec.decode(files[headerPath]) : ''), binMap: {}, pageSet: false };
+    doc.numbering = { defs: ctx.head.numberings, outline: 1 };
     spine.forEach((path, i) => {
       const f = files[path] || files[path.replace(/^\//, '')];
       if (!f) return;
@@ -109,6 +119,10 @@ const Hwpx = (() => {
   function paragraph(ctx, el) {
     const ps = ctx.head.paras[el.getAttribute('paraPrIDRef')] || {};
     const p = Object.assign(Model.para(), ps);
+    delete p.bulletId; delete p.bfId;
+    if (ps.bulletId) p.bullet = ctx.head.bullets[ps.bulletId];
+    const fill = ps.bfId && ctx.head.fills[ps.bfId];
+    if (fill && (fill.bg && fill.bg !== '#ffffff' || ['l', 'r', 't', 'b'].some(k => fill.border[k] !== 'none'))) p.box = { bg: fill.bg, border: fill.border };
     p.style = ctx.head.styles[el.getAttribute('styleIDRef')] || '바탕글';
     if (el.getAttribute('pageBreak') === '1') p.pageBreak = true;
     const st = { href: null, mark: null };
@@ -147,6 +161,7 @@ const Hwpx = (() => {
           break;
         case 'secPr': {
           if (ctx.pageSet) break;
+          if (n.getAttribute('outlineShapeIDRef')) ctx.doc.numbering.outline = +n.getAttribute('outlineShapeIDRef') || 1;
           const pp = kid(n, 'pagePr'), m = kid(pp, 'margin');
           if (pp) {
             const pg = { w: num(pp, 'width', 59528), h: num(pp, 'height', 84188), ml: num(m, 'left', 8504), mr: num(m, 'right', 8504),
@@ -262,25 +277,42 @@ const Hwpx = (() => {
       charKey.set(k, id);
       return id;
     };
+    // 문단 번호 모양: 뼈대의 1번(개요용)은 두고 문서의 번호 모양을 2번부터 붙인다
+    const numMap = {}, numXml = [];
+    const defs = (doc.numbering && doc.numbering.defs) || {};
+    Object.keys(defs).forEach((old, i) => {
+      const id = i + 2, def = defs[old];
+      numMap[old] = id;
+      let h = `<hh:numbering id="${id}" start="${def.start || 1}">`;
+      for (let lv = 0; lv < 10; lv++) {
+        const L = def.levels[lv] || { type: 'DIGIT', fmt: '' };
+        h += `<hh:paraHead start="${L.start || 1}" level="${lv + 1}" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="${L.type || 'DIGIT'}" charPrIDRef="4294967295" checkable="0">${x(L.fmt || '')}</hh:paraHead>`;
+      }
+      numXml.push(h + '</hh:numbering>');
+    });
+    const outlineId = doc.numbering && numMap[doc.numbering.outline] || 1;
+    const bulletChars = [];
+    const bulletId = ch => { ch = ch || '●'; let i = bulletChars.indexOf(ch); if (i < 0) { bulletChars.push(ch); i = bulletChars.length - 1; } return i + 1; };
     const paraPrs = [], paraKey = new Map();
     const PARA0 = 20;
     const AL = { justify: 'JUSTIFY', left: 'LEFT', right: 'RIGHT', center: 'CENTER', distribute: 'DISTRIBUTE' };
     const paraId = p => {
-      const k = JSON.stringify([p.align, p.left, p.right, p.indent, p.before, p.after, p.lsType, p.ls, p.outline || 0, p.list || '']);
+      const k = JSON.stringify([p.align, p.left, p.right, p.indent, p.before, p.after, p.lsType, p.ls, p.outline || 0, p.list || '', p.num || null, p.bullet || '', p.box || null]);
       if (paraKey.has(k)) return paraKey.get(k);
       const id = PARA0 + paraPrs.length;
       const r = v => Math.round(v || 0);
       const margin = d => `<hh:margin><hc:intent value="${r(p.indent) * d}" unit="HWPUNIT"/><hc:left value="${r(p.left) * d}" unit="HWPUNIT"/><hc:right value="${r(p.right) * d}" unit="HWPUNIT"/><hc:prev value="${r(p.before) * d}" unit="HWPUNIT"/><hc:next value="${r(p.after) * d}" unit="HWPUNIT"/></hh:margin>` +
         `<hh:lineSpacing type="${p.lsType || 'PERCENT'}" value="${(p.lsType || 'PERCENT') === 'PERCENT' ? r(p.ls || 160) : r(p.ls) * d}" unit="HWPUNIT"/>`;
       const head = p.outline ? `<hh:heading type="OUTLINE" idRef="0" level="${p.outline - 1}"/>`
-        : p.list === 'number' ? '<hh:heading type="NUMBER" idRef="1" level="0"/>'
-        : p.list === 'bullet' ? '<hh:heading type="BULLET" idRef="1" level="0"/>' : '<hh:heading type="NONE" idRef="0" level="0"/>';
+        : p.list === 'number' ? `<hh:heading type="NUMBER" idRef="${p.num && numMap[p.num.id] || 1}" level="${p.num ? Math.min(9, p.num.level) : 0}"/>`
+        : p.list === 'bullet' ? `<hh:heading type="BULLET" idRef="${bulletId(p.bullet)}" level="0"/>` : '<hh:heading type="NONE" idRef="0" level="0"/>';
+      const bf = p.box ? fillId({ border: p.box.border || {}, bg: p.box.bg }) : 2;
       paraPrs.push(`<hh:paraPr id="${id}" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">` +
         `<hh:align horizontal="${AL[p.align] || 'JUSTIFY'}" vertical="BASELINE"/>${head}` +
         '<hh:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="BREAK_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>' +
         '<hh:autoSpacing eAsianEng="0" eAsianNum="0"/>' +
         `<hp:switch><hp:case hp:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">${margin(1)}</hp:case><hp:default>${margin(2)}</hp:default></hp:switch>` +
-        '<hh:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/></hh:paraPr>');
+        `<hh:border borderFillIDRef="${bf}" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/></hh:paraPr>`);
       paraKey.set(k, id);
       return id;
     };
@@ -449,7 +481,8 @@ const Hwpx = (() => {
     const secPr = T.secPr.replace(/<hp:pagePr[^>]*>(<hp:margin[^>]*\/>)<\/hp:pagePr>/,
       `<hp:pagePr landscape="${land ? 'NARROWLY' : 'WIDELY'}" width="${Math.round(pw)}" height="${Math.round(ph)}" gutterType="LEFT_ONLY"><hp:margin header="${Math.round(pg.mh)}" footer="${Math.round(pg.mf)}" gutter="${Math.round(pg.gutter || 0)}" left="${Math.round(pg.ml)}" right="${Math.round(pg.mr)}" top="${Math.round(pg.mt)}" bottom="${Math.round(pg.mb)}"/></hp:pagePr>`);
     const bodyW = Math.round((land ? ph : pw) - pg.ml - pg.mr);
-    let lead = `<hp:run charPrIDRef="0">${secPr}<hp:ctrl><hp:colPr id="" type="NEWSPAPER" layout="LEFT" colCount="1" sameSz="1" sameGap="0"/></hp:ctrl>`;
+    const secPr2 = secPr.replace(/outlineShapeIDRef="\d+"/, `outlineShapeIDRef="${outlineId}"`);
+    let lead = `<hp:run charPrIDRef="0">${secPr2}<hp:ctrl><hp:colPr id="" type="NEWSPAPER" layout="LEFT" colCount="1" sameSz="1" sameGap="0"/></hp:ctrl>`;
     const hasBlocks = b => b && b.length && b.some(p => p.runs && p.runs.length);
     if (hasBlocks(doc.header)) lead += `<hp:ctrl><hp:header id="${nid()}" applyPageType="BOTH">${subList(doc.header, 'TOP', { w: bodyW, h: Math.round(pg.mh) })}</hp:header></hp:ctrl>`;
     if (hasBlocks(doc.footer)) lead += `<hp:ctrl><hp:footer id="${nid()}" applyPageType="BOTH">${subList(doc.footer, 'BOTTOM', { w: bodyW, h: Math.round(pg.mf) })}</hp:footer></hp:ctrl>`;
@@ -467,7 +500,10 @@ const Hwpx = (() => {
     });
     header = header.replace(/<hh:borderFills itemCnt="(\d+)">([\s\S]*?)<\/hh:borderFills>/, (m, n, inner) => `<hh:borderFills itemCnt="${+n + fills.length}">${inner}${fills.join('')}</hh:borderFills>`);
     header = header.replace(/<hh:charProperties itemCnt="(\d+)">([\s\S]*?)<\/hh:charProperties>/, (m, n, inner) => `<hh:charProperties itemCnt="${+n + charPrs.length}">${inner}${charPrs.join('')}</hh:charProperties>`);
-    if (!/<hh:bullets/.test(header)) header = header.replace('</hh:numberings>', '</hh:numberings><hh:bullets itemCnt="1"><hh:bullet id="1" char="●" useImage="0"><hh:paraHead level="0" align="LEFT" useInstWidth="0" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="DIGIT" charPrIDRef="4294967295" checkable="0"/></hh:bullet></hh:bullets>');
+    header = header.replace(/<hh:numberings itemCnt="(\d+)">([\s\S]*?)<\/hh:numberings>/, (m, n, inner) => `<hh:numberings itemCnt="${+n + numXml.length}">${inner}${numXml.join('')}</hh:numberings>`);
+    if (!bulletChars.length) bulletChars.push('●');
+    if (!/<hh:bullets/.test(header)) header = header.replace('</hh:numberings>', `</hh:numberings><hh:bullets itemCnt="${bulletChars.length}">` +
+      bulletChars.map((c, i) => `<hh:bullet id="${i + 1}" char="${x(c)}" useImage="0"><hh:paraHead level="0" align="LEFT" useInstWidth="0" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="DIGIT" charPrIDRef="4294967295" checkable="0"/></hh:bullet>`).join('') + '</hh:bullets>');
     header = header.replace(/<hh:paraProperties itemCnt="(\d+)">([\s\S]*?)<\/hh:paraProperties>/, (m, n, inner) => `<hh:paraProperties itemCnt="${+n + paraPrs.length}">${inner}${paraPrs.join('')}</hh:paraProperties>`);
 
     const now = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
