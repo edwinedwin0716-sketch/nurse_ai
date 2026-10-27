@@ -7,7 +7,7 @@
   const Native = window.Android || null;              // 안드로이드 앱 안이면 Java 다리
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const narrow = () => window.innerWidth <= 700;
-  const VERSION = '1.1.0';
+  const VERSION = '1.2.0';
   const app = { name: '새 문서.hwpx', writable: false, kind: 'new' };
   const pref = (k, v) => { try { if (v === undefined) return localStorage.getItem('hwped.' + k); localStorage.setItem('hwped.' + k, v); } catch (e) { return null; } };
 
@@ -892,15 +892,16 @@
     });
   }
   function eqDialog(eq) {
-    dialog('수식', fld('수식 (한글 수식 문법, 예: a over b, x^2, sqrt {x})', `<textarea id="eT">${eq ? Model.esc(eq.dataset.script || '') : ''}</textarea>`) + '<p style="font-size:12px;color:var(--sub)">이 앱에선 수식을 글자로 보여 주고, 저장하면 한글에서 수식으로 그려져요.</p>', {
+    dialog('수식', fld('수식 (한글 수식 문법, 예: a over b, x^2, sqrt {x})', `<textarea id="eT">${eq ? Model.esc(eq.dataset.script || '') : ''}</textarea>`) + '<div class="preview" id="eP" style="font-size:14pt"></div><p style="font-size:12px;color:var(--sub)">예: a over b (분수) · sqrt{x} (루트) · x^2 · H_2 O · alpha · LEFT( x RIGHT) · times · le</p>', {
       noEnter: true,
       buttons: eq ? [['del', '수식 지우기']] : [],
+      onOpen: d => { const up = () => { d.querySelector('#eP').innerHTML = `<span class="eq">${Model.eqHtml(v(d, '#eT'))}</span>`; }; d.querySelector('#eT').addEventListener('input', up); up(); },
       onButton: b => { if (b === 'del' && !st.readOnly) { Ed.act(() => eq.remove()); closeDlg(); } },
       onOk: d => {
         if (st.readOnly) return;
         const t = v(d, '#eT').trim(); if (!t) return false;
-        if (eq) Ed.act(() => { eq.dataset.script = t; eq.textContent = t; });
-        else { Ed.restoreSel(); Ed.insertHtml(`<span class="eq" contenteditable="false" data-script="${Model.esc(t)}">${Model.esc(t)}</span>&#8203;`); }
+        if (eq) Ed.act(() => { eq.dataset.script = t; eq.innerHTML = Model.eqHtml(t); });
+        else { Ed.restoreSel(); Ed.insertHtml(`<span class="eq" contenteditable="false" data-script="${Model.esc(t)}">${Model.eqHtml(t)}</span>&#8203;`); }
       },
     });
   }

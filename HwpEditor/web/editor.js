@@ -223,8 +223,28 @@ const Ed = (() => {
     return out;
   }
 
+  // 문서에 정해 둔 문단 번호 모양대로 번호 글자를 붙인다 (한글처럼 같은 번호 모양은 문서 끝까지 이어진다)
+  function renumber() {
+    const nb = st.doc.numbering;
+    if (!nb || !nb.defs) return;
+    const counters = {};
+    for (const p of el.querySelectorAll('p[data-numid], p[data-outline]')) {
+      let id, lv;
+      if (p.dataset.numid) { id = p.dataset.numid; lv = +p.dataset.numlv || 0; }
+      else { id = nb.outline; lv = (+p.dataset.outline || 1) - 1; }
+      const def = nb.defs[id];
+      if (!def) { if (p.dataset.label) delete p.dataset.label; continue; }
+      const c = counters[id] = counters[id] || [];
+      c[lv] = c[lv] === undefined ? ((def.levels[lv] && def.levels[lv].start) || 1) : c[lv] + 1;
+      for (let k = lv + 1; k < 10; k++) c[k] = undefined;
+      const label = Model.numLabel(def, lv, c);
+      if (p.dataset.label !== label) p.dataset.label = label;
+    }
+  }
+
   function layout() {
     clearTimeout(pagTimer);
+    renumber();
     const g = geo();
     Object.assign(el.style, { left: (PAD + g.left) + 'px', top: (PAD + g.top) + 'px', width: g.bodyW + 'px' });
     const sel = saveSelOffsets();
@@ -713,6 +733,8 @@ const Ed = (() => {
     o.style = p.dataset.style || '바탕글';
     o.outline = +(p.dataset.outline || 0);
     o.list = p.dataset.list || '';
+    const bg = Model.hex(s.backgroundColor), bd = ['Left', 'Right', 'Top', 'Bottom'].map(k => s['border' + k] || 'none');
+    if (bg || bd.some(x => x && x !== 'none')) o.box = { bg, border: { l: bd[0], r: bd[1], t: bd[2], b: bd[3] } };
     return o;
   }
   function setParaCss(p, o) {
@@ -749,7 +771,7 @@ const Ed = (() => {
       const on = ps.every(p => p.dataset.list === kind);
       for (const p of ps) {
         const o = paraFromEl(p);
-        if (on) { delete p.dataset.list; o.indent = 0; }
+        if (on) { delete p.dataset.list; delete p.dataset.numid; delete p.dataset.numlv; delete p.dataset.label; delete p.dataset.bullet; o.indent = 0; }
         else { p.dataset.list = kind; o.indent = -2000; }
         setParaCss(p, o);
       }

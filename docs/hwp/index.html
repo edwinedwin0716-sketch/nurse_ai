@@ -130,7 +130,17 @@ button, select, input, textarea { font: inherit; color: inherit; }
 .fnotes { font: 9pt/1.5 "함초롬바탕", HwpSerif, AppleMyungjo, Batang, "Noto Serif KR", serif; color: #000; }
 .fnotes::before { content: ""; display: block; width: 40%; border-top: 0.5pt solid #000; margin-bottom: 3px; }
 .fnotes p { margin: 0; }
-#doc .eq { font-family: "Times New Roman", serif; font-style: italic; background: #f1f5ff; padding: 0 2px; border-radius: 2px; cursor: pointer; }
+.eq { font-family: "Times New Roman", HwpSerif, serif; padding: 0 2px; cursor: pointer; white-space: nowrap; text-indent: 0; }
+.eq i { font-style: italic; }
+.eq .eqrm { font-style: normal; }
+.eq .eqf { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 0.1em; font-size: 0.95em; }
+.eq .eqd { border-top: 0.06em solid currentColor; padding-top: 0.05em; }
+.eq .eqr { white-space: nowrap; }
+.eq .eqo { border-top: 0.06em solid currentColor; padding: 0 0.1em; }
+.eq .eqv::before { content: "→"; display: block; font-size: 0.6em; line-height: 0.6; text-align: center; }
+.eq .eqv { display: inline-flex; flex-direction: column-reverse; vertical-align: bottom; }
+.eq .eqrn { font-size: 0.6em; margin-right: -0.3em; }
+#doc .eq:hover { background: #eef3ff; }
 #doc .pgn { background: #eef; }
 #doc .ph { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; border: 1px dashed #999; background: #f5f5f5; color: #777; font: 9pt var(--font-ui); vertical-align: bottom; max-width: 100%; text-indent: 0; }
 #doc[data-ro="1"] { caret-color: transparent; }
@@ -156,6 +166,9 @@ button, select, input, textarea { font: inherit; color: inherit; }
 #doc p:not([data-list="number"]) { counter-reset: ln; }
 #doc p[data-outline] { counter-reset: none; }
 #doc p[data-list="number"]::before { content: counter(ln) ". "; }
+/* 문서에 정해 둔 번호 모양·글머리표 글자가 있으면 그것을 쓴다 */
+#doc p[data-bullet]::before { content: attr(data-bullet) " "; font-size: 1em; }
+#doc p[data-label]::before { content: attr(data-label) " "; font-size: 1em; }
 
 /* 조판 부호·문단 부호 보기 */
 .show-marks #doc p::after { content: "↵"; color: #3a7bd5; font-size: 9pt; }
@@ -575,6 +588,11 @@ const Model = (() => {
     if (p.lsType === 'PERCENT' && p.ls && p.ls !== 160) s.push('line-height:' + (p.ls / 100));
     else if (p.lsType === 'FIXED' || p.lsType === 'AT_LEAST') s.push('line-height:' + pt(p.ls));
     else if (p.lsType === 'BETWEEN_LINES') s.push('line-height:calc(1.2em + ' + pt(p.ls) + ')');
+    if (p.box) {
+      if (p.box.bg && p.box.bg.toLowerCase() !== '#ffffff') s.push('background-color:' + p.box.bg);
+      const b = p.box.border || {};
+      for (const [k, side] of [['l', 'left'], ['r', 'right'], ['t', 'top'], ['b', 'bottom']]) if (b[k] && b[k] !== 'none') s.push(`border-${side}:${b[k]}`);
+    }
     return s.join(';');
   }
 
@@ -614,7 +632,7 @@ const Model = (() => {
           break;
         }
         case 'note': h += `<sup class="fn" contenteditable="false"${r.end ? ' data-end="1"' : ''} data-note="${esc(blocksText(r.blocks))}"></sup>`; break;
-        case 'eq': h += `<span class="eq" contenteditable="false" data-script="${esc(r.script)}">${esc(r.script)}</span>`; break;
+        case 'eq': h += `<span class="eq" contenteditable="false" data-script="${esc(r.script)}">${eqHtml(r.script)}</span>`; break;
         case 'pagenum': h += '<span class="pgn" contenteditable="false">#</span>'; break;
         case 'ph': h += `<span class="ph" contenteditable="false" style="width:${pt(r.w)};height:${pt(r.h)}">${esc(r.label || '개체')}<br><small>이 앱에선 못 보여요</small></span>`; break;
       }
@@ -636,6 +654,8 @@ const Model = (() => {
     if (p.style && p.style !== '바탕글') attrs.push(`data-style="${esc(p.style)}"`);
     if (p.outline) attrs.push(`data-outline="${p.outline}"`);
     if (p.list) attrs.push(`data-list="${p.list}"`);
+    if (p.num) attrs.push(`data-numid="${p.num.id}" data-numlv="${p.num.level}"`);
+    if (p.bullet) attrs.push(`data-bullet="${esc(bulletChar(p.bullet))}"`);
     if (p.pageBreak) attrs.push('data-pb="1"');
     const flow = p.runs.filter(r => r.t !== 'table' && r.t !== 'box');
     // 한글이 정한 줄 바꿈이 있으면 마지막 줄을 따로 묶는다(보기 모드에서 앞줄만 양쪽 정렬)
@@ -749,6 +769,10 @@ const Model = (() => {
     p.style = el.dataset.style || '바탕글';
     if (el.dataset.outline) p.outline = +el.dataset.outline;
     if (el.dataset.list) p.list = el.dataset.list;
+    if (el.dataset.numid) p.num = { id: +el.dataset.numid, level: +el.dataset.numlv || 0 };
+    if (el.dataset.bullet) p.bullet = el.dataset.bullet;
+    const bg = hex(s.backgroundColor), bd = ['Left', 'Right', 'Top', 'Bottom'].map(k => s['border' + k] || 'none');
+    if (bg || bd.some(x => x !== 'none' && x)) p.box = { bg, border: { l: bd[0], r: bd[1], t: bd[2], b: bd[3] } };
     if (el.dataset.pb) p.pageBreak = true;
     return p;
   }
@@ -872,7 +896,110 @@ const Model = (() => {
 
   function toHtml(blocks, doc, url) { return blocksHtml(blocks, { doc, url }); }
 
-  return { RATIO_K, spacingEm, BASE, A4, STYLES, empty, para, toHtml, fromDom, blocksText, csCss, paraCss, fontCss, esc, hex, huOf, ptOf };
+  // 문단 번호 글자: 번호 종류(가나다·①·Ⅰ 등)와 형식(^1. ^2) 등)
+  const SEQ = {
+    HANGUL_SYLLABLE: '가나다라마바사아자차카타파하', CIRCLED_HANGUL_SYLLABLE: '㉮㉯㉰㉱㉲㉳㉴㉵㉶㉷㉸㉹㉺㉻',
+    HANGUL_JAMO: 'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ', CIRCLED_HANGUL_JAMO: '㉠㉡㉢㉣㉤㉥㉦㉧㉨㉩㉪㉫㉬㉭',
+    CIRCLED_DIGIT: '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳', CIRCLED_LATIN_CAPITAL: 'ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ',
+    CIRCLED_LATIN_SMALL: 'ⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ', CIRCLED_IDEOGRAPH: '㊀㊁㊂㊃㊄㊅㊆㊇㊈㊉',
+  };
+  const roman = n => { let r = '', v = [[1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]; for (const [a, b] of v) while (n >= a) { r += b; n -= a; } return r; };
+  const phon = n => { const d = '영일이삼사오육칠팔구'; if (n < 10) return d[n]; if (n < 20) return '십' + (n % 10 ? d[n % 10] : ''); return d[Math.floor(n / 10)] + '십' + (n % 10 ? d[n % 10] : ''); };
+  const ideo = n => { const d = '〇一二三四五六七八九'; if (n < 10) return d[n]; if (n < 20) return '十' + (n % 10 ? d[n % 10] : ''); return d[Math.floor(n / 10)] + '十' + (n % 10 ? d[n % 10] : ''); };
+  function numText(n, type) {
+    const seq = SEQ[type];
+    if (seq) { const a = [...seq]; return n >= 1 && n <= a.length ? a[n - 1] : String(n); }
+    switch (type) {
+      case 'ROMAN_CAPITAL': return roman(n);
+      case 'ROMAN_SMALL': return roman(n).toLowerCase();
+      case 'LATIN_CAPITAL': return String.fromCharCode(64 + ((n - 1) % 26) + 1);
+      case 'LATIN_SMALL': return String.fromCharCode(96 + ((n - 1) % 26) + 1);
+      case 'HANGUL_PHONETIC': return phon(n);
+      case 'IDEOGRAPH': return ideo(n);
+      default: return String(n);
+    }
+  }
+  function numLabel(def, level, counters) {
+    const lv = def.levels[level] || { fmt: '^' + (level + 1) + '.', type: 'DIGIT' };
+    return (lv.fmt || '').replace(/\^(\d)/g, (m, d) => { const i = +d - 1; const l2 = def.levels[i] || { type: 'DIGIT' }; return numText(counters[i] || 1, l2.type); });
+  }
+
+  // 한글 수식 문법 → 보기용 HTML (분수 over, 루트 sqrt·root, 위·아래 첨자 ^ _, 그리스 문자, 기호)
+  const EQ_SYM = { times: '×', div: '÷', '+-': '±', pm: '±', '-+': '∓', mp: '∓', le: '≤', leq: '≤', ge: '≥', geq: '≥', '<=': '≤', '>=': '≥', ne: '≠', '!=': '≠', neq: '≠',
+    approx: '≈', sim: '∼', equiv: '≡', inf: '∞', infinity: '∞', cdot: '·', cdots: '⋯', ldots: '…', deg: '°', prime: '′', '->': '→', rarrow: '→', larrow: '←', '<->': '↔', lrarrow: '↔',
+    RARROW: '⇒', LARROW: '⇐', LRARROW: '⇔', therefore: '∴', because: '∵', partial: '∂', nabla: '∇', sum: '∑', SUM: '∑', prod: '∏', PROD: '∏', int: '∫', INT: '∫', oint: '∮', in: '∈', notin: '∉',
+    subset: '⊂', supset: '⊃', cup: '∪', cap: '∩', forall: '∀', exist: '∃', exists: '∃', angle: '∠', perp: '⊥', triangle: '△', circ: '∘', bullet: '•', emptyset: '∅', lim: 'lim', log: 'log', ln: 'ln',
+    sin: 'sin', cos: 'cos', tan: 'tan', exp: 'exp', max: 'max', min: 'min', mol: 'mol' };
+  const GREEK = 'alpha α beta β gamma γ delta δ epsilon ε zeta ζ eta η theta θ iota ι kappa κ lambda λ mu μ nu ν xi ξ omicron ο pi π rho ρ sigma σ tau τ upsilon υ phi φ chi χ psi ψ omega ω';
+  const GR = {};
+  GREEK.split(' ').forEach((w, i, a) => { if (i % 2 === 0) { GR[w] = a[i + 1]; GR[w.toUpperCase()] = a[i + 1].toUpperCase(); } });
+  function eqHtml(src) {
+    const toks = [];
+    const re = /\s+|[{}^_~`]|<->|->|<=|>=|!=|\+-|-\+|[A-Za-z]+|\d+(?:\.\d+)?|"[^"]*"|./g;
+    let m;
+    while ((m = re.exec(src || ''))) { if (!/^\s+$/.test(m[0])) toks.push(m[0]); else if (toks.length && toks[toks.length - 1] !== ' ') toks.push(' '); }
+    let i = 0;
+    const peek = () => toks[i], next = () => toks[i++];
+    const skipSp = () => { while (peek() === ' ') i++; };
+    function atom() {
+      skipSp();
+      const t = next();
+      if (t === undefined) return '';
+      if (t === '{') { const g = seq('}'); if (peek() === '}') i++; return g; }
+      if (t === '~') return '&nbsp;';
+      if (t === '`') return '&thinsp;';
+      if (/^"/.test(t)) return esc(t.slice(1, -1));
+      if (t === 'sqrt') return `<span class="eqr">√<span class="eqo">${atom()}</span></span>`;
+      if (t === 'root') { const n = atom(); skipSp(); if (peek() === 'of') i++; return `<span class="eqr"><sup class="eqrn">${n}</sup>√<span class="eqo">${atom()}</span></span>`; }
+      if (t === 'LEFT' || t === 'left') { skipSp(); const open = next() || ''; const body = seq('RIGHT'); if (/^right$/i.test(peek() || '')) i++; skipSp(); const close = next() || ''; return `${esc(open === '{' ? '{' : open)}${body}${esc(close === '}' ? '}' : close)}`; }
+      if (t === 'rm' || t === 'it' || t === 'bold') { const a = atom(); return t === 'rm' ? `<span class="eqrm">${a}</span>` : t === 'bold' ? `<b>${a}</b>` : `<i>${a}</i>`; }
+      if (t === 'bar' || t === 'overline') return `<span class="eqo">${atom()}</span>`;
+      if (t === 'vec') return `<span class="eqv">${atom()}</span>`;
+      if (t === 'hat') return `${atom()}&#770;`;
+      if (EQ_SYM[t]) return /^[a-z]{2,}$/.test(EQ_SYM[t]) ? `<span class="eqrm">${EQ_SYM[t]}</span>` : EQ_SYM[t];
+      if (GR[t]) return GR[t];
+      if (/^[A-Za-z]+$/.test(t)) return `<i>${esc(t)}</i>`;
+      if (t === '-') return '−';
+      return esc(t);
+    }
+    function item() {
+      let a = atom();
+      for (;;) {
+        const j = i; skipSp();
+        if (peek() === '^') { i++; a += `<sup>${atom()}</sup>`; }
+        else if (peek() === '_') { i++; a += `<sub>${atom()}</sub>`; }
+        else { i = j; break; }
+      }
+      return a;
+    }
+    // over는 바로 앞 덩어리와 바로 뒤 덩어리로 분수를 만든다 (여러 항은 { }로 묶는다)
+    function seq(end) {
+      const parts = [];
+      while (i < toks.length && peek() !== end && !(end === 'RIGHT' && /^right$/i.test(peek() || ''))) {
+        if (peek() === '}' && end !== '}') { i++; continue; }
+        if (peek() === ' ') { i++; parts.push(' '); continue; }
+        if (peek() === 'over') {
+          i++;
+          while (parts.length && parts[parts.length - 1] === ' ') parts.pop();
+          const num = parts.pop() || '';
+          const den = item();
+          parts.push(`<span class="eqf"><span class="eqn">${num}</span><span class="eqd">${den}</span></span>`);
+          continue;
+        }
+        parts.push(item());
+      }
+      return parts.join('');
+    }
+    return seq(null);
+  }
+
+  // 글머리표에 쓰인 윙딩(Wingdings) 기호(U+F0xx)를 보통 기호로
+  const WING = { 0x46: '☞', 0x4A: '☺', 0x6C: '●', 0x6D: '❍', 0x6E: '■', 0x6F: '□', 0x70: '◻', 0x71: '❑', 0x72: '❒', 0x73: '⬧', 0x74: '⧫', 0x75: '◆', 0x76: '❖', 0x77: '⬥',
+    0x9E: '·', 0x9F: '•', 0xA0: '▪', 0xA1: '○', 0xA2: '⭕', 0xA4: '◉', 0xA5: '◎', 0xA7: '▪', 0xA8: '◻', 0xAB: '★', 0xAC: '✶', 0xAE: '✹', 0xD8: '➢', 0xDC: '➤', 0xE0: '➔', 0xE8: '➔',
+    0xF0: '⇨', 0xFB: '✗', 0xFC: '✓', 0xFD: '☒', 0xFE: '☑' };
+  const bulletChar = ch => { const c = (ch || '').charCodeAt(0); return c >= 0xF000 && c <= 0xF0FF ? (WING[c & 0xFF] || '●') : (ch || '●'); };
+
+  return { eqHtml, bulletChar, numLabel, RATIO_K, spacingEm, BASE, A4, STYLES, empty, para, toHtml, fromDom, blocksText, csCss, paraCss, fontCss, esc, hex, huOf, ptOf };
 })();
 
 </script>
@@ -882,11 +1009,13 @@ const Model = (() => {
 'use strict';
 
 const Hwp5 = (() => {
-  const T = { DOC_PROPS: 16, ID_MAPPINGS: 17, BIN_DATA: 18, FACE_NAME: 19, BORDER_FILL: 20, CHAR_SHAPE: 21, PARA_SHAPE: 25, STYLE: 26,
+  const T = { DOC_PROPS: 16, ID_MAPPINGS: 17, BIN_DATA: 18, FACE_NAME: 19, BORDER_FILL: 20, CHAR_SHAPE: 21, NUMBERING: 23, BULLET: 24, PARA_SHAPE: 25, STYLE: 26,
     PARA_HEADER: 66, PARA_TEXT: 67, PARA_CHAR_SHAPE: 68, PARA_LINE_SEG: 69, CTRL_HEADER: 71, LIST_HEADER: 72, PAGE_DEF: 73,
     SHAPE_COMPONENT: 76, TABLE: 77, OLE: 84, PICTURE: 85, EQEDIT: 88, CHART: 95 };
   const ALIGN = ['justify', 'left', 'right', 'center', 'distribute', 'distribute'];
   const LS = ['PERCENT', 'FIXED', 'BETWEEN_LINES', 'AT_LEAST'];
+  const NUM_TYPES = ['DIGIT', 'CIRCLED_DIGIT', 'ROMAN_CAPITAL', 'ROMAN_SMALL', 'LATIN_CAPITAL', 'LATIN_SMALL', 'CIRCLED_LATIN_CAPITAL', 'CIRCLED_LATIN_SMALL',
+    'HANGUL_SYLLABLE', 'CIRCLED_HANGUL_SYLLABLE', 'HANGUL_JAMO', 'CIRCLED_HANGUL_JAMO', 'HANGUL_PHONETIC', 'IDEOGRAPH', 'CIRCLED_IDEOGRAPH'];
 
   class R {
     constructor(b) { this.b = b; this.dv = new DataView(b.buffer, b.byteOffset, b.byteLength); this.p = 0; }
@@ -930,7 +1059,7 @@ const Hwp5 = (() => {
   const ctrlId = v => String.fromCharCode((v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255);
 
   function docInfo(roots) {
-    const info = { fonts: [], charShapes: [], paraShapes: [], borderFills: [null], bins: [], styles: [], counts: [] };
+    const info = { fonts: [], charShapes: [], paraShapes: [], borderFills: [null], bins: [], styles: [], counts: [], numberings: {}, bullets: {} };
     const flat = [];
     const walk = list => { for (const r of list) { flat.push(r); walk(r.children); } };
     walk(roots);
@@ -971,7 +1100,7 @@ const Hwp5 = (() => {
         }
         case T.PARA_SHAPE: {
           const p1 = c.u32(), left = c.i32(), right = c.i32(), indent = c.i32(), prev = c.i32(), next = c.i32(), lsOld = c.i32();
-          c.u16(); c.u16(); c.u16(); for (let i = 0; i < 4; i++) c.i16();
+          c.u16(); const numId = c.u16(), bfId = c.u16(); for (let i = 0; i < 4; i++) c.i16();
           let p3 = null, ls = lsOld;
           if (c.left >= 12) { c.u32(); p3 = c.u32(); ls = c.u32(); }
           const half = v => (v >> 1);            // 두 배로 저장, 0번 비트는 단위
@@ -979,8 +1108,23 @@ const Hwp5 = (() => {
           info.paraShapes.push({
             align: ALIGN[(p1 >> 2) & 7] || 'justify', left: half(left), right: half(right), indent: half(indent),
             before: half(prev), after: half(next), lsType, ls: lsType === 'PERCENT' ? ls : half(ls),
-            heading: (p1 >> 23) & 3, level: (p1 >> 25) & 7,
+            heading: (p1 >> 23) & 3, level: (p1 >> 25) & 7, numId, bfId,
           });
+          break;
+        }
+        case T.NUMBERING: {
+          // 문단 번호 모양: 수준마다 번호 형식(^1. 등)과 번호 종류
+          const def = { levels: [] };
+          const head = () => { const props = c.u32(); c.i16(); c.i16(); c.u32(); return { type: NUM_TYPES[(props >> 5) & 0x1F] || 'DIGIT', fmt: c.wstr() }; };
+          for (let i = 0; i < 7; i++) def.levels.push(head());
+          def.start = c.u16() || 1;
+          if (c.left >= 28) for (let i = 0; i < 7; i++) def.levels[i].start = c.u32() || 1;
+          info.numberings[Object.keys(info.numberings).length + 1] = def;
+          break;
+        }
+        case T.BULLET: {
+          c.u32(); c.i16(); c.i16(); c.u32();
+          info.bullets[Object.keys(info.bullets).length + 1] = String.fromCharCode(c.u16() || 0x25CF);
           break;
         }
         case T.STYLE: {
@@ -1009,12 +1153,23 @@ const Hwp5 = (() => {
     return cs;
   }
 
+  // 문단 테두리·배경 (선이나 색이 있을 때만)
+  function paraBox(bf) {
+    if (!bf) return undefined;
+    const b = borders(bf);
+    const has = bf.bg && bf.bg.toLowerCase() !== '#ffffff' || ['l', 'r', 't', 'b'].some(k => b[k] !== 'none');
+    return has ? { bg: bf.bg, border: b } : undefined;
+  }
+
   function paraStyle(info, id, styleId) {
     const s = info.paraShapes[id] || {};
     const st = info.styles[styleId];
     return { align: s.align, left: s.left || 0, right: s.right || 0, indent: s.indent || 0, before: s.before || 0, after: s.after || 0,
       lsType: s.lsType || 'PERCENT', ls: s.ls || 160, style: st ? st.name : '', outline: s.heading === 1 ? s.level + 1 : 0,
-      list: s.heading === 2 ? 'number' : s.heading === 3 ? 'bullet' : undefined };
+      list: s.heading === 2 ? 'number' : s.heading === 3 ? 'bullet' : undefined,
+      num: s.heading === 2 && s.numId ? { id: s.numId, level: s.level } : undefined,
+      bullet: s.heading === 3 ? info.bullets[s.numId] : undefined,
+      box: paraBox(info.borderFills[s.bfId]) };
   }
 
   // 문단 기록 하나 → 모델 문단
@@ -1098,6 +1253,7 @@ const Hwp5 = (() => {
     const id = ctrlId(c.u32());
     switch (id) {
       case 'secd': {
+        if (!ctx.doc.numbering.outlineSet) { const r = new R(rec.data); r.p = 18; const o = r.u16(); if (o) ctx.doc.numbering.outline = o; ctx.doc.numbering.outlineSet = true; }
         for (const ch of rec.children) if (ch.tag === T.PAGE_DEF && !ctx.doc.pageSet) {
           const r = new R(ch.data);
           const pg = { w: r.u32(), h: r.u32(), ml: r.u32(), mr: r.u32(), mt: r.u32(), mb: r.u32(), mh: r.u32(), mf: r.u32(), gutter: r.u32() };
@@ -1238,6 +1394,7 @@ const Hwp5 = (() => {
     const info = docInfo(records(unz(files.DocInfo)));
     const doc = Model.empty();
     doc.blocks = [];
+    doc.numbering = { defs: info.numberings, outline: 1 };
     const ctx = { info, doc, files, compressed };
     for (let i = 0; files['BodyText/Section' + i]; i++) {
       const roots = records(unz(files['BodyText/Section' + i]));
@@ -1247,6 +1404,7 @@ const Hwp5 = (() => {
     }
     if (!doc.blocks.length) doc.blocks.push(Model.para());
     delete doc.pageSet;
+    delete doc.numbering.outlineSet;
     return doc;
   }
 
@@ -1278,7 +1436,7 @@ const Hwpx = (() => {
 
   // ---------- 읽기 ----------
   function readHeader(xml) {
-    const h = { fonts: {}, chars: {}, paras: {}, fills: {}, styles: {} };
+    const h = { fonts: {}, chars: {}, paras: {}, fills: {}, styles: {}, numberings: {}, bullets: {} };
     if (!xml) return h;
     const d = parse(xml);
     for (const ff of desc(d, 'fontface')) if (ff.getAttribute('lang') === 'HANGUL') for (const f of kids(ff, 'font')) h.fonts[f.getAttribute('id')] = f.getAttribute('face');
@@ -1313,6 +1471,9 @@ const Hwpx = (() => {
         indent: v('intent'), left: v('left'), right: v('right'), before: v('prev'), after: v('next'), lsType, ls: lsv,
         outline: head && head.getAttribute('type') === 'OUTLINE' ? num(head, 'level') + 1 : 0,
         list: head && head.getAttribute('type') === 'NUMBER' ? 'number' : head && head.getAttribute('type') === 'BULLET' ? 'bullet' : undefined,
+        num: head && head.getAttribute('type') === 'NUMBER' ? { id: num(head, 'idRef'), level: num(head, 'level') } : undefined,
+        bulletId: head && head.getAttribute('type') === 'BULLET' ? head.getAttribute('idRef') : undefined,
+        bfId: (kid(p, 'border') || p).getAttribute('borderFillIDRef'),
       };
     }
     const LINE = { SOLID: 'solid', DASH: 'dashed', DOT: 'dotted', DASH_DOT: 'dashed', DASH_DOT_DOT: 'dashed', LONG_DASH: 'dashed', DOUBLE_SLIM: 'double', SLIM_THICK: 'double', THICK_SLIM: 'double', SLIM_THICK_SLIM: 'double', CIRCLE: 'dotted' };
@@ -1322,6 +1483,12 @@ const Hwpx = (() => {
       h.fills[b.getAttribute('id')] = { border: { l: side('leftBorder'), r: side('rightBorder'), t: side('topBorder'), b: side('bottomBorder') }, bg: wb ? col(wb.getAttribute('faceColor')) : null };
     }
     for (const s of desc(d, 'style')) h.styles[s.getAttribute('id')] = s.getAttribute('name');
+    for (const nb of desc(d, 'numbering')) {
+      const def = { start: num(nb, 'start', 1) || 1, levels: [] };
+      for (const ph of kids(nb, 'paraHead')) def.levels[num(ph, 'level', 1) - 1] = { type: ph.getAttribute('numFormat') || 'DIGIT', fmt: ph.textContent || '', start: num(ph, 'start', 1) };
+      h.numberings[nb.getAttribute('id')] = def;
+    }
+    for (const b of desc(d, 'bullet')) h.bullets[b.getAttribute('id')] = b.getAttribute('char') || '●';
     return h;
   }
 
@@ -1342,6 +1509,7 @@ const Hwpx = (() => {
     if (!spine.length) throw new Error('한글 문서(.hwpx)가 아니라서 열 수 없어요');
     const headerPath = Object.keys(files).find(k => /^Contents\/header\.xml$/i.test(k));
     const ctx = { doc, files, manifest, head: readHeader(headerPath ? dec.decode(files[headerPath]) : ''), binMap: {}, pageSet: false };
+    doc.numbering = { defs: ctx.head.numberings, outline: 1 };
     spine.forEach((path, i) => {
       const f = files[path] || files[path.replace(/^\//, '')];
       if (!f) return;
@@ -1366,6 +1534,10 @@ const Hwpx = (() => {
   function paragraph(ctx, el) {
     const ps = ctx.head.paras[el.getAttribute('paraPrIDRef')] || {};
     const p = Object.assign(Model.para(), ps);
+    delete p.bulletId; delete p.bfId;
+    if (ps.bulletId) p.bullet = ctx.head.bullets[ps.bulletId];
+    const fill = ps.bfId && ctx.head.fills[ps.bfId];
+    if (fill && (fill.bg && fill.bg !== '#ffffff' || ['l', 'r', 't', 'b'].some(k => fill.border[k] !== 'none'))) p.box = { bg: fill.bg, border: fill.border };
     p.style = ctx.head.styles[el.getAttribute('styleIDRef')] || '바탕글';
     if (el.getAttribute('pageBreak') === '1') p.pageBreak = true;
     const st = { href: null, mark: null };
@@ -1404,6 +1576,7 @@ const Hwpx = (() => {
           break;
         case 'secPr': {
           if (ctx.pageSet) break;
+          if (n.getAttribute('outlineShapeIDRef')) ctx.doc.numbering.outline = +n.getAttribute('outlineShapeIDRef') || 1;
           const pp = kid(n, 'pagePr'), m = kid(pp, 'margin');
           if (pp) {
             const pg = { w: num(pp, 'width', 59528), h: num(pp, 'height', 84188), ml: num(m, 'left', 8504), mr: num(m, 'right', 8504),
@@ -1519,25 +1692,42 @@ const Hwpx = (() => {
       charKey.set(k, id);
       return id;
     };
+    // 문단 번호 모양: 뼈대의 1번(개요용)은 두고 문서의 번호 모양을 2번부터 붙인다
+    const numMap = {}, numXml = [];
+    const defs = (doc.numbering && doc.numbering.defs) || {};
+    Object.keys(defs).forEach((old, i) => {
+      const id = i + 2, def = defs[old];
+      numMap[old] = id;
+      let h = `<hh:numbering id="${id}" start="${def.start || 1}">`;
+      for (let lv = 0; lv < 10; lv++) {
+        const L = def.levels[lv] || { type: 'DIGIT', fmt: '' };
+        h += `<hh:paraHead start="${L.start || 1}" level="${lv + 1}" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="${L.type || 'DIGIT'}" charPrIDRef="4294967295" checkable="0">${x(L.fmt || '')}</hh:paraHead>`;
+      }
+      numXml.push(h + '</hh:numbering>');
+    });
+    const outlineId = doc.numbering && numMap[doc.numbering.outline] || 1;
+    const bulletChars = [];
+    const bulletId = ch => { ch = ch || '●'; let i = bulletChars.indexOf(ch); if (i < 0) { bulletChars.push(ch); i = bulletChars.length - 1; } return i + 1; };
     const paraPrs = [], paraKey = new Map();
     const PARA0 = 20;
     const AL = { justify: 'JUSTIFY', left: 'LEFT', right: 'RIGHT', center: 'CENTER', distribute: 'DISTRIBUTE' };
     const paraId = p => {
-      const k = JSON.stringify([p.align, p.left, p.right, p.indent, p.before, p.after, p.lsType, p.ls, p.outline || 0, p.list || '']);
+      const k = JSON.stringify([p.align, p.left, p.right, p.indent, p.before, p.after, p.lsType, p.ls, p.outline || 0, p.list || '', p.num || null, p.bullet || '', p.box || null]);
       if (paraKey.has(k)) return paraKey.get(k);
       const id = PARA0 + paraPrs.length;
       const r = v => Math.round(v || 0);
       const margin = d => `<hh:margin><hc:intent value="${r(p.indent) * d}" unit="HWPUNIT"/><hc:left value="${r(p.left) * d}" unit="HWPUNIT"/><hc:right value="${r(p.right) * d}" unit="HWPUNIT"/><hc:prev value="${r(p.before) * d}" unit="HWPUNIT"/><hc:next value="${r(p.after) * d}" unit="HWPUNIT"/></hh:margin>` +
         `<hh:lineSpacing type="${p.lsType || 'PERCENT'}" value="${(p.lsType || 'PERCENT') === 'PERCENT' ? r(p.ls || 160) : r(p.ls) * d}" unit="HWPUNIT"/>`;
       const head = p.outline ? `<hh:heading type="OUTLINE" idRef="0" level="${p.outline - 1}"/>`
-        : p.list === 'number' ? '<hh:heading type="NUMBER" idRef="1" level="0"/>'
-        : p.list === 'bullet' ? '<hh:heading type="BULLET" idRef="1" level="0"/>' : '<hh:heading type="NONE" idRef="0" level="0"/>';
+        : p.list === 'number' ? `<hh:heading type="NUMBER" idRef="${p.num && numMap[p.num.id] || 1}" level="${p.num ? Math.min(9, p.num.level) : 0}"/>`
+        : p.list === 'bullet' ? `<hh:heading type="BULLET" idRef="${bulletId(p.bullet)}" level="0"/>` : '<hh:heading type="NONE" idRef="0" level="0"/>';
+      const bf = p.box ? fillId({ border: p.box.border || {}, bg: p.box.bg }) : 2;
       paraPrs.push(`<hh:paraPr id="${id}" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">` +
         `<hh:align horizontal="${AL[p.align] || 'JUSTIFY'}" vertical="BASELINE"/>${head}` +
         '<hh:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="BREAK_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>' +
         '<hh:autoSpacing eAsianEng="0" eAsianNum="0"/>' +
         `<hp:switch><hp:case hp:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">${margin(1)}</hp:case><hp:default>${margin(2)}</hp:default></hp:switch>` +
-        '<hh:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/></hh:paraPr>');
+        `<hh:border borderFillIDRef="${bf}" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/></hh:paraPr>`);
       paraKey.set(k, id);
       return id;
     };
@@ -1706,7 +1896,8 @@ const Hwpx = (() => {
     const secPr = T.secPr.replace(/<hp:pagePr[^>]*>(<hp:margin[^>]*\/>)<\/hp:pagePr>/,
       `<hp:pagePr landscape="${land ? 'NARROWLY' : 'WIDELY'}" width="${Math.round(pw)}" height="${Math.round(ph)}" gutterType="LEFT_ONLY"><hp:margin header="${Math.round(pg.mh)}" footer="${Math.round(pg.mf)}" gutter="${Math.round(pg.gutter || 0)}" left="${Math.round(pg.ml)}" right="${Math.round(pg.mr)}" top="${Math.round(pg.mt)}" bottom="${Math.round(pg.mb)}"/></hp:pagePr>`);
     const bodyW = Math.round((land ? ph : pw) - pg.ml - pg.mr);
-    let lead = `<hp:run charPrIDRef="0">${secPr}<hp:ctrl><hp:colPr id="" type="NEWSPAPER" layout="LEFT" colCount="1" sameSz="1" sameGap="0"/></hp:ctrl>`;
+    const secPr2 = secPr.replace(/outlineShapeIDRef="\d+"/, `outlineShapeIDRef="${outlineId}"`);
+    let lead = `<hp:run charPrIDRef="0">${secPr2}<hp:ctrl><hp:colPr id="" type="NEWSPAPER" layout="LEFT" colCount="1" sameSz="1" sameGap="0"/></hp:ctrl>`;
     const hasBlocks = b => b && b.length && b.some(p => p.runs && p.runs.length);
     if (hasBlocks(doc.header)) lead += `<hp:ctrl><hp:header id="${nid()}" applyPageType="BOTH">${subList(doc.header, 'TOP', { w: bodyW, h: Math.round(pg.mh) })}</hp:header></hp:ctrl>`;
     if (hasBlocks(doc.footer)) lead += `<hp:ctrl><hp:footer id="${nid()}" applyPageType="BOTH">${subList(doc.footer, 'BOTTOM', { w: bodyW, h: Math.round(pg.mf) })}</hp:footer></hp:ctrl>`;
@@ -1724,7 +1915,10 @@ const Hwpx = (() => {
     });
     header = header.replace(/<hh:borderFills itemCnt="(\d+)">([\s\S]*?)<\/hh:borderFills>/, (m, n, inner) => `<hh:borderFills itemCnt="${+n + fills.length}">${inner}${fills.join('')}</hh:borderFills>`);
     header = header.replace(/<hh:charProperties itemCnt="(\d+)">([\s\S]*?)<\/hh:charProperties>/, (m, n, inner) => `<hh:charProperties itemCnt="${+n + charPrs.length}">${inner}${charPrs.join('')}</hh:charProperties>`);
-    if (!/<hh:bullets/.test(header)) header = header.replace('</hh:numberings>', '</hh:numberings><hh:bullets itemCnt="1"><hh:bullet id="1" char="●" useImage="0"><hh:paraHead level="0" align="LEFT" useInstWidth="0" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="DIGIT" charPrIDRef="4294967295" checkable="0"/></hh:bullet></hh:bullets>');
+    header = header.replace(/<hh:numberings itemCnt="(\d+)">([\s\S]*?)<\/hh:numberings>/, (m, n, inner) => `<hh:numberings itemCnt="${+n + numXml.length}">${inner}${numXml.join('')}</hh:numberings>`);
+    if (!bulletChars.length) bulletChars.push('●');
+    if (!/<hh:bullets/.test(header)) header = header.replace('</hh:numberings>', `</hh:numberings><hh:bullets itemCnt="${bulletChars.length}">` +
+      bulletChars.map((c, i) => `<hh:bullet id="${i + 1}" char="${x(c)}" useImage="0"><hh:paraHead level="0" align="LEFT" useInstWidth="0" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="DIGIT" charPrIDRef="4294967295" checkable="0"/></hh:bullet>`).join('') + '</hh:bullets>');
     header = header.replace(/<hh:paraProperties itemCnt="(\d+)">([\s\S]*?)<\/hh:paraProperties>/, (m, n, inner) => `<hh:paraProperties itemCnt="${+n + paraPrs.length}">${inner}${paraPrs.join('')}</hh:paraProperties>`);
 
     const now = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
@@ -2090,8 +2284,28 @@ const Ed = (() => {
     return out;
   }
 
+  // 문서에 정해 둔 문단 번호 모양대로 번호 글자를 붙인다 (한글처럼 같은 번호 모양은 문서 끝까지 이어진다)
+  function renumber() {
+    const nb = st.doc.numbering;
+    if (!nb || !nb.defs) return;
+    const counters = {};
+    for (const p of el.querySelectorAll('p[data-numid], p[data-outline]')) {
+      let id, lv;
+      if (p.dataset.numid) { id = p.dataset.numid; lv = +p.dataset.numlv || 0; }
+      else { id = nb.outline; lv = (+p.dataset.outline || 1) - 1; }
+      const def = nb.defs[id];
+      if (!def) { if (p.dataset.label) delete p.dataset.label; continue; }
+      const c = counters[id] = counters[id] || [];
+      c[lv] = c[lv] === undefined ? ((def.levels[lv] && def.levels[lv].start) || 1) : c[lv] + 1;
+      for (let k = lv + 1; k < 10; k++) c[k] = undefined;
+      const label = Model.numLabel(def, lv, c);
+      if (p.dataset.label !== label) p.dataset.label = label;
+    }
+  }
+
   function layout() {
     clearTimeout(pagTimer);
+    renumber();
     const g = geo();
     Object.assign(el.style, { left: (PAD + g.left) + 'px', top: (PAD + g.top) + 'px', width: g.bodyW + 'px' });
     const sel = saveSelOffsets();
@@ -2580,6 +2794,8 @@ const Ed = (() => {
     o.style = p.dataset.style || '바탕글';
     o.outline = +(p.dataset.outline || 0);
     o.list = p.dataset.list || '';
+    const bg = Model.hex(s.backgroundColor), bd = ['Left', 'Right', 'Top', 'Bottom'].map(k => s['border' + k] || 'none');
+    if (bg || bd.some(x => x && x !== 'none')) o.box = { bg, border: { l: bd[0], r: bd[1], t: bd[2], b: bd[3] } };
     return o;
   }
   function setParaCss(p, o) {
@@ -2616,7 +2832,7 @@ const Ed = (() => {
       const on = ps.every(p => p.dataset.list === kind);
       for (const p of ps) {
         const o = paraFromEl(p);
-        if (on) { delete p.dataset.list; o.indent = 0; }
+        if (on) { delete p.dataset.list; delete p.dataset.numid; delete p.dataset.numlv; delete p.dataset.label; delete p.dataset.bullet; o.indent = 0; }
         else { p.dataset.list = kind; o.indent = -2000; }
         setParaCss(p, o);
       }
@@ -3111,7 +3327,7 @@ const Ed = (() => {
   const Native = window.Android || null;              // 안드로이드 앱 안이면 Java 다리
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const narrow = () => window.innerWidth <= 700;
-  const VERSION = '1.1.0';
+  const VERSION = '1.2.0';
   const app = { name: '새 문서.hwpx', writable: false, kind: 'new' };
   const pref = (k, v) => { try { if (v === undefined) return localStorage.getItem('hwped.' + k); localStorage.setItem('hwped.' + k, v); } catch (e) { return null; } };
 
@@ -3996,15 +4212,16 @@ const Ed = (() => {
     });
   }
   function eqDialog(eq) {
-    dialog('수식', fld('수식 (한글 수식 문법, 예: a over b, x^2, sqrt {x})', `<textarea id="eT">${eq ? Model.esc(eq.dataset.script || '') : ''}</textarea>`) + '<p style="font-size:12px;color:var(--sub)">이 앱에선 수식을 글자로 보여 주고, 저장하면 한글에서 수식으로 그려져요.</p>', {
+    dialog('수식', fld('수식 (한글 수식 문법, 예: a over b, x^2, sqrt {x})', `<textarea id="eT">${eq ? Model.esc(eq.dataset.script || '') : ''}</textarea>`) + '<div class="preview" id="eP" style="font-size:14pt"></div><p style="font-size:12px;color:var(--sub)">예: a over b (분수) · sqrt{x} (루트) · x^2 · H_2 O · alpha · LEFT( x RIGHT) · times · le</p>', {
       noEnter: true,
       buttons: eq ? [['del', '수식 지우기']] : [],
+      onOpen: d => { const up = () => { d.querySelector('#eP').innerHTML = `<span class="eq">${Model.eqHtml(v(d, '#eT'))}</span>`; }; d.querySelector('#eT').addEventListener('input', up); up(); },
       onButton: b => { if (b === 'del' && !st.readOnly) { Ed.act(() => eq.remove()); closeDlg(); } },
       onOk: d => {
         if (st.readOnly) return;
         const t = v(d, '#eT').trim(); if (!t) return false;
-        if (eq) Ed.act(() => { eq.dataset.script = t; eq.textContent = t; });
-        else { Ed.restoreSel(); Ed.insertHtml(`<span class="eq" contenteditable="false" data-script="${Model.esc(t)}">${Model.esc(t)}</span>&#8203;`); }
+        if (eq) Ed.act(() => { eq.dataset.script = t; eq.innerHTML = Model.eqHtml(t); });
+        else { Ed.restoreSel(); Ed.insertHtml(`<span class="eq" contenteditable="false" data-script="${Model.esc(t)}">${Model.eqHtml(t)}</span>&#8203;`); }
       },
     });
   }

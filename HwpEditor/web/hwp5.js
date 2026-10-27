@@ -3,11 +3,13 @@
 'use strict';
 
 const Hwp5 = (() => {
-  const T = { DOC_PROPS: 16, ID_MAPPINGS: 17, BIN_DATA: 18, FACE_NAME: 19, BORDER_FILL: 20, CHAR_SHAPE: 21, PARA_SHAPE: 25, STYLE: 26,
+  const T = { DOC_PROPS: 16, ID_MAPPINGS: 17, BIN_DATA: 18, FACE_NAME: 19, BORDER_FILL: 20, CHAR_SHAPE: 21, NUMBERING: 23, BULLET: 24, PARA_SHAPE: 25, STYLE: 26,
     PARA_HEADER: 66, PARA_TEXT: 67, PARA_CHAR_SHAPE: 68, PARA_LINE_SEG: 69, CTRL_HEADER: 71, LIST_HEADER: 72, PAGE_DEF: 73,
     SHAPE_COMPONENT: 76, TABLE: 77, OLE: 84, PICTURE: 85, EQEDIT: 88, CHART: 95 };
   const ALIGN = ['justify', 'left', 'right', 'center', 'distribute', 'distribute'];
   const LS = ['PERCENT', 'FIXED', 'BETWEEN_LINES', 'AT_LEAST'];
+  const NUM_TYPES = ['DIGIT', 'CIRCLED_DIGIT', 'ROMAN_CAPITAL', 'ROMAN_SMALL', 'LATIN_CAPITAL', 'LATIN_SMALL', 'CIRCLED_LATIN_CAPITAL', 'CIRCLED_LATIN_SMALL',
+    'HANGUL_SYLLABLE', 'CIRCLED_HANGUL_SYLLABLE', 'HANGUL_JAMO', 'CIRCLED_HANGUL_JAMO', 'HANGUL_PHONETIC', 'IDEOGRAPH', 'CIRCLED_IDEOGRAPH'];
 
   class R {
     constructor(b) { this.b = b; this.dv = new DataView(b.buffer, b.byteOffset, b.byteLength); this.p = 0; }
@@ -51,7 +53,7 @@ const Hwp5 = (() => {
   const ctrlId = v => String.fromCharCode((v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255);
 
   function docInfo(roots) {
-    const info = { fonts: [], charShapes: [], paraShapes: [], borderFills: [null], bins: [], styles: [], counts: [] };
+    const info = { fonts: [], charShapes: [], paraShapes: [], borderFills: [null], bins: [], styles: [], counts: [], numberings: {}, bullets: {} };
     const flat = [];
     const walk = list => { for (const r of list) { flat.push(r); walk(r.children); } };
     walk(roots);
@@ -92,7 +94,7 @@ const Hwp5 = (() => {
         }
         case T.PARA_SHAPE: {
           const p1 = c.u32(), left = c.i32(), right = c.i32(), indent = c.i32(), prev = c.i32(), next = c.i32(), lsOld = c.i32();
-          c.u16(); c.u16(); c.u16(); for (let i = 0; i < 4; i++) c.i16();
+          c.u16(); const numId = c.u16(), bfId = c.u16(); for (let i = 0; i < 4; i++) c.i16();
           let p3 = null, ls = lsOld;
           if (c.left >= 12) { c.u32(); p3 = c.u32(); ls = c.u32(); }
           const half = v => (v >> 1);            // 두 배로 저장, 0번 비트는 단위
@@ -100,8 +102,23 @@ const Hwp5 = (() => {
           info.paraShapes.push({
             align: ALIGN[(p1 >> 2) & 7] || 'justify', left: half(left), right: half(right), indent: half(indent),
             before: half(prev), after: half(next), lsType, ls: lsType === 'PERCENT' ? ls : half(ls),
-            heading: (p1 >> 23) & 3, level: (p1 >> 25) & 7,
+            heading: (p1 >> 23) & 3, level: (p1 >> 25) & 7, numId, bfId,
           });
+          break;
+        }
+        case T.NUMBERING: {
+          // 문단 번호 모양: 수준마다 번호 형식(^1. 등)과 번호 종류
+          const def = { levels: [] };
+          const head = () => { const props = c.u32(); c.i16(); c.i16(); c.u32(); return { type: NUM_TYPES[(props >> 5) & 0x1F] || 'DIGIT', fmt: c.wstr() }; };
+          for (let i = 0; i < 7; i++) def.levels.push(head());
+          def.start = c.u16() || 1;
+          if (c.left >= 28) for (let i = 0; i < 7; i++) def.levels[i].start = c.u32() || 1;
+          info.numberings[Object.keys(info.numberings).length + 1] = def;
+          break;
+        }
+        case T.BULLET: {
+          c.u32(); c.i16(); c.i16(); c.u32();
+          info.bullets[Object.keys(info.bullets).length + 1] = String.fromCharCode(c.u16() || 0x25CF);
           break;
         }
         case T.STYLE: {
@@ -130,12 +147,23 @@ const Hwp5 = (() => {
     return cs;
   }
 
+  // 문단 테두리·배경 (선이나 색이 있을 때만)
+  function paraBox(bf) {
+    if (!bf) return undefined;
+    const b = borders(bf);
+    const has = bf.bg && bf.bg.toLowerCase() !== '#ffffff' || ['l', 'r', 't', 'b'].some(k => b[k] !== 'none');
+    return has ? { bg: bf.bg, border: b } : undefined;
+  }
+
   function paraStyle(info, id, styleId) {
     const s = info.paraShapes[id] || {};
     const st = info.styles[styleId];
     return { align: s.align, left: s.left || 0, right: s.right || 0, indent: s.indent || 0, before: s.before || 0, after: s.after || 0,
       lsType: s.lsType || 'PERCENT', ls: s.ls || 160, style: st ? st.name : '', outline: s.heading === 1 ? s.level + 1 : 0,
-      list: s.heading === 2 ? 'number' : s.heading === 3 ? 'bullet' : undefined };
+      list: s.heading === 2 ? 'number' : s.heading === 3 ? 'bullet' : undefined,
+      num: s.heading === 2 && s.numId ? { id: s.numId, level: s.level } : undefined,
+      bullet: s.heading === 3 ? info.bullets[s.numId] : undefined,
+      box: paraBox(info.borderFills[s.bfId]) };
   }
 
   // 문단 기록 하나 → 모델 문단
@@ -219,6 +247,7 @@ const Hwp5 = (() => {
     const id = ctrlId(c.u32());
     switch (id) {
       case 'secd': {
+        if (!ctx.doc.numbering.outlineSet) { const r = new R(rec.data); r.p = 18; const o = r.u16(); if (o) ctx.doc.numbering.outline = o; ctx.doc.numbering.outlineSet = true; }
         for (const ch of rec.children) if (ch.tag === T.PAGE_DEF && !ctx.doc.pageSet) {
           const r = new R(ch.data);
           const pg = { w: r.u32(), h: r.u32(), ml: r.u32(), mr: r.u32(), mt: r.u32(), mb: r.u32(), mh: r.u32(), mf: r.u32(), gutter: r.u32() };
@@ -359,6 +388,7 @@ const Hwp5 = (() => {
     const info = docInfo(records(unz(files.DocInfo)));
     const doc = Model.empty();
     doc.blocks = [];
+    doc.numbering = { defs: info.numberings, outline: 1 };
     const ctx = { info, doc, files, compressed };
     for (let i = 0; files['BodyText/Section' + i]; i++) {
       const roots = records(unz(files['BodyText/Section' + i]));
@@ -368,6 +398,7 @@ const Hwp5 = (() => {
     }
     if (!doc.blocks.length) doc.blocks.push(Model.para());
     delete doc.pageSet;
+    delete doc.numbering.outlineSet;
     return doc;
   }
 
