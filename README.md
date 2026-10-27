@@ -123,7 +123,7 @@ Mac의 Spotlight와 똑같은 모양의 검색창이에요. **Shift 키를 두 �
 
 | 다운로드 | 설치 |
 |---|---|
-| 📱 Android(덱스 포함): [`HwpEditor.apk`](HwpEditor/HwpEditor.apk) | 받은 apk 눌러 설치 |
+| 📱 Android(덱스 포함): [`HwpEditor.apk`](HwpEditor/HwpEditor.apk) (1.0.1) | 받은 apk 눌러 설치 (예전 버전 위에 그대로 설치돼요) |
 | 💻 Windows 10/11: [`HwpEditor-Windows-1.0.zip`](HwpEditor/HwpEditor-Windows-1.0.zip) | 압축 해제 → `HWP편집기.exe` (바탕화면 아이콘 생성, Edge 앱 창) |
 | 📱 아이폰 · 🍎 Mac: [웹앱 열기](https://edwinedwin0716-sketch.github.io/nurse_ai/hwp/) | 사파리 → 홈 화면 / Dock에 추가 |
 
