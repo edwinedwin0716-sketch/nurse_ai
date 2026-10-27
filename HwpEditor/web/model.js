@@ -11,13 +11,16 @@ const Model = (() => {
   const A4 = { w: 59528, h: 84188, ml: 8504, mr: 8504, mt: 5668, mb: 4252, mh: 4252, mf: 4252, gutter: 0 };
   const STYLES = ['바탕글', '본문', '개요 1', '개요 2', '개요 3', '개요 4', '개요 5', '개요 6', '개요 7'];
   const FALLBACK = {
-    '함초롬바탕': '"함초롬바탕","HCR Batang","Noto Serif KR","Noto Serif CJK KR",serif',
+    '함초롬바탕': '"함초롬바탕","HCR Batang",HwpSerif,AppleMyungjo,Batang,"Noto Serif KR","Noto Serif CJK KR",serif',
     '함초롬돋움': '"함초롬돋움","HCR Dotum","Noto Sans KR","Noto Sans CJK KR",sans-serif',
-    '바탕': '"바탕",Batang,"Noto Serif KR",serif', '바탕체': '"바탕체",BatangChe,"Noto Serif KR",serif',
+    '바탕': '"바탕",Batang,HwpSerif,AppleMyungjo,"Noto Serif KR",serif', '바탕체': '"바탕체",BatangChe,HwpSerif,"Noto Serif KR",serif',
     '굴림': '"굴림",Gulim,"Noto Sans KR",sans-serif', '돋움': '"돋움",Dotum,"Noto Sans KR",sans-serif',
-    '맑은 고딕': '"맑은 고딕","Malgun Gothic","Noto Sans KR",sans-serif', '궁서': '"궁서",Gungsuh,serif',
+    '맑은 고딕': '"맑은 고딕","Malgun Gothic","Noto Sans KR",sans-serif', '궁서': '"궁서",Gungsuh,HwpSerif,serif',
   };
-  const fontCss = f => FALLBACK[f] || `"${String(f).replace(/"/g, '')}",${/명조|바탕|궁서|serif/i.test(f) ? 'serif' : 'sans-serif'}`;
+  const fontCss = f => FALLBACK[f] || `"${String(f).replace(/"/g, '')}",${/명조|바탕|궁서|serif|Times|Batang|Myeongjo/i.test(f) ? 'HwpSerif,AppleMyungjo,Batang,serif' : 'sans-serif'}`;
+  // 장평(글자 폭 %)은 화면에서 자간으로 비슷하게 줄여 보인다 (한글 글자 폭 약 1em 기준)
+  const RATIO_K = 0.85;
+  const spacingEm = (sp, ratio) => ((sp || 0) + ((ratio || 100) - 100) * RATIO_K) / 100;
 
   const empty = () => ({ page: Object.assign({}, A4), header: [], footer: [], pageNum: null, blocks: [para()], bins: {} });
   function para(text) {
@@ -40,7 +43,8 @@ const Model = (() => {
     if (deco.length) s.push('text-decoration:' + deco.join(' '));
     if (cs.color && cs.color.toLowerCase() !== '#000000') s.push('color:' + cs.color);
     if (cs.bg && cs.bg.toLowerCase() !== '#ffffff') s.push('background-color:' + cs.bg);
-    if (cs.spacing) s.push('letter-spacing:' + (cs.spacing / 100) + 'em');
+    const ls = spacingEm(cs.spacing, cs.ratio);
+    if (Math.abs(ls) > 0.0001) s.push('letter-spacing:' + +ls.toFixed(4) + 'em');
     return s.join(';');
   }
 
@@ -59,6 +63,15 @@ const Model = (() => {
     return s.join(';');
   }
 
+  // 글자처럼 취급하지 않는 그림·표의 위치(가운데·오른쪽·어울림)
+  function placeCss(pl) {
+    if (!pl) return '';
+    if (pl.wrap === 'square' && pl.align !== 'center') return pl.align === 'right' ? ';float:right;margin:0 0 2pt 6pt' : `;float:left;margin:0 6pt 2pt ${pt(pl.x || 0)}`;
+    return ';display:block;' + (pl.align === 'center' ? 'margin-left:auto;margin-right:auto' : pl.align === 'right' ? 'margin-left:auto;margin-right:0' : `margin-left:${pt(pl.x || 0)}`);
+  }
+  const placeAttr = pl => pl ? ` data-align="${pl.align}" data-wrap="${pl.wrap}" data-x="${pl.x || 0}"` : '';
+  const placeOfEl = n => n.dataset.align ? { align: n.dataset.align, wrap: n.dataset.wrap || 'block', x: +n.dataset.x || 0 } : null;
+
   function runsHtml(runs, ctx) {
     let h = '', link = null;
     for (const r of runs) {
@@ -66,7 +79,8 @@ const Model = (() => {
       switch (r.t) {
         case 'text': {
           if ((r.href || null) !== link) { if (link) h += '</a>'; link = r.href || null; if (link) h += `<a href="${esc(link)}">`; }
-          let t = esc(r.text);
+          // 한컴 전용 기호(사용자 정의 영역 글자)는 다른 글꼴에 없어 네모로 보이니 숨긴다(파일에는 남는다)
+          let t = esc(r.text).replace(/[\uE000-\uF8FF]+/g, m => `<span class="pua">${m}</span>`);
           const css = csCss(r.cs || {});
           const ratio = r.cs && r.cs.ratio && r.cs.ratio !== 100 ? ` data-ratio="${r.cs.ratio}"` : '';
           if (css || ratio) t = `<span style="${css}"${ratio}>${t}</span>`;
@@ -76,16 +90,18 @@ const Model = (() => {
           break;
         }
         case 'tab': h += '\t'; break;
+        case 'lb': h += '<span class="hlb"></span>'; break;
         case 'br': h += '<br>'; break;
         case 'img': {
           const b = ctx.doc.bins[r.bin];
           const url = b ? ctx.url(r.bin, b) : '';
-          h += `<img src="${url}" data-bin="${r.bin}" style="width:${pt(r.w)};height:${pt(r.h)}" alt="">`;
+          h += `<img src="${url}" data-bin="${r.bin}"${placeAttr(r.place)} style="width:${pt(r.w)};height:${pt(r.h)}${placeCss(r.place)}" alt="">`;
           break;
         }
-        case 'note': h += `<sup class="fn" contenteditable="false" data-note="${esc(blocksText(r.blocks))}"></sup>`; break;
+        case 'note': h += `<sup class="fn" contenteditable="false"${r.end ? ' data-end="1"' : ''} data-note="${esc(blocksText(r.blocks))}"></sup>`; break;
         case 'eq': h += `<span class="eq" contenteditable="false" data-script="${esc(r.script)}">${esc(r.script)}</span>`; break;
         case 'pagenum': h += '<span class="pgn" contenteditable="false">#</span>'; break;
+        case 'ph': h += `<span class="ph" contenteditable="false" style="width:${pt(r.w)};height:${pt(r.h)}">${esc(r.label || '개체')}<br><small>이 앱에선 못 보여요</small></span>`; break;
       }
     }
     if (link) h += '</a>';
@@ -106,7 +122,11 @@ const Model = (() => {
     if (p.outline) attrs.push(`data-outline="${p.outline}"`);
     if (p.list) attrs.push(`data-list="${p.list}"`);
     if (p.pageBreak) attrs.push('data-pb="1"');
-    const inner = runsHtml(p.runs.filter(r => r.t !== 'table' && r.t !== 'box'), ctx);
+    const flow = p.runs.filter(r => r.t !== 'table' && r.t !== 'box');
+    // 한글이 정한 줄 바꿈이 있으면 마지막 줄을 따로 묶는다(보기 모드에서 앞줄만 양쪽 정렬)
+    let last = -1;
+    flow.forEach((r, i) => { if (r.t === 'lb') last = i; });
+    const inner = last < 0 ? runsHtml(flow, ctx) : runsHtml(flow.slice(0, last + 1), ctx) + '<span class="hll">' + runsHtml(flow.slice(last + 1), ctx) + '</span>';
     return `<p${attrs.length ? ' ' + attrs.join(' ') : ''}>${inner || '<br>'}</p>`;
   }
 
@@ -135,7 +155,8 @@ const Model = (() => {
   function tableHtml(t, ctx) {
     const rows = [];
     for (const c of t.cells) (rows[c.r] = rows[c.r] || []).push(c);
-    let h = `<table class="tb"${t.w ? ` style="width:${pt(t.w)}"` : ''}><tbody>`;
+    const tpl = t.place && t.place.wrap !== 'square' ? t.place : null;
+    let h = `<table class="tb"${placeAttr(tpl)} style="${t.w ? 'width:' + pt(t.w) : ''}${tpl ? placeCss(tpl).replace(';display:block', '') : ''}"><tbody>`;
     const nRows = Math.max(t.rows || 0, rows.length);
     for (let r = 0; r < nRows; r++) {
       h += '<tr>';
@@ -145,6 +166,8 @@ const Model = (() => {
         if (c.h) s.push('height:' + pt(c.h));
         if (c.bg && c.bg.toLowerCase() !== '#ffffff') s.push('background-color:' + c.bg);
         if (c.valign && c.valign !== 'middle') s.push('vertical-align:' + c.valign);
+        const pd = c.pad || t.pad;
+        if (pd) s.push(`padding:${pt(pd[2])} ${pt(pd[1])} ${pt(pd[3])} ${pt(pd[0])}`);
         if (c.border) s.push(`border-left:${c.border.l};border-right:${c.border.r};border-top:${c.border.t};border-bottom:${c.border.b}`);
         h += `<td${c.cs > 1 ? ` colspan="${c.cs}"` : ''}${c.rs > 1 ? ` rowspan="${c.rs}"` : ''} style="${s.join(';')}">${blocksHtml(c.blocks.length ? c.blocks : [para()], ctx)}</td>`;
       }
@@ -172,8 +195,12 @@ const Model = (() => {
     const st = getComputedStyle(el);
     const cs = { font: firstFont(st.fontFamily) || BASE.font, size: Math.round(parseFloat(st.fontSize) * 0.75 * 10) / 10,
       bold: (parseInt(st.fontWeight, 10) || 400) >= 600, italic: st.fontStyle === 'italic', color: hex(st.color) || '#000000' };
-    const ls = parseFloat(st.letterSpacing);
-    if (ls) cs.spacing = Math.round(ls / parseFloat(st.fontSize) * 100);
+    const rEl = el.closest && el.closest('[data-ratio]');
+    const ratio = rEl && (!stop || stop.contains(rEl)) ? +rEl.dataset.ratio : 100;
+    if (ratio !== 100) cs.ratio = ratio;
+    const ls = parseFloat(st.letterSpacing) || 0;
+    const sp = Math.round(ls / parseFloat(st.fontSize) * 100 - (ratio - 100) * RATIO_K);
+    if (sp) cs.spacing = Math.max(-50, Math.min(50, sp));
     for (let e = el; e && e !== stop; e = e.parentElement) {
       const tag = e.tagName;
       const d = e.style.textDecorationLine || e.style.textDecoration || '';
@@ -183,7 +210,6 @@ const Model = (() => {
       if (tag === 'SUB' || e.style.verticalAlign === 'sub') cs.sub = true;
       if (tag === 'A') cs.underline = true;
       if (!cs.bg) { const bg = hex(e.style.backgroundColor) || (tag === 'MARK' ? '#ffff00' : null); if (bg) cs.bg = bg; }
-      if (!cs.ratio && e.dataset && e.dataset.ratio) cs.ratio = +e.dataset.ratio;
     }
     if (cs.sup || cs.sub) cs.size = Math.round(cs.size / 0.83 * 10) / 10;   // 위·아래 첨자는 작게 보이기만 한다
     cache.set(el, cs);
@@ -236,11 +262,12 @@ const Model = (() => {
         if (tag === 'BR') { if (n.nextSibling || n.previousSibling) p.runs.push({ t: 'br' }); }
         else if (tag === 'IMG') {
           const key = n.dataset.bin;
-          if (key && ctx.doc.bins[key]) p.runs.push({ t: 'img', bin: key, w: huOf(n.style.width) || Math.round(n.width * 75), h: huOf(n.style.height) || Math.round(n.height * 75) });
+          if (key && ctx.doc.bins[key]) p.runs.push({ t: 'img', bin: key, w: huOf(n.style.width) || Math.round(n.width * 75), h: huOf(n.style.height) || Math.round(n.height * 75), place: placeOfEl(n) });
         }
-        else if (n.classList.contains('fn')) p.runs.push({ t: 'note', blocks: (n.dataset.note || '').split('\n').map(t => para(t)) });
+        else if (n.classList.contains('fn')) p.runs.push({ t: 'note', end: !!n.dataset.end, blocks: (n.dataset.note || '').split('\n').map(t => para(t)) });
         else if (n.classList.contains('eq')) p.runs.push({ t: 'eq', script: n.dataset.script || n.textContent, cs: csOf(n, el.parentElement, cache) });
         else if (n.classList.contains('pgn')) p.runs.push({ t: 'pagenum' });
+        else if (n.classList.contains('ph') || n.classList.contains('pgap')) { if (n.classList.contains('ph')) ctx.lost = (ctx.lost || 0) + 1; }
         else if (tag === 'TABLE') p.runs.push(tableOf(n, ctx));
         else if (tag === 'A') walk(n, n.getAttribute('href') || href);
         else walk(n, href);
@@ -251,7 +278,7 @@ const Model = (() => {
   }
 
   function tableOf(tb, ctx) {
-    const t = { t: 'table', cells: [], rows: 0, cols: 0, w: Math.round(tb.offsetWidth * 75) || huOf(tb.style.width) };
+    const t = { t: 'table', cells: [], rows: 0, cols: 0, w: Math.round(tb.offsetWidth * 75) || huOf(tb.style.width), place: placeOfEl(tb) };
     const taken = [];
     let r = 0;
     for (const tr of tb.rows) {
@@ -263,7 +290,8 @@ const Model = (() => {
         for (let i = 0; i < rs; i++) for (let j = 0; j < cs; j++) (taken[r + i] = taken[r + i] || [])[c + j] = true;
         const st = td.style;
         const b = side => st['border' + side] || '';
-        t.cells.push({ r, c, rs, cs, w: Math.round(td.offsetWidth * 75) || huOf(st.width), h: Math.round(td.offsetHeight * 75) || huOf(st.height),
+        const pad = st.paddingTop ? [huOf(st.paddingLeft), huOf(st.paddingRight), huOf(st.paddingTop), huOf(st.paddingBottom)] : null;
+        t.cells.push({ r, c, rs, cs, pad, w: Math.round(td.offsetWidth * 75) || huOf(st.width), h: Math.round(td.offsetHeight * 75) || huOf(st.height),
           bg: hex(st.backgroundColor), valign: st.verticalAlign || 'middle',
           border: (st.borderLeft || st.borderTop) ? { l: b('Left'), r: b('Right'), t: b('Top'), b: b('Bottom') } : null,
           blocks: blocksOf(td, ctx) });
@@ -322,10 +350,12 @@ const Model = (() => {
 
   function fromDom(root, doc) {
     const ctx = { doc, cache: new Map() };
-    return blocksOf(root, ctx);
+    const blocks = blocksOf(root, ctx);
+    blocks.lost = ctx.lost || 0;          // 저장하지 못하는 개체(차트 등) 수
+    return blocks;
   }
 
   function toHtml(blocks, doc, url) { return blocksHtml(blocks, { doc, url }); }
 
-  return { BASE, A4, STYLES, empty, para, toHtml, fromDom, blocksText, csCss, paraCss, fontCss, esc, hex, huOf, ptOf };
+  return { RATIO_K, spacingEm, BASE, A4, STYLES, empty, para, toHtml, fromDom, blocksText, csCss, paraCss, fontCss, esc, hex, huOf, ptOf };
 })();

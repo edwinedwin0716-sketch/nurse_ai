@@ -3,7 +3,7 @@
 
     python3 HwpEditor/build.py   → dist/HWP편집기.html (PC·Windows·웹앱), android/assets/index.html
 """
-import os, re
+import os, re, shutil
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 WEB = os.path.join(HERE, 'web')
@@ -28,8 +28,14 @@ def main():
     html = bundle()
     os.makedirs(os.path.join(HERE, 'dist'), exist_ok=True)
     os.makedirs(os.path.join(HERE, 'android', 'assets'), exist_ok=True)
-    for out in (os.path.join(HERE, 'dist', 'HWP편집기.html'), os.path.join(HERE, 'android', 'assets', 'index.html')):
-        open(out, 'w', encoding='utf-8').write(html)
+    open(os.path.join(HERE, 'android', 'assets', 'index.html'), 'w', encoding='utf-8').write(html)
+    # PC·웹용엔 글꼴 파일이 없으니 글꼴 규칙을 빼서 없는 파일을 찾지 않게 한다
+    web = re.sub(r'@font-face \{ font-family: HwpSerif;[^}]*\}\n', '', html)
+    open(os.path.join(HERE, 'dist', 'HWP편집기.html'), 'w', encoding='utf-8').write(web)
+    # 안드로이드는 명조 글꼴이 없는 기기가 많아 나눔명조(OFL)를 앱에 넣는다
+    fonts = os.path.join(HERE, 'android', 'assets', 'fonts')
+    shutil.rmtree(fonts, ignore_errors=True)
+    shutil.copytree(os.path.join(HERE, 'fonts'), fonts)
     print('ok', len(html) // 1024, 'KB')
 
 

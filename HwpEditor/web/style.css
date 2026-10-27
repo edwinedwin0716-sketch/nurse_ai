@@ -1,3 +1,6 @@
+/* 안드로이드 앱에 넣은 나눔명조(OFL). 웹·PC에선 파일이 없어서 기기 글꼴을 쓴다 */
+@font-face { font-family: HwpSerif; src: url("fonts/NanumMyeongjo.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: HwpSerif; src: url("fonts/NanumMyeongjoBold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
 :root {
   --bar: #f3f4f6; --bar2: #ffffff; --line: #d5d8dd; --text: #1f2328; --sub: #5d6470; --accent: #2563c9; --accent-soft: #e3ecfb;
   --desk: #8b9099; --hover: #e8ebef; --press: #d9e3f3; --danger: #c62828;
@@ -74,6 +77,11 @@ button, select, input, textarea { font: inherit; color: inherit; }
 .mask .hf { overflow: hidden; font: 10pt/1.6 "함초롬바탕", "Noto Serif KR", serif; white-space: pre-wrap; color: #000; }
 .mask .hf p { margin: 0; }
 .mask .pgno { font: 10pt "함초롬바탕", "Noto Serif KR", serif; color: #000; white-space: nowrap; }
+.pagegrid .sheet { cursor: pointer; }
+.pagegrid .sheet:hover { outline: 3px solid var(--accent); }
+.pcard { position: absolute; left: 0; overflow: hidden; pointer-events: none; }
+.pcard .docclone { position: absolute; left: 0; }
+.pgnum { position: absolute; left: 0; right: 0; text-align: center; font: 12px var(--font-ui); color: #fff; text-shadow: 0 1px 2px #0008; }
 .sheet .hf { position: absolute; overflow: hidden; font: 10pt/1.6 "함초롬바탕", "Noto Serif KR", serif; white-space: pre-wrap; color: #000; }
 .sheet .hf p { margin: 0; }
 .sheet .guide { position: absolute; border: 1px dashed transparent; pointer-events: none; }
@@ -83,22 +91,34 @@ button, select, input, textarea { font: inherit; color: inherit; }
 .sheet .notes p { margin: 0; }
 
 #doc { position: absolute; outline: none; color: #000; background: transparent; caret-color: #000;
-  font: 10pt/1.6 "함초롬바탕", "HCR Batang", "Noto Serif KR", "Noto Serif CJK KR", serif; white-space: pre-wrap; word-break: break-all; overflow-wrap: anywhere;
-  tab-size: 40pt; -moz-tab-size: 40pt; counter-reset: o1 o2 o3 o4 o5 o6 o7 fn ln; }
+  font: 10pt/1.6 "함초롬바탕", "HCR Batang", HwpSerif, AppleMyungjo, Batang, "Noto Serif KR", "Noto Serif CJK KR", serif; white-space: pre-wrap; word-break: normal; overflow-wrap: anywhere; text-justify: inter-word;
+  tab-size: 40pt; -moz-tab-size: 40pt; counter-reset: o1 o2 o3 o4 o5 o6 o7 fn en ln; }
 #doc p { margin: 0; min-height: 1em; }
 #doc table.tb { border-collapse: collapse; table-layout: fixed; margin: 0; }
 #doc td table.tb, #doc th table.tb, #doc .box table.tb { table-layout: auto; max-width: 100%; }
 #doc .pgap { pointer-events: none; }
-#doc table.tb td { border: 0.12mm solid #000; padding: 1.41mm 1.8mm; vertical-align: middle; overflow-wrap: anywhere; }
+#doc table.tb td { border: 0.12mm solid #000; padding: 0.5mm 1.8mm; vertical-align: middle; overflow-wrap: anywhere; }
+/* 한글이 정한 줄 바꿈: 보기 모드에서만 쓴다 (편집할 땐 기기가 줄을 나눈다) */
+#doc .hlb { display: none; }
+#doc .pua { display: none; }
+.hlines #doc .hlb { display: block; height: 0; }
+.hlines #doc p:has(> .hlb):not([style*="text-align"]) { text-align-last: justify; }
+.hlines #doc .hll { display: block; text-indent: 0; text-align-last: auto; }
 #doc table.tb td.cellsel { background-image: linear-gradient(rgba(37, 99, 201, .28), rgba(37, 99, 201, .28)); }
 #doc img { vertical-align: bottom; max-width: 100%; }
 #doc img.picked { outline: 2px solid var(--accent); outline-offset: 1px; }
-#doc .box { border: 0.12mm solid #000; padding: 1.41mm 1.8mm; margin: 2pt 0; }
+#doc .box { border: 0.12mm solid #000; padding: 0.5mm 1.8mm; margin: 2pt 0; }
 #doc a { color: #00f; text-decoration: underline; }
 #doc .fn { counter-increment: fn; color: #00f; cursor: pointer; font-size: 75%; }
 #doc .fn::after { content: counter(fn) ")"; }
+#doc .fn[data-end] { counter-increment: en; }
+#doc .fn[data-end]::after { content: counter(en, lower-roman) ")"; }
+.fnotes { font: 9pt/1.5 "함초롬바탕", HwpSerif, AppleMyungjo, Batang, "Noto Serif KR", serif; color: #000; }
+.fnotes::before { content: ""; display: block; width: 40%; border-top: 0.5pt solid #000; margin-bottom: 3px; }
+.fnotes p { margin: 0; }
 #doc .eq { font-family: "Times New Roman", serif; font-style: italic; background: #f1f5ff; padding: 0 2px; border-radius: 2px; cursor: pointer; }
 #doc .pgn { background: #eef; }
+#doc .ph { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; border: 1px dashed #999; background: #f5f5f5; color: #777; font: 9pt var(--font-ui); vertical-align: bottom; max-width: 100%; text-indent: 0; }
 #doc[data-ro="1"] { caret-color: transparent; }
 
 /* 개요 번호(1. 가. 1) 가) (1) (가) ①)와 문단 번호·글머리표 */
