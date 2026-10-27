@@ -74,6 +74,7 @@ const Hwpx = (() => {
       spine = desc(d, 'itemref').map(r => manifest[r.getAttribute('idref')]).filter(h => h && /section/i.test(h));
     }
     if (!spine.length) spine = Object.keys(files).filter(k => /^Contents\/section\d+\.xml$/i.test(k)).sort((a, b) => parseInt(a.match(/\d+/)) - parseInt(b.match(/\d+/)));
+    if (!spine.length) throw new Error('한글 문서(.hwpx)가 아니라서 열 수 없어요');
     const headerPath = Object.keys(files).find(k => /^Contents\/header\.xml$/i.test(k));
     const ctx = { doc, files, manifest, head: readHeader(headerPath ? dec.decode(files[headerPath]) : ''), binMap: {}, pageSet: false };
     spine.forEach((path, i) => {

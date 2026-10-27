@@ -43,6 +43,8 @@ public class MainActivity extends Activity {
     private byte[] pending;          // 저장 위치를 고르는 동안 기다리는 내용
     private String pendingName = "";
     private Intent startIntent;
+    private String openCall;         // 화면이 준비되기 전에 연 파일을 다시 알려 줄 때 쓴다
+    private boolean pageReady;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -69,7 +71,9 @@ public class MainActivity extends Activity {
             }
             @Override
             public void onPageFinished(WebView view, String url) {
+                pageReady = true;
                 if (startIntent != null) { Intent i = startIntent; startIntent = null; readIntent(i); }
+                else if (openCall != null && loaded != null) js(openCall);
             }
         });
         web.setWebChromeClient(new WebChromeClient() {
@@ -96,7 +100,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        readIntent(intent);
+        if (pageReady) readIntent(intent); else startIntent = intent;
     }
 
     @Override
@@ -113,7 +117,10 @@ public class MainActivity extends Activity {
         Uri uri = null;
         if (Intent.ACTION_SEND.equals(intent.getAction())) uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
         else if (Intent.ACTION_VIEW.equals(intent.getAction())) uri = intent.getData();
+        // 카카오톡 등은 주소를 ClipData에만 담아 보내기도 한다
+        if (uri == null && intent.getClipData() != null && intent.getClipData().getItemCount() > 0) uri = intent.getClipData().getItemAt(0).getUri();
         if (uri == null) return;
+        setIntent(new Intent(Intent.ACTION_MAIN));     // 화면을 돌려도 다시 열지 않게
         boolean writable = (intent.getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != 0;
         openUri(uri, writable);
     }
@@ -129,7 +136,8 @@ public class MainActivity extends Activity {
             loaded = out.toByteArray();
             currentUri = writable ? uri : null;
             String name = displayName(uri);
-            js("window.HwpNative.onOpened(" + q(name) + "," + loaded.length + "," + writable + "," + q(uri.toString()) + ")");
+            openCall = "window.HwpNative && window.HwpNative.onOpened(" + q(name) + "," + loaded.length + "," + writable + "," + q(uri.toString()) + ")";
+            js(openCall);
             return true;
         } catch (Exception e) {
             toast("파일을 열 수 없어요: " + e.getMessage());
@@ -268,10 +276,11 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
-        public void chunkDone() { loaded = null; }
+        public void chunkDone() { loaded = null; openCall = null; }
 
+        // 편집 화면이 다 뜬 뒤 아직 못 받은 파일이 있으면 다시 보낸다
         @JavascriptInterface
-        public void pendingFile() { }
+        public void pendingFile() { if (loaded != null && openCall != null) js(openCall); }
 
         @JavascriptInterface
         public boolean openRecent(final String uri) {

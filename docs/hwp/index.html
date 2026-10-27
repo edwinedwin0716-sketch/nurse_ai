@@ -1247,6 +1247,7 @@ const Hwpx = (() => {
       spine = desc(d, 'itemref').map(r => manifest[r.getAttribute('idref')]).filter(h => h && /section/i.test(h));
     }
     if (!spine.length) spine = Object.keys(files).filter(k => /^Contents\/section\d+\.xml$/i.test(k)).sort((a, b) => parseInt(a.match(/\d+/)) - parseInt(b.match(/\d+/)));
+    if (!spine.length) throw new Error('한글 문서(.hwpx)가 아니라서 열 수 없어요');
     const headerPath = Object.keys(files).find(k => /^Contents\/header\.xml$/i.test(k));
     const ctx = { doc, files, manifest, head: readHeader(headerPath ? dec.decode(files[headerPath]) : ''), binMap: {}, pageSet: false };
     spine.forEach((path, i) => {
@@ -3804,6 +3805,11 @@ const Ed = (() => {
     if (bytes[0] === 0x50 && bytes[1] === 0x4B) return 'hwpx';
     if (/\.html?$/i.test(name)) return 'html';
     if (/\.hwp$/i.test(name) && new TextDecoder('latin1').decode(bytes.subarray(0, 16)).startsWith('HWP Document')) return 'hwp3';
+    // 글자 파일이 아니면(그림·PDF 등) 열지 않는다
+    const head = bytes.subarray(0, 4096);
+    let zeros = 0;
+    for (const b of head) if (b === 0) zeros++;
+    if (zeros > 4 || /\.(pdf|docx?|pptx?|xlsx?|jpe?g|png|gif|zip|mp4|apk)$/i.test(name)) return 'other';
     return 'txt';
   }
   function openBytes(bytes, name, writable, uri) {
@@ -3813,6 +3819,7 @@ const Ed = (() => {
       if (kind === 'hwp') doc = Hwp5.read(bytes);
       else if (kind === 'hwpx') doc = Hwpx.read(bytes);
       else if (kind === 'hwp3') throw new Error('아주 옛날 한글(97 이전) 문서는 열 수 없어요');
+      else if (kind === 'other') throw new Error('한글 문서(.hwp · .hwpx)가 아니라서 열 수 없어요');
       else if (kind === 'html') {
         doc = Model.empty();
         const tmp = document.createElement('div'); tmp.style.cssText = 'position:absolute;left:-9999px;width:600px';
@@ -3879,6 +3886,7 @@ const Ed = (() => {
       const step = 512 * 1024;
       for (let off = 0; off < size; off += step) parts.push(Native.chunk(off, step));
       Native.chunkDone();
+      if (size > 0 && !parts.join('')) return;          // 같은 파일을 두 번 받은 경우
       const bin = atob(parts.join(''));
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
