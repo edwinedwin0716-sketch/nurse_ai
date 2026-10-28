@@ -69,10 +69,12 @@ const Model = (() => {
   }
 
   // 글자처럼 취급하지 않는 그림·표의 위치(가운데·오른쪽·어울림)
-  function placeCss(pl) {
+  // 왼쪽에서 띄운 거리는 들어갈 자리(칸 너비 - 개체 너비)를 넘지 않게 한다 (표 칸 밖으로 삐져나가지 않게)
+  function placeCss(pl, w) {
     if (!pl) return '';
-    if (pl.wrap === 'square' && pl.align !== 'center') return pl.align === 'right' ? ';float:right;margin:0 0 2pt 6pt' : `;float:left;margin:0 6pt 2pt ${pt(pl.x || 0)}`;
-    return ';display:block;' + (pl.align === 'center' ? 'margin-left:auto;margin-right:auto' : pl.align === 'right' ? 'margin-left:auto;margin-right:0' : `margin-left:${pt(pl.x || 0)}`);
+    const x = pl.x ? (w ? `clamp(0pt, ${pt(pl.x)}, calc(100% - ${pt(w)}))` : pt(pl.x)) : '0';
+    if (pl.wrap === 'square' && pl.align !== 'center') return pl.align === 'right' ? ';float:right;margin:0 0 2pt 6pt' : `;float:left;margin:0 6pt 2pt ${x}`;
+    return ';display:block;' + (pl.align === 'center' ? 'margin-left:auto;margin-right:auto' : pl.align === 'right' ? 'margin-left:auto;margin-right:0' : `margin-left:${x}`);
   }
   const placeAttr = pl => pl ? ` data-align="${pl.align}" data-wrap="${pl.wrap}" data-x="${pl.x || 0}"` : '';
   const placeOfEl = n => n.dataset.align ? { align: n.dataset.align, wrap: n.dataset.wrap || 'block', x: +n.dataset.x || 0 } : null;
@@ -100,7 +102,7 @@ const Model = (() => {
         case 'img': {
           const b = ctx.doc.bins[r.bin];
           const url = b ? ctx.url(r.bin, b) : '';
-          h += `<img src="${url}" data-bin="${r.bin}"${placeAttr(r.place)} style="width:${pt(r.w)};height:${pt(r.h)}${placeCss(r.place)}" alt="">`;
+          h += `<img src="${url}" data-bin="${r.bin}"${placeAttr(r.place)} style="width:${pt(r.w)};height:auto;aspect-ratio:${Math.max(1, Math.round(r.w))}/${Math.max(1, Math.round(r.h))}${placeCss(r.place, r.w)}" alt="">`;
           break;
         }
         case 'note': h += `<sup class="fn" contenteditable="false"${r.end ? ' data-end="1"' : ''} data-note="${esc(blocksText(r.blocks))}"></sup>`; break;
@@ -163,7 +165,7 @@ const Model = (() => {
     const rows = [];
     for (const c of t.cells) (rows[c.r] = rows[c.r] || []).push(c);
     const tpl = t.place && t.place.wrap !== 'square' ? t.place : null;
-    let h = `<table class="tb"${placeAttr(tpl)} style="${t.w ? 'width:' + pt(t.w) : ''}${tpl ? placeCss(tpl).replace(';display:block', '') : ''}"><tbody>`;
+    let h = `<table class="tb"${placeAttr(tpl)} style="${t.w ? 'width:' + pt(t.w) : ''}${tpl ? placeCss(tpl, t.w).replace(';display:block', '') : ''}"><tbody>`;
     const nRows = Math.max(t.rows || 0, rows.length);
     for (let r = 0; r < nRows; r++) {
       h += '<tr>';
@@ -273,7 +275,12 @@ const Model = (() => {
         if (tag === 'BR') { if (n.nextSibling || n.previousSibling) p.runs.push({ t: 'br' }); }
         else if (tag === 'IMG') {
           const key = n.dataset.bin;
-          if (key && ctx.doc.bins[key]) p.runs.push({ t: 'img', bin: key, w: huOf(n.style.width) || Math.round(n.width * 75), h: huOf(n.style.height) || Math.round(n.height * 75), place: placeOfEl(n) });
+          if (key && ctx.doc.bins[key]) {
+            const w = huOf(n.style.width) || Math.round(n.width * 75);
+            const ar = /([\d.]+)\s*\/\s*([\d.]+)/.exec(n.style.aspectRatio || '');
+            const h = huOf(n.style.height) || (ar ? Math.round(w * ar[2] / ar[1]) : Math.round(n.height * 75));
+            p.runs.push({ t: 'img', bin: key, w, h, place: placeOfEl(n) });
+          }
         }
         else if (n.classList.contains('fn')) p.runs.push({ t: 'note', end: !!n.dataset.end, blocks: (n.dataset.note || '').split('\n').map(t => para(t)) });
         else if (n.classList.contains('eq')) p.runs.push({ t: 'eq', script: n.dataset.script || n.textContent, cs: csOf(n, el.parentElement, cache) });

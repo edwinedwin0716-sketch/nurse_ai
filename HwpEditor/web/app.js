@@ -7,7 +7,7 @@
   const Native = window.Android || null;              // 안드로이드 앱 안이면 Java 다리
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const narrow = () => window.innerWidth <= 700;
-  const VERSION = '1.2.1';
+  const VERSION = '1.2.2';
   const app = { name: '새 문서.hwpx', writable: false, kind: 'new' };
   const pref = (k, v) => { try { if (v === undefined) return localStorage.getItem('hwped.' + k); localStorage.setItem('hwped.' + k, v); } catch (e) { return null; } };
 
@@ -812,7 +812,8 @@
     });
   }
   function imageDialog(img) {
-    const w0 = Model.ptOf(img.style.width) || img.width * 0.75, h0 = Model.ptOf(img.style.height) || img.height * 0.75;
+    const ar0 = /([\d.]+)\s*\/\s*([\d.]+)/.exec(img.style.aspectRatio || '');
+    const w0 = Model.ptOf(img.style.width) || img.width * 0.75, h0 = Model.ptOf(img.style.height) || (ar0 ? w0 * ar0[2] / ar0[1] : img.height * 0.75);
     const toMm = p => Math.round(p * 25.4 / 72 * 10) / 10;
     dialog('그림 크기', `<div class="grid2">${fld('너비(mm)', num('iW', toMm(w0), 0.5))}${fld('높이(mm)', num('iH', toMm(h0), 0.5))}</div>
       <label class="chk" style="margin-top:8px"><input type="checkbox" id="iKeep" checked>비율 유지</label>
@@ -828,7 +829,7 @@
           d.querySelector('#iW').value = toMm(w); d.querySelector('#iH').value = toMm(w * ratio);
         });
       },
-      onOk: d => { const w = +v(d, '#iW') * 72 / 25.4, h = +v(d, '#iH') * 72 / 25.4; if (w > 0 && h > 0) Ed.act(() => { img.style.width = w.toFixed(1) + 'pt'; img.style.height = h.toFixed(1) + 'pt'; }); },
+      onOk: d => { const w = +v(d, '#iW') * 72 / 25.4, h = +v(d, '#iH') * 72 / 25.4; if (w > 0 && h > 0) Ed.act(() => { img.style.width = w.toFixed(1) + 'pt'; img.style.height = 'auto'; img.style.aspectRatio = `${Math.round(w * 100)}/${Math.round(h * 100)}`; }); },
     });
   }
 
