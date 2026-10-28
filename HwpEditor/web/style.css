@@ -105,7 +105,7 @@ button, select, input, textarea { font: inherit; color: inherit; }
 .hlines #doc p:has(> .hlb):not([style*="text-align"]) { text-align-last: justify; }
 .hlines #doc .hll { display: block; text-indent: 0; text-align-last: auto; }
 #doc table.tb td.cellsel { background-image: linear-gradient(rgba(37, 99, 201, .28), rgba(37, 99, 201, .28)); }
-#doc img { vertical-align: bottom; max-width: 100%; }
+#doc img { vertical-align: bottom; max-width: 100%; object-fit: contain; }
 #doc img.picked { outline: 2px solid var(--accent); outline-offset: 1px; }
 #doc .box { border: 0.12mm solid #000; padding: 0.5mm 1.8mm; margin: 2pt 0; }
 #doc a { color: #00f; text-decoration: underline; }

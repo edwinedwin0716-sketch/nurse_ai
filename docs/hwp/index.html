@@ -119,7 +119,7 @@ button, select, input, textarea { font: inherit; color: inherit; }
 .hlines #doc p:has(> .hlb):not([style*="text-align"]) { text-align-last: justify; }
 .hlines #doc .hll { display: block; text-indent: 0; text-align-last: auto; }
 #doc table.tb td.cellsel { background-image: linear-gradient(rgba(37, 99, 201, .28), rgba(37, 99, 201, .28)); }
-#doc img { vertical-align: bottom; max-width: 100%; }
+#doc img { vertical-align: bottom; max-width: 100%; object-fit: contain; }
 #doc img.picked { outline: 2px solid var(--accent); outline-offset: 1px; }
 #doc .box { border: 0.12mm solid #000; padding: 0.5mm 1.8mm; margin: 2pt 0; }
 #doc a { color: #00f; text-decoration: underline; }
@@ -597,10 +597,12 @@ const Model = (() => {
   }
 
   // 글자처럼 취급하지 않는 그림·표의 위치(가운데·오른쪽·어울림)
-  function placeCss(pl) {
+  // 왼쪽에서 띄운 거리는 들어갈 자리(칸 너비 - 개체 너비)를 넘지 않게 한다 (표 칸 밖으로 삐져나가지 않게)
+  function placeCss(pl, w) {
     if (!pl) return '';
-    if (pl.wrap === 'square' && pl.align !== 'center') return pl.align === 'right' ? ';float:right;margin:0 0 2pt 6pt' : `;float:left;margin:0 6pt 2pt ${pt(pl.x || 0)}`;
-    return ';display:block;' + (pl.align === 'center' ? 'margin-left:auto;margin-right:auto' : pl.align === 'right' ? 'margin-left:auto;margin-right:0' : `margin-left:${pt(pl.x || 0)}`);
+    const x = pl.x ? (w ? `clamp(0pt, ${pt(pl.x)}, calc(100% - ${pt(w)}))` : pt(pl.x)) : '0';
+    if (pl.wrap === 'square' && pl.align !== 'center') return pl.align === 'right' ? ';float:right;margin:0 0 2pt 6pt' : `;float:left;margin:0 6pt 2pt ${x}`;
+    return ';display:block;' + (pl.align === 'center' ? 'margin-left:auto;margin-right:auto' : pl.align === 'right' ? 'margin-left:auto;margin-right:0' : `margin-left:${x}`);
   }
   const placeAttr = pl => pl ? ` data-align="${pl.align}" data-wrap="${pl.wrap}" data-x="${pl.x || 0}"` : '';
   const placeOfEl = n => n.dataset.align ? { align: n.dataset.align, wrap: n.dataset.wrap || 'block', x: +n.dataset.x || 0 } : null;
@@ -628,7 +630,7 @@ const Model = (() => {
         case 'img': {
           const b = ctx.doc.bins[r.bin];
           const url = b ? ctx.url(r.bin, b) : '';
-          h += `<img src="${url}" data-bin="${r.bin}"${placeAttr(r.place)} style="width:${pt(r.w)};height:${pt(r.h)}${placeCss(r.place)}" alt="">`;
+          h += `<img src="${url}" data-bin="${r.bin}"${placeAttr(r.place)} style="width:${pt(r.w)};height:auto;aspect-ratio:${Math.max(1, Math.round(r.w))}/${Math.max(1, Math.round(r.h))}${placeCss(r.place, r.w)}" alt="">`;
           break;
         }
         case 'note': h += `<sup class="fn" contenteditable="false"${r.end ? ' data-end="1"' : ''} data-note="${esc(blocksText(r.blocks))}"></sup>`; break;
@@ -691,7 +693,7 @@ const Model = (() => {
     const rows = [];
     for (const c of t.cells) (rows[c.r] = rows[c.r] || []).push(c);
     const tpl = t.place && t.place.wrap !== 'square' ? t.place : null;
-    let h = `<table class="tb"${placeAttr(tpl)} style="${t.w ? 'width:' + pt(t.w) : ''}${tpl ? placeCss(tpl).replace(';display:block', '') : ''}"><tbody>`;
+    let h = `<table class="tb"${placeAttr(tpl)} style="${t.w ? 'width:' + pt(t.w) : ''}${tpl ? placeCss(tpl, t.w).replace(';display:block', '') : ''}"><tbody>`;
     const nRows = Math.max(t.rows || 0, rows.length);
     for (let r = 0; r < nRows; r++) {
       h += '<tr>';
@@ -801,7 +803,12 @@ const Model = (() => {
         if (tag === 'BR') { if (n.nextSibling || n.previousSibling) p.runs.push({ t: 'br' }); }
         else if (tag === 'IMG') {
           const key = n.dataset.bin;
-          if (key && ctx.doc.bins[key]) p.runs.push({ t: 'img', bin: key, w: huOf(n.style.width) || Math.round(n.width * 75), h: huOf(n.style.height) || Math.round(n.height * 75), place: placeOfEl(n) });
+          if (key && ctx.doc.bins[key]) {
+            const w = huOf(n.style.width) || Math.round(n.width * 75);
+            const ar = /([\d.]+)\s*\/\s*([\d.]+)/.exec(n.style.aspectRatio || '');
+            const h = huOf(n.style.height) || (ar ? Math.round(w * ar[2] / ar[1]) : Math.round(n.height * 75));
+            p.runs.push({ t: 'img', bin: key, w, h, place: placeOfEl(n) });
+          }
         }
         else if (n.classList.contains('fn')) p.runs.push({ t: 'note', end: !!n.dataset.end, blocks: (n.dataset.note || '').split('\n').map(t => para(t)) });
         else if (n.classList.contains('eq')) p.runs.push({ t: 'eq', script: n.dataset.script || n.textContent, cs: csOf(n, el.parentElement, cache) });
@@ -2112,7 +2119,7 @@ const Ed = (() => {
   }
   function cleanHtml() {
     const c = el.cloneNode(true);
-    c.querySelectorAll('.pgap, tr.pgap-row').forEach(e => e.remove());
+    c.querySelectorAll('.pgap, tr.pgap-row, colgroup.cg').forEach(e => e.remove());
     c.querySelectorAll('[data-rsadd]').forEach(td => { td.rowSpan = Math.max(1, td.rowSpan - (+td.dataset.rsadd || 0)); td.removeAttribute('data-rsadd'); });
     c.querySelectorAll('[data-push]').forEach(e => { e.style.marginTop = ''; e.removeAttribute('data-push'); if (!e.getAttribute('style')) e.removeAttribute('style'); });
     c.querySelectorAll('[data-shift]').forEach(e => { e.style.position = ''; e.style.top = ''; e.removeAttribute('data-shift'); if (!e.getAttribute('style')) e.removeAttribute('style'); });
@@ -2372,6 +2379,37 @@ const Ed = (() => {
     }
   }
 
+  // 표 칸 너비: 칸마다 정해 둔 너비로 열 너비를 구해 <colgroup>으로 준다.
+  // (첫 줄이 합친 칸이면 브라우저가 열을 똑같이 나누어 버리므로)
+  function fitColumns() {
+    for (const table of el.querySelectorAll('table.tb')) {
+      const g = gridOf(table);
+      if (!g.nCols) continue;
+      const w = new Array(g.nCols).fill(0);
+      const widthOf = td => Model.ptOf(td.style.width);
+      for (const [td, i] of g.cells) if (i.cs === 1 && !w[i.c]) w[i.c] = widthOf(td);
+      for (let round = 0; round < 4; round++) {
+        let moved = false;
+        for (const [td, i] of g.cells) {
+          if (i.cs === 1) continue;
+          const cols = [...Array(i.cs).keys()].map(k => i.c + k);
+          const unknown = cols.filter(c => !w[c]);
+          if (!unknown.length) continue;
+          const rest = widthOf(td) - cols.reduce((a, c) => a + w[c], 0);
+          if (rest > 1) { unknown.forEach(c => { w[c] = rest / unknown.length; }); moved = true; }
+        }
+        if (!moved) break;
+      }
+      const known = w.filter(Boolean), total = Model.ptOf(table.style.width) || known.reduce((a, b) => a + b, 0);
+      const missing = w.filter(x => !x).length;
+      if (missing) { const each = Math.max(10, (total - known.reduce((a, b) => a + b, 0)) / missing) || 30; for (let c = 0; c < w.length; c++) if (!w[c]) w[c] = each; }
+      const html = w.map(x => `<col style="width:${x.toFixed(2)}pt">`).join('');
+      let cg = table.querySelector(':scope > colgroup.cg');
+      if (!cg) { cg = document.createElement('colgroup'); cg.className = 'cg'; table.insertBefore(cg, table.firstChild); }
+      if (cg.innerHTML !== html) cg.innerHTML = html;
+    }
+  }
+
   function layout() {
     clearTimeout(pagTimer);
     renumber();
@@ -2379,6 +2417,7 @@ const Ed = (() => {
     Object.assign(el.style, { left: (PAD + g.left) + 'px', top: (PAD + g.top) + 'px', width: g.bodyW + 'px' });
     const sel = saveSelOffsets();
     clearPagination();
+    fitColumns();
     const kids = [...el.children];
     let pages = 1;
     if (st.pageView) {
@@ -3398,7 +3437,7 @@ const Ed = (() => {
   const Native = window.Android || null;              // 안드로이드 앱 안이면 Java 다리
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const narrow = () => window.innerWidth <= 700;
-  const VERSION = '1.2.1';
+  const VERSION = '1.2.2';
   const app = { name: '새 문서.hwpx', writable: false, kind: 'new' };
   const pref = (k, v) => { try { if (v === undefined) return localStorage.getItem('hwped.' + k); localStorage.setItem('hwped.' + k, v); } catch (e) { return null; } };
 
@@ -4203,7 +4242,8 @@ const Ed = (() => {
     });
   }
   function imageDialog(img) {
-    const w0 = Model.ptOf(img.style.width) || img.width * 0.75, h0 = Model.ptOf(img.style.height) || img.height * 0.75;
+    const ar0 = /([\d.]+)\s*\/\s*([\d.]+)/.exec(img.style.aspectRatio || '');
+    const w0 = Model.ptOf(img.style.width) || img.width * 0.75, h0 = Model.ptOf(img.style.height) || (ar0 ? w0 * ar0[2] / ar0[1] : img.height * 0.75);
     const toMm = p => Math.round(p * 25.4 / 72 * 10) / 10;
     dialog('그림 크기', `<div class="grid2">${fld('너비(mm)', num('iW', toMm(w0), 0.5))}${fld('높이(mm)', num('iH', toMm(h0), 0.5))}</div>
       <label class="chk" style="margin-top:8px"><input type="checkbox" id="iKeep" checked>비율 유지</label>
@@ -4219,7 +4259,7 @@ const Ed = (() => {
           d.querySelector('#iW').value = toMm(w); d.querySelector('#iH').value = toMm(w * ratio);
         });
       },
-      onOk: d => { const w = +v(d, '#iW') * 72 / 25.4, h = +v(d, '#iH') * 72 / 25.4; if (w > 0 && h > 0) Ed.act(() => { img.style.width = w.toFixed(1) + 'pt'; img.style.height = h.toFixed(1) + 'pt'; }); },
+      onOk: d => { const w = +v(d, '#iW') * 72 / 25.4, h = +v(d, '#iH') * 72 / 25.4; if (w > 0 && h > 0) Ed.act(() => { img.style.width = w.toFixed(1) + 'pt'; img.style.height = 'auto'; img.style.aspectRatio = `${Math.round(w * 100)}/${Math.round(h * 100)}`; }); },
     });
   }
 

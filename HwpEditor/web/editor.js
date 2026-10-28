@@ -51,7 +51,7 @@ const Ed = (() => {
   }
   function cleanHtml() {
     const c = el.cloneNode(true);
-    c.querySelectorAll('.pgap, tr.pgap-row').forEach(e => e.remove());
+    c.querySelectorAll('.pgap, tr.pgap-row, colgroup.cg').forEach(e => e.remove());
     c.querySelectorAll('[data-rsadd]').forEach(td => { td.rowSpan = Math.max(1, td.rowSpan - (+td.dataset.rsadd || 0)); td.removeAttribute('data-rsadd'); });
     c.querySelectorAll('[data-push]').forEach(e => { e.style.marginTop = ''; e.removeAttribute('data-push'); if (!e.getAttribute('style')) e.removeAttribute('style'); });
     c.querySelectorAll('[data-shift]').forEach(e => { e.style.position = ''; e.style.top = ''; e.removeAttribute('data-shift'); if (!e.getAttribute('style')) e.removeAttribute('style'); });
@@ -311,6 +311,37 @@ const Ed = (() => {
     }
   }
 
+  // 표 칸 너비: 칸마다 정해 둔 너비로 열 너비를 구해 <colgroup>으로 준다.
+  // (첫 줄이 합친 칸이면 브라우저가 열을 똑같이 나누어 버리므로)
+  function fitColumns() {
+    for (const table of el.querySelectorAll('table.tb')) {
+      const g = gridOf(table);
+      if (!g.nCols) continue;
+      const w = new Array(g.nCols).fill(0);
+      const widthOf = td => Model.ptOf(td.style.width);
+      for (const [td, i] of g.cells) if (i.cs === 1 && !w[i.c]) w[i.c] = widthOf(td);
+      for (let round = 0; round < 4; round++) {
+        let moved = false;
+        for (const [td, i] of g.cells) {
+          if (i.cs === 1) continue;
+          const cols = [...Array(i.cs).keys()].map(k => i.c + k);
+          const unknown = cols.filter(c => !w[c]);
+          if (!unknown.length) continue;
+          const rest = widthOf(td) - cols.reduce((a, c) => a + w[c], 0);
+          if (rest > 1) { unknown.forEach(c => { w[c] = rest / unknown.length; }); moved = true; }
+        }
+        if (!moved) break;
+      }
+      const known = w.filter(Boolean), total = Model.ptOf(table.style.width) || known.reduce((a, b) => a + b, 0);
+      const missing = w.filter(x => !x).length;
+      if (missing) { const each = Math.max(10, (total - known.reduce((a, b) => a + b, 0)) / missing) || 30; for (let c = 0; c < w.length; c++) if (!w[c]) w[c] = each; }
+      const html = w.map(x => `<col style="width:${x.toFixed(2)}pt">`).join('');
+      let cg = table.querySelector(':scope > colgroup.cg');
+      if (!cg) { cg = document.createElement('colgroup'); cg.className = 'cg'; table.insertBefore(cg, table.firstChild); }
+      if (cg.innerHTML !== html) cg.innerHTML = html;
+    }
+  }
+
   function layout() {
     clearTimeout(pagTimer);
     renumber();
@@ -318,6 +349,7 @@ const Ed = (() => {
     Object.assign(el.style, { left: (PAD + g.left) + 'px', top: (PAD + g.top) + 'px', width: g.bodyW + 'px' });
     const sel = saveSelOffsets();
     clearPagination();
+    fitColumns();
     const kids = [...el.children];
     let pages = 1;
     if (st.pageView) {
