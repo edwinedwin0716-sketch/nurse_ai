@@ -4,6 +4,10 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Security
 Add-Type -Path (Join-Path $PSScriptRoot 'ModernControls.cs') -ReferencedAssemblies System.Windows.Forms,System.Drawing
+# 한글(.hwpx)·Word 제출 양식 만들기 (HwpxReport.cs). 못 불러와도 나머지 기능은 그대로 쓴다
+$script:hwpxOk=$true;$script:hwpxError=''
+try{Add-Type -Path @((Join-Path $PSScriptRoot 'HwpxReport.cs'),(Join-Path $PSScriptRoot 'HwpxTemplate.cs')) -ReferencedAssemblies System.Core,System.IO.Compression,System.Web.Extensions}
+catch{$script:hwpxOk=$false;$script:hwpxError=$_.Exception.Message}
 . (Join-Path $PSScriptRoot 'Templates.ps1')
 if(-not($Check -or $SelfTest)){
     $created=$false;$script:instance=New-Object Threading.Mutex($true,'Local\NursingHelperShare',([ref]$created))
@@ -218,32 +222,53 @@ function Get-Cover {
     $d=New-Object Windows.Forms.Form;$d.Text='표지';$d.ClientSize=New-Object Drawing.Size(460,400);$d.StartPosition='CenterParent'
     $d.FormBorderStyle='FixedDialog';$d.MaximizeBox=$false;$d.MinimizeBox=$false;$d.BackColor=[Theme]::Back;$d.Font=[Theme]::UI(9.5,$false)
     $title=New-Text '표지 정보' 14 $true;$title.Location=New-Object Drawing.Point(20,14)
-    $f1=New-Field '예) 2026-1 여성건강간호학Ⅰ' 1;$f2=New-Field '예) 산후출혈 간호과정' 1;$f3=New-Field '예) C-7조 (학번 이름, …)' 1;$f4=New-Field '예) ○○대학교 간호학과' 1
-    if($c){$f1.Text=$c.subject;$f2.Text=$c.title;$f3.Text=$c.author;$f4.Text=$c.school}
-    $card=New-FormCard 420 @(@('과목',$f1),@('제목',$f2),@('제출자',$f3),@('학교·학과',$f4));$card.Location=New-Object Drawing.Point(20,50)
+    $f1=New-Field '예) 2026년도 2학기' 1;$f2=New-Field '예) 제왕절개분만(C-sec)' 1;$f5=New-Field '예) ○○병원 31병동' 1;$f6=New-Field '예) ○○○ 교수님' 1
+    $f7=New-Field '예) 2024○○○○, …' 1;$f3=New-Field '예) 홍길동, …' 1;$f4=New-Field '예) ○○대학교 간호학과' 1
+    if($c){$f1.Text=$c.subject;$f2.Text=$c.title;$f3.Text=$c.author;$f4.Text=$c.school;$f5.Text=[string]$c.place;$f6.Text=[string]$c.professor;$f7.Text=[string]$c.studentNo}
+    $card=New-FormCard 420 @(@('학기·과목',$f1),@('제목',$f2),@('실습장소',$f5),@('담당교수',$f6),@('학번',$f7),@('성명',$f3),@('학교·학과',$f4));$card.Location=New-Object Drawing.Point(20,50)
     $note=New-Text '이 정보는 이 PC에만 저장돼요.' 8.5 $false ([Theme]::Secondary);$note.Location=New-Object Drawing.Point(24,($card.Bottom+8))
     $ok=New-Pill '표지 넣고 저장' $true;$ok.Location=New-Object Drawing.Point(20,($note.Bottom+14))
     $skip=New-Pill '표지 없이 저장';$skip.Location=New-Object Drawing.Point(($ok.Right+8),$ok.Top)
+    $d.ClientSize=New-Object Drawing.Size(460,($ok.Bottom+20))
     $ok.Add_Click({$d.DialogResult='OK';$d.Close()});$skip.Add_Click({$d.DialogResult='Ignore';$d.Close()})
     $d.Controls.AddRange(@($title,$card,$note,$ok,$skip))
     $r=$d.ShowDialog($form);$cover=$null
     if($r -eq 'OK'){
-        $script:settings.cover=[pscustomobject]@{subject=$f1.Text.Trim();title=$f2.Text.Trim();author=$f3.Text.Trim();school=$f4.Text.Trim()};Save-Settings
-        $cover=@{subject=$f1.Text.Trim();title=$f2.Text.Trim();author=$f3.Text.Trim();school=$f4.Text.Trim();date=$datePicker.Value.ToString('yyyy년 M월 d일',[Globalization.CultureInfo]::InvariantCulture)}
+        $script:settings.cover=[pscustomobject]@{subject=$f1.Text.Trim();title=$f2.Text.Trim();author=$f3.Text.Trim();school=$f4.Text.Trim();place=$f5.Text.Trim();professor=$f6.Text.Trim();studentNo=$f7.Text.Trim()};Save-Settings
+        $cover=@{subject=$f1.Text.Trim();title=$f2.Text.Trim();author=$f3.Text.Trim();school=$f4.Text.Trim();place=$f5.Text.Trim();professor=$f6.Text.Trim();studentNo=$f7.Text.Trim();date=$datePicker.Value.ToString('yyyy.M.d',[Globalization.CultureInfo]::InvariantCulture)}
     }
     $d.Dispose()
     if($r -eq 'Cancel'){return 'cancel'}
     return $cover
 }
+# 제출 양식 결과를 HwpxReport.cs 에 넘길 JSON (휴대폰판 report.js 와 같은 내용)
+function ConvertTo-ReportJson($m,$cover) {
+    $diags=@(foreach($d in $m.diags){
+        [pscustomobject]@{name=[string]$d.name;page=[string]$d.page;statement=[string]$d.statement;long=[string]$d.long
+            short=@($d.short|ForEach-Object {[string]$_});cues=@($d.cues|ForEach-Object {[string]$_})
+            plans=@(foreach($p in $d.plans){[pscustomobject]@{kind=[string]$p.kind;plan=[string]$p.plan;why=[string]$p.why}})}
+    })
+    $o=[pscustomobject]@{md=$m.date.ToString('M/d',[Globalization.CultureInfo]::InvariantCulture);subjective=@($m.subjective|ForEach-Object {[string]$_});objective=@($m.objective|ForEach-Object {[string]$_});diags=$diags;cover=$cover}
+    return (ConvertTo-Json -InputObject $o -Depth 8 -Compress)
+}
 function Save-Document {
     if(-not $output.Text.Trim()){return}
     $dialog=New-Object Windows.Forms.SaveFileDialog
-    $dialog.Filter='Word 문서 (*.doc)|*.doc|웹 페이지 · 한글/브라우저에서 열기·인쇄 (*.html)|*.html|서식 있는 문서 (*.rtf)|*.rtf|텍스트 (*.txt)|*.txt'
+    $dialog.Filter='한글 문서 - 제출 양식 (*.hwpx)|*.hwpx|Word 문서 (*.doc)|*.doc|웹 페이지 · 한글/브라우저에서 열기·인쇄 (*.html)|*.html|서식 있는 문서 (*.rtf)|*.rtf|텍스트 (*.txt)|*.txt'
     $dialog.FileName="간호과정_$($datePicker.Value.ToString('yyyyMMdd'))"
     if($dialog.ShowDialog($form) -eq 'OK'){
         $path=$dialog.FileName;$ext=[IO.Path]::GetExtension($path).ToLower()
-        if($ext -in @('.doc','.html','.htm')){
-            if($script:model -and $script:format -eq 'report'){$cover=Get-Cover;if($cover -eq 'cancel'){$dialog.Dispose();return};$html=ConvertTo-ReportHtml $script:model $cover}
+        if($ext -eq '.hwpx'){
+            if(-not $script:hwpxOk){[Windows.Forms.MessageBox]::Show("한글 저장 기능을 불러오지 못했어요. Word로 저장해 주세요.`r`n$($script:hwpxError)",'간호과정 도우미')|Out-Null;$dialog.Dispose();return}
+            if(-not $script:model){[Windows.Forms.MessageBox]::Show('한글 저장은 ‘틀 만들기’로 만든 결과를 제출 양식 표로 저장해요. 먼저 제출 양식이나 B4 워크북으로 틀을 만들어 주세요.','간호과정 도우미')|Out-Null;$dialog.Dispose();return}
+            $cover=Get-Cover;if($cover -eq 'cancel'){$dialog.Dispose();return}
+            [HwpxReport]::Save($path,(ConvertTo-ReportJson $script:model $cover))
+        }
+        elseif($ext -in @('.doc','.html','.htm')){
+            if($script:model -and $script:format -eq 'report'){
+                $cover=Get-Cover;if($cover -eq 'cancel'){$dialog.Dispose();return}
+                if($script:hwpxOk){$html=[HwpxReport]::Html((ConvertTo-ReportJson $script:model $cover))}else{$html=ConvertTo-ReportHtml $script:model $cover}
+            }
             elseif($script:model){$html=ConvertTo-WorkbookHtml $script:model}else{$html=ConvertTo-SimpleHtml $output.Text};[IO.File]::WriteAllText($path,$html,[Text.UTF8Encoding]::new($true))}
         elseif($ext -eq '.txt'){[IO.File]::WriteAllText($path,$output.Text.Replace("`n","`r`n"),[Text.UTF8Encoding]::new($true))}
         else{$output.SaveFile($path,'RichText')}
@@ -495,7 +520,7 @@ function Load-Sample {
     Update-Cues
 }
 function Show-Welcome {
-    Show-Document "■ 시작하기`n`n1. 왼쪽에 주관적·객관적 자료를 한 줄에 하나씩 넣으세요.`n2. ‘진단 추천’을 누르면 맞는 간호진단에 체크돼요. 위에서부터 우선순위예요.`n3. 진단을 눌러 원인(관련 요인)을 고치고 ‘틀 만들기’를 누르세요.`n`n· 위쪽에서 제출 양식 / B4 워크북 / 기본 형식을 고를 수 있어요.`n· 결과는 여기서 바로 고칠 수 있어요.`n· 저장 → Word(.doc)를 고르면 표 양식으로 저장돼요. 제출 양식은 표지도 넣을 수 있어요.`n· ‘예시 불러오기’로 바로 사용법을 볼 수 있어요."
+    Show-Document "■ 시작하기`n`n1. 왼쪽에 주관적·객관적 자료를 한 줄에 하나씩 넣으세요.`n2. ‘진단 추천’을 누르면 맞는 간호진단에 체크돼요. 위에서부터 우선순위예요.`n3. 진단을 눌러 원인(관련 요인)을 고치고 ‘틀 만들기’를 누르세요.`n`n· 위쪽에서 제출 양식 / B4 워크북 / 기본 형식을 고를 수 있어요.`n· 결과는 여기서 바로 고칠 수 있어요.`n· 저장 → 한글(.hwpx) 또는 Word(.doc)를 고르면 학교 제출 양식 표로 저장돼요. 표지도 넣을 수 있어요.`n· ‘예시 불러오기’로 바로 사용법을 볼 수 있어요."
 }
 $suggestButton.Add_Click({Suggest})
 $sampleButton.Add_Click({Load-Sample})
@@ -522,6 +547,14 @@ Show-Welcome
 if($Check -or $SelfTest){
     Test-Templates
     Load-Sample;Build-Document
+    # 한글(.hwpx) 제출 양식: 만들어지는지만 확인한다 (실패해도 설치는 막지 않는다)
+    if($script:hwpxOk){
+        try{
+            $hx=[HwpxReport]::Hwpx((ConvertTo-ReportJson $script:model @{subject='학기';title='제목';place='장소';professor='교수';studentNo='학번';author='이름';school='학교';date='2026.1.1'}))
+            if($hx.Length -lt 1000 -or $hx[0] -ne 0x50 -or $hx[1] -ne 0x4B){throw 'hwpx too small'}
+            Write-Output "Hwpx report passed ($($hx.Length) bytes)"
+        }catch{Write-Output "Hwpx report warning: $($_.Exception.Message)"}
+    } else {Write-Output "Hwpx report not loaded: $($script:hwpxError)"}
     $form.Show();[Windows.Forms.Application]::DoEvents();$bitmap=New-Object Drawing.Bitmap($form.Width,$form.Height)
     $form.DrawToBitmap($bitmap,(New-Object Drawing.Rectangle(0,0,$form.Width,$form.Height)));$bitmap.Save((Join-Path $PSScriptRoot 'preview.png'));$bitmap.Dispose()
     $form.Dispose();Write-Output 'Nursing helper UI initialization and preview passed';exit 0

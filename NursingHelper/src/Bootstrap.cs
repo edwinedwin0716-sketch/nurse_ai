@@ -10,14 +10,14 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("간호과정 도우미")]
 [assembly: AssemblyProduct("간호과정 도우미")]
 [assembly: AssemblyDescription("간호과정(사정·진단·계획·중재·평가) 틀 자동 작성")]
-[assembly: AssemblyVersion("1.6.0.0")]
-[assembly: AssemblyFileVersion("1.6.0.0")]
+[assembly: AssemblyVersion("1.7.0.0")]
+[assembly: AssemblyFileVersion("1.7.0.0")]
 
 static class Bootstrap {
- const string Version = "1.6";
+ const string Version = "1.7";
  const string Caption = "간호과정 도우미";
  static readonly object logLock = new object();
- static readonly string[] Payload = { "App.ps1", "Templates.ps1", "ModernControls.cs" };
+ static readonly string[] Payload = { "App.ps1", "Templates.ps1", "ModernControls.cs", "HwpxReport.cs", "HwpxTemplate.cs" };
 
  [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern IntPtr FindWindow(string cls, string title);
  [DllImport("user32.dll")] static extern bool PostMessage(IntPtr window, uint msg, IntPtr w, IntPtr l);

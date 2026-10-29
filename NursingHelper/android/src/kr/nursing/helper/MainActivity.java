@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.print.PrintAttributes;
 import android.print.PrintManager;
+import android.util.Base64;
 import android.view.View;
 import android.view.Window;
 import android.webkit.JavascriptInterface;
@@ -151,7 +152,17 @@ public class MainActivity extends Activity {
         // 다운로드 폴더에 저장 (Android 10 이상은 권한 없이 저장)
         @JavascriptInterface
         public String saveFile(String name, String mime, String content) {
-            byte[] data = content.getBytes(Charset.forName("UTF-8"));
+            return saveBytes(name, mime, content.getBytes(Charset.forName("UTF-8")));
+        }
+
+        // 한글(.hwpx)처럼 글자가 아닌 파일: JS가 base64로 넘긴다
+        @JavascriptInterface
+        public String saveBase64(String name, String mime, String b64) {
+            try { return saveBytes(name, mime, Base64.decode(b64, Base64.DEFAULT)); }
+            catch (Exception e) { return "저장하지 못했어요: " + e.getMessage(); }
+        }
+
+        private String saveBytes(String name, String mime, byte[] data) {
             try {
                 if (Build.VERSION.SDK_INT >= 29) {
                     ContentResolver cr = getContentResolver();

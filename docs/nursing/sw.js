@@ -1,6 +1,6 @@
 // 한 번 열면 인터넷 없이도 열리게 저장해 두고, 인터넷이 되면 뒤에서 새 버전으로 바꾼다.
-const CACHE = 'nursing-cefaf98352';
-const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./app.js", "./engine.js", "./templates.js", "./templates-extra.js"];
+const CACHE = 'nursing-ec1218e098';
+const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./app.js", "./engine.js", "./templates.js", "./templates-extra.js", "./hwpx-pako.js", "./hwpx-container.js", "./hwpx-template.js", "./hwpx-model.js", "./hwpx-writer.js", "./report.js"];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
