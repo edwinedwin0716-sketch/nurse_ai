@@ -158,7 +158,7 @@
     if (moveTo) go('p-out');
   };
   function esc(x) { return x.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-  var SUB = /^(\[.+\]$|– (계획|수행) –$|진단 \d+ :|간호진단 \d+ :|\d순위:|단서묶음 \d|장기목표$|단기목표$|진단적 |치료적 |교육적 |주관적 자료|객관적 자료|자료조직|간호문제|간호수행$|간호중재|단기목표 평가|장기목표 평가|우선순위의 근거|관련\(위험\)|간호진단 진술|간호평가)/;
+  var SUB = /^(\[.+\]$|– (계획|수행) –$|(목표|계획|수행)$|\((진단적|치료적|교육적)\)$|진단 \d+ :|간호진단 \d+ :|\d순위:|단서묶음 \d|장기목표$|단기목표$|진단적 |치료적 |교육적 |주관적 자료|객관적 자료|자료조직|간호문제|간호수행$|간호중재|단기목표 평가|장기목표 평가|우선순위의 근거|관련\(위험\)|간호진단 진술|간호평가)/;
   function renderDoc() {
     var box = $('doc');
     if (!state.text) { box.innerHTML = '<div class="empty">자료를 넣고 ‘진단 추천 받기’ → ‘틀 만들기’를 누르세요.</div>'; return; }
@@ -191,14 +191,19 @@
   var coverNext = null;
   function withCover(next) {
     if (!(state.model && state.format === 'report')) { next(null); return; }
+    withCoverAny(next);
+  }
+  function withCoverAny(next) {
     var c = {}; try { c = JSON.parse(store('cover') || '{}'); } catch (e) {}
     $('cv1').value = c.subject || ''; $('cv2').value = c.title || ''; $('cv3').value = c.author || ''; $('cv4').value = c.school || '';
+    $('cv5').value = c.place || ''; $('cv6').value = c.professor || ''; $('cv7').value = c.studentNo || '';
     coverNext = next; $('sheetBg').style.display = 'block'; setTimeout(function () { $('coverSheet').classList.add('open'); }, 10);
   }
   window.coverDone = function (use) {
-    var c = { subject: $('cv1').value.trim(), title: $('cv2').value.trim(), author: $('cv3').value.trim(), school: $('cv4').value.trim() };
+    var c = { subject: $('cv1').value.trim(), title: $('cv2').value.trim(), author: $('cv3').value.trim(), school: $('cv4').value.trim(),
+      place: $('cv5').value.trim(), professor: $('cv6').value.trim(), studentNo: $('cv7').value.trim() };
     store('cover', JSON.stringify(c)); closeSheets();
-    var d = getDate(); c.date = d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일';
+    var d = getDate(); c.date = d.getFullYear() + '.' + (d.getMonth() + 1) + '.' + d.getDate();
     var next = coverNext; coverNext = null; if (next) next(use ? c : null);
   };
   window.closeSheets = function () { $('coverSheet').classList.remove('open'); closeSettings(); };
@@ -217,6 +222,25 @@
       if (shareFile(fileName('.doc'), 'application/msword', doc)) return;
       var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([doc], { type: 'application/msword' })); a.download = fileName('.doc'); a.click();
     });
+  };
+  // 한글(.hwpx): 제출 양식 표 그대로 (다른 형식이거나 글을 고쳤으면 글 그대로)
+  window.saveHwpx = function () {
+    if (!current()) return;
+    var go = function (cv) {
+      var bytes;
+      try { bytes = N.reportHwpx(state.model && state.format === 'report' ? state.model : null, cv, state.text); }
+      catch (e) { toast('한글 파일을 만들지 못했어요: ' + e.message); return; }
+      var name = fileName('.hwpx'), mime = 'application/hwp+zip';
+      if (bridge && bridge.saveBase64) {
+        var bin = ''; for (var i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+        toast(bridge.saveBase64(name, mime, btoa(bin))); return;
+      }
+      if (shareFile(name, mime, bytes)) return;
+      var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: mime })); a.download = name; a.click();
+      toast('한글 파일로 저장했어요');
+    };
+    if (state.model && state.format !== 'report') toast('한글 저장은 제출 양식 표로 만들어요');
+    if (state.model) withCoverAny(go); else go(null);
   };
   window.printDoc = function () {
     if (!current()) return;

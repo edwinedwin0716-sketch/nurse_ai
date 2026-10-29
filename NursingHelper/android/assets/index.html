@@ -124,6 +124,7 @@ textarea.edit{width:calc(100% - 32px);margin:12px 16px 0;min-height:60vh;border:
     <button class="pill" id="editBtn" onclick="toggleEdit()">편집</button>
     <button class="pill" onclick="copyText()">복사</button>
     <button class="pill" onclick="shareText()">공유</button>
+    <button class="pill" onclick="saveHwpx()">한글 저장</button>
     <button class="pill" onclick="saveDoc()">Word 저장</button>
     <button class="pill" onclick="printDoc()">PDF·인쇄</button>
   </div>
@@ -156,9 +157,12 @@ textarea.edit{width:calc(100% - 32px);margin:12px 16px 0;min-height:60vh;border:
   <div class="grab"></div>
   <h2>표지 정보</h2>
   <div class="card" style="margin-top:12px">
-    <div class="field"><label>과목</label><input id="cv1" placeholder="예) 2026-1 여성건강간호학Ⅰ"></div>
-    <div class="field"><label>제목</label><input id="cv2" placeholder="예) 산후출혈 간호과정"></div>
-    <div class="field"><label>제출자</label><input id="cv3" placeholder="예) C-7조 (학번 이름, …)"></div>
+    <div class="field"><label>학기·과목</label><input id="cv1" placeholder="예) 2026년도 2학기"></div>
+    <div class="field"><label>제목</label><input id="cv2" placeholder="예) 제왕절개분만(C-sec)"></div>
+    <div class="field"><label>실습장소</label><input id="cv5" placeholder="예) ○○병원 31병동"></div>
+    <div class="field"><label>담당교수</label><input id="cv6" placeholder="예) ○○○ 교수님"></div>
+    <div class="field"><label>학번</label><input id="cv7" placeholder="예) 2024○○○○, …"></div>
+    <div class="field"><label>성명</label><input id="cv3" placeholder="예) 홍길동, …"></div>
     <div class="field"><label>학교·학과</label><input id="cv4" placeholder="예) ○○대학교 간호학과"></div>
   </div>
   <p class="note">이 정보는 이 휴대폰에만 저장돼요.</p>
@@ -169,6 +173,12 @@ textarea.edit{width:calc(100% - 32px);margin:12px 16px 0;min-height:60vh;border:
 <script src="templates.js"></script>
 <script src="templates-extra.js"></script>
 <script src="engine.js"></script>
+<script src="hwpx-pako.js"></script>
+<script src="hwpx-container.js"></script>
+<script src="hwpx-template.js"></script>
+<script src="hwpx-model.js"></script>
+<script src="hwpx-writer.js"></script>
+<script src="report.js"></script>
 <script src="app.js"></script>
 <script>/* 컴퓨터에서 ☕ 후원을 누르면 카카오페이 QR을 보여 준다 (PC에서는 카카오페이 창이 안 열림) */
 (function(){var mobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);

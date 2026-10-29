@@ -306,24 +306,24 @@
       var d = sec.d;
       if (k > 0) w('');
       w('■ 간호진단 ' + (k + 1) + '  ' + d.statement);
+      w('(' + d.name + ' : 정의는 별책 부록 8, ' + pg(d) + '에서 옮겨 적으세요)');
       w(''); w('[사정(자료수집)]');
-      w('주관적 자료 : ' + (sec.s.length ? sec.s.join(', ') : '"(대상자가 직접 한 말)"'));
-      w('객관적 자료 : ' + (sec.o.length ? sec.o.join(', ') : '(V/S, 검사 결과, 관찰 내용)'));
+      w('주관적 자료'); (sec.s.length ? sec.s : ['"(대상자가 직접 한 말)"']).forEach(function (x) { w(x); });
+      w('객관적 자료'); (sec.o.length ? sec.o : ['(V/S, 검사 결과, 관찰 내용)']).forEach(function (x) { w(x); });
       w(''); w('[간호계획 및 수행]');
-      w('장기목표: ' + d.long);
-      d.short.forEach(function (g, i) { w((i === 0 ? '단기목표: ' : '          ') + g); });
-      w(''); w('– 계획 –');
-      sec.groups.forEach(function (g) { w('[' + g.title + ']'); g.items.forEach(function (it) { w(it.no + it.plan); }); });
-      w(''); w('– 수행 –');
-      var i = 0;
-      sec.groups.forEach(function (g) { g.items.forEach(function (it) { i++; w(i + '. ' + it.done); w('   - ' + dd + ' __:__ (수행 결과·대상자 반응을 적으세요)'); }); });
+      w('목표'); w('단기목표'); d.short.forEach(function (g, i) { w((i + 1) + '. ' + g); });
+      w('장기목표'); w(d.long);
+      w(''); w('계획');
+      sec.groups.forEach(function (g) { w('(' + g.title.replace(' 지시', '') + ')'); g.items.forEach(function (it) { w(it.no + ' ' + it.plan); }); });
+      w(''); w('수행');
+      sec.groups.forEach(function (g) { w('(' + g.title.replace(' 지시', '') + ')'); g.items.forEach(function (it) { w(it.no + ' ' + it.done); w('→ ' + dd + ' __:__ (수행 결과·대상자 반응을 적으세요)'); }); });
       w(''); w('[합리적 근거]');
-      sec.groups.forEach(function (g) { g.items.forEach(function (it) { w(it.no + it.why); w('(참고문헌: 저자 외. (연도). 교재명 제_판 p.__ 출판사 — 확인 후 적으세요)'); }); });
+      sec.groups.forEach(function (g) { w('(' + g.title.replace(' 지시', '') + ')'); g.items.forEach(function (it) { w(it.no + ' ' + it.why); w('(참고문헌: 저자 외. (연도). 교재명 제_판. 출판사. p.__ — 확인 후 적으세요)'); }); });
       w(''); w('[간호평가]');
-      w('장기목표: ' + d.long + ' (달성 / 부분 달성 / 미달성)');
-      d.short.forEach(function (g, i) { w((i === 0 ? '단기목표: ' : '          ') + g + ' (달성 / 부분 달성 / 미달성)'); });
+      w('단기목표'); d.short.forEach(function (g, i) { w((i + 1) + '. ' + g); w('→ 대상자는 __ (결과를 수치로 적으세요) (달성 / 부분 달성 / 미달성)'); });
+      w('장기목표'); w(d.long); w('→ 대상자는 __ (퇴원 시 상태를 적으세요) (달성 / 부분 달성 / 미달성)');
     });
-    w(''); w('※ 자동으로 만든 틀입니다. 수행 결과와 참고문헌은 직접 채우고, 이론적 근거는 교재로 꼭 확인·수정하세요.');
+    w(''); w('※ 자동으로 만든 틀입니다. 진단 정의·수행 결과·참고문헌은 직접 채우고, 이론적 근거는 교재로 꼭 확인·수정하세요.');
     return out.join('\n') + '\n';
   }
   function reportHtml(m, cover) {
@@ -356,7 +356,7 @@
   root.Nursing = {
     formatDiagnosis: formatDiagnosis, toPast: toPast, splitLines: splitLines, findDiagnoses: findDiagnoses, cues: cues,
     basic: basic, workbookModel: workbookModel, workbookText: workbookText, workbookHtml: workbookHtml, simpleHtml: simpleHtml,
-    reportText: reportText, reportHtml: reportHtml, toDone: toDone,
+    reportText: reportText, reportHtml: reportHtml, toDone: toDone, reportSections: reportSections, md: md,
     sortByPriority: sortByPriority, particle: particle, ro: ro
   };
 })(typeof window !== 'undefined' ? window : globalThis);
