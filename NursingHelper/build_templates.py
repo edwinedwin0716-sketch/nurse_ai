@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""추가 진단(data/extra.json)을 PC용 Templates.ps1과 휴대폰·웹용 templates-extra.js에 똑같이 넣는다.
+"""추가 진단(data/extra.json)과 질환별 추가 간호(variants.json)를 검사해 templates-extra.js에 넣는다.
+(Windows판도 1.7.1부터 같은 화면(HTML)을 쓴다)
 
     python3 NursingHelper/build_templates.py
 """
@@ -8,10 +9,7 @@ import json, os, re, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, 'data', 'extra.json')
 VAR = os.path.join(HERE, 'data', 'variants.json')  # 질환별 추가 간호: {진단명: [{label, when, diag, ther, edu}]}
-PS = os.path.join(HERE, 'src', 'Templates.ps1')
 JS = os.path.join(HERE, 'android', 'assets', 'templates-extra.js')
-BEGIN = '# >>> 추가 진단'
-END = '# <<< 추가 진단'
 FIELDS = ['en', 'domain', 'cls', 'page', 'problem', 'priority', 'reason', 'evalData', 'keywords', 'cause', 'long', 'short', 'diag', 'ther', 'edu']
 
 
@@ -25,29 +23,9 @@ def check(name, t):
     if '{' in json.dumps(t['short'], ensure_ascii=False): sys.exit('%s: 목표에 {자리표시}가 남았어요' % name)
 
 
-def q(s):  # PowerShell 작은따옴표 문자열
-    return "'" + str(s).replace("'", "''") + "'"
-
-
-def items(lst):
-    return '@(\n' + ',\n'.join("        @{plan=%s;why=%s}" % (q(x['plan']), q(x['why'])) for x in lst) + ')'
-
-
-def ps_entry(name, t):
-    page = str(t['page']) if t['page'] else '$null'
-    return ("$script:Templates[%s] = @{\n" % q(name) +
-            "    en = %s\n    domain = %s\n    cls = %s\n    page = %s\n    problem = %s\n    priority = %d\n" % (q(t['en']), q(t['domain']), q(t['cls']), page, q(t['problem']), t['priority']) +
-            "    reason = %s\n    evalData = %s\n    keywords = %s\n    cause = %s\n    long = %s\n" % (q(t['reason']), q(t['evalData']), q(t['keywords']), q(t['cause']), q(t['long'])) +
-            "    short = @(%s)\n" % ','.join(q(x) for x in t['short']) +
-            "    diag = %s\n    ther = %s\n    edu = %s\n}\n" % (items(t['diag']), items(t['ther']), items(t['edu'])))
-
-
 def main():
     data = json.load(open(SRC, encoding='utf-8'))
     for n, t in data.items(): check(n, t)
-    ps = open(PS, encoding='utf-8').read()
-    a, b = ps.index(BEGIN), ps.index(END)
-    head = ps[:a] + ps[a:ps.index('\n', a) + 1]
     variants = json.load(open(VAR, encoding='utf-8')) if os.path.exists(VAR) else {}
     for n, vs in variants.items():
         for v in vs:
@@ -55,11 +33,6 @@ def main():
             for k in ('diag', 'ther', 'edu'):
                 for x in v.get(k, []):
                     if not x.get('plan') or not x.get('why'): sys.exit('%s/%s: 빈 항목' % (n, v['label']))
-    vps = ''.join("$script:Variants[%s] = @(%s)\n$script:Templates[%s].keywords += %s\n" % (
-        q(n), ','.join("@{label=%s;when=%s;diag=%s;ther=%s;edu=%s}" % (q(v['label']), q(v['when']), items(v.get('diag', [])), items(v.get('ther', [])), items(v.get('edu', []))) for v in vs),
-        q(n), q('|' + '|'.join(v['when'] for v in vs))) for n, vs in variants.items())
-    ps = head + ''.join(ps_entry(n, t) for n, t in data.items()) + vps + ps[b:]
-    open(PS, 'w', encoding='utf-8').write(ps)
     clean = {n: {f: t[f] for f in FIELDS} for n, t in data.items()}
     js = ('// 자동 생성: NursingHelper/data/extra.json · variants.json → build_templates.py (직접 고치지 마세요)\n'
           'Object.assign(window.TEMPLATES, ' + json.dumps(clean, ensure_ascii=False, indent=1) + ');\n'

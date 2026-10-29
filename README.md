@@ -16,7 +16,7 @@
 
 | 프로그램 | 📱 안드로이드 | 📱 아이폰·아이패드 | 💻 Windows 10/11 | 🍎 Mac |
 |---|---|---|---|---|
-| **🩺 간호과정 도우미** | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/NursingHelper/NursingHelper.apk) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-111111?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/nursing/) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/NursingHelper/NursingHelper-1.7.zip) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/nursing/) |
+| **🩺 간호과정 도우미** | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/NursingHelper/NursingHelper.apk) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-111111?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/nursing/) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/NursingHelper/NursingHelper-1.7.1.zip) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/nursing/) |
 | **📖 간호 공부방** (베타) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/NursingStudy/NursingStudy.apk) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-111111?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/study/) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/NursingStudy/NursingStudy-Windows-0.2.zip) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/study/) |
 | **🗂️ 플래시카드** | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/StudyHelper/StudyHelper.apk) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-111111?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/flashcards/) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/StudyHelper/Flashcards-Windows-2.1.2.zip) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/flashcards/) |
 | **📝 HWP 편집기** | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/HwpEditor/HwpEditor.apk) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-111111?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/hwp/) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/HwpEditor/HwpEditor-Windows-1.2.2.zip) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/hwp/) |
@@ -46,7 +46,7 @@
 
 | 다운로드 | 설치 |
 |---|---|
-| 💻 Windows: [`NursingHelper-1.7.zip`](NursingHelper/NursingHelper-1.7.zip) | 압축 해제 → `NursingHelperSetup.exe` 실행 |
+| 💻 Windows: [`NursingHelper-1.7.1.zip`](NursingHelper/NursingHelper-1.7.1.zip) | 압축 해제 → `NursingHelper.exe` (바탕화면 아이콘 생성, Edge 앱 창) |
 | 📱 Android: [`NursingHelper.apk`](NursingHelper/NursingHelper.apk) | 설치 시 "출처를 알 수 없는 앱" 허용 |
 | 📱 아이폰 · 🍎 Mac: [웹앱 열기](https://edwinedwin0716-sketch.github.io/nurse_ai/nursing/) | 사파리 → 홈 화면 / Dock에 추가 |
 
@@ -138,7 +138,7 @@ Mac의 Spotlight와 똑같은 모양의 검색창이에요. **Shift 키를 두 �
 - 직접 만든 프로그램이라 Windows·Android에서 보안 경고가 뜰 수 있습니다.
 
 ## 빌드
-- Windows: `NursingHelper/src/build.sh`, `MySpaceLauncher/src/build.sh`, `Spotlight/src/build.sh` (mono-mcs)
+- Windows: `NursingHelper/windows/build.sh`(먼저 `python3 NursingHelper/build_web.py`, Edge 앱 창 실행기), `MySpaceLauncher/src/build.sh`, `Spotlight/src/build.sh` (mono-mcs)
 - Mac: `cd MySpaceMac && npm install && node build/package.js && sh build/slim.sh` (Electron, rcodesign 임시 서명)
 - Android: `*/android/build-apk.sh` (Ubuntu `android-sdk-platform-23 aapt dalvik-exchange apksigner zipalign`)
 - 플래시카드 웹앱 묶기: `python3 StudyHelper/build.py`, Windows 실행기: `sh StudyHelper/windows/build.sh`
