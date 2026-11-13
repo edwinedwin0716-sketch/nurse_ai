@@ -96,6 +96,7 @@ footer a{color:var(--sub)}
     <button class="tab" role="tab" id="t-flash" data-app="flash"><span class="ico">🗂️</span>플래시카드<small>필기로 암기 카드</small></button>
     <button class="tab" role="tab" id="t-hwp" data-app="hwp"><span class="ico">📝</span>HWP 편집기<small>한글 문서 보기·고치기</small></button>
     <button class="tab" role="tab" id="t-matjip" data-app="matjip"><span class="ico">🍽️</span>맛·볼거리<small>동네 맛집 추천</small></button>
+    <button class="tab" role="tab" id="t-game" data-app="game"><span class="ico">🏮</span>등불 원정대<small>카드 모험 게임</small></button>
     <button class="tab" role="tab" id="t-pc" data-app="pc"><span class="ico">🖥️</span>컴퓨터 도구<small>MySpace·Spotlight</small></button>
   </nav>
 
@@ -108,7 +109,7 @@ footer a{color:var(--sub)}
     <span>불편한 점은 <a href="https://github.com/edwinedwin0716-sketch/nurse_ai/issues" target="_blank" rel="noopener">여기(Issues)</a>에 남겨 주세요 · <a href="https://github.com/edwinedwin0716-sketch/nurse_ai" target="_blank" rel="noopener">전체 파일 보기</a></span><script>
 var RAW='https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/';
 var WEB='./';
-var IMG={nurse:'img/nurse.jpg',flash:'img/flash.jpg',myspace:'img/myspace.jpg',spot:'img/spot.jpg',matjip:'img/matjip.png',study:'img/study.jpg',hwp:'img/hwp.jpg'};
+var IMG={nurse:'img/nurse.jpg',flash:'img/flash.jpg',myspace:'img/myspace.jpg',spot:'img/spot.jpg',matjip:'img/matjip.png',study:'img/study.jpg',hwp:'img/hwp.jpg',game:'img/game.jpg'};
 var MJ='https://github.com/edwinedwin0716-sketch/matjip-finder/raw/main/download/', MJWEB='https://edwinedwin0716-sketch.github.io/matjip-finder/';
 var WIN_STEPS=['위 버튼을 누르면 zip 파일이 받아져요.','받은 파일을 <b>우클릭 → 모두 압축 풀기</b>.','안에 있는 <b>FILE</b>을 더블클릭하세요. 다음부터는 바탕화면 아이콘으로 열면 돼요.'];
 var WIN_TIP='<strong>파란 경고창</strong>("Windows의 PC 보호")이 뜨면 <b>추가 정보 → 실행</b>을 누르세요. 직접 만든 프로그램이라 처음 한 번 뜨는 거예요.';
@@ -152,6 +153,12 @@ var APPS={
       ios:{url:MJWEB,web:1,name:'아이폰에서 열기',size:'웹앱 · 홈 화면에 추가해서 사용',steps:IOS_STEPS,tip:'설치 파일이 필요 없고, 새 기능은 자동으로 바뀌어요. 주변 정보를 받아 오려면 인터넷이 필요해요.'},
       windows:{url:MJ+'Matjip-Windows-1.0.1.zip',name:'Windows 10/11용 받기',size:'zip · 버전 1.0.1',steps:WIN_STEPS,exe:'맛볼거리.exe',tip:WIN_TIP+' 앱 창은 Windows에 들어 있는 Edge로 열려요.'},
       mac:{url:MJWEB,web:1,name:'Mac에서 열기',size:'웹앱 · Dock에 추가해서 사용',steps:MAC_WEB_STEPS,tip:'설치 파일이 필요 없고, 새 기능은 자동으로 바뀌어요. 메뉴가 안 보이면 macOS가 옛 버전이에요. 그럴 땐 크롬으로 열어 주세요.'}}},
+  game:{title:'등불 원정대 (게임)',img:'game',points:['카드 두 장으로 싸우는 육각 칸 동굴 모험 (쉬는 시간용 게임)','수호기사 · 바람사수 · 야전 간호사 중 2~3명으로 원정대 꾸리기','모험 4개 · 깰 때마다 원정대 강화 · 기록 자동 저장','혼자 하기는 인터넷 없이 OK','🌐 친구와 온라인으로 2~3명: 방 코드만 알려 주면 휴대폰 · 컴퓨터 섞어서 같이 해요'],
+    devs:{
+      android:{file:'Lantern/Lantern.apk',name:'안드로이드 앱 받기',size:'apk · 버전 1.0',steps:APK_STEPS,tip:APK_TIP+' 온라인으로 함께 할 때만 인터넷을 써요.'},
+      ios:{web:'game/',name:'아이폰에서 열기',size:'웹앱 · 홈 화면에 추가해서 사용',steps:IOS_STEPS,tip:IOS_TIP+' 친구와 온라인으로 할 때는 인터넷이 필요해요.'},
+      windows:{file:'Lantern/Lantern-Windows-1.0.zip',name:'Windows 10/11용 받기',size:'zip · 버전 1.0',steps:WIN_STEPS,exe:'등불원정대.exe',tip:WIN_TIP+' 게임 창은 Windows에 들어 있는 Edge로 열려요.'},
+      mac:{web:'game/',name:'Mac에서 열기',size:'웹앱 · Dock에 추가해서 사용',steps:MAC_WEB_STEPS,tip:MAC_WEB_TIP+' 친구와 온라인으로 할 때는 인터넷이 필요해요.'}}},
   pc:{title:'컴퓨터 도구',videos:[['🎬 MySpace 사용법 (30초)','videos/MySpace-howto.mp4'],['🎬 Spotlight 사용법 (28초)','videos/Spotlight-howto.mp4']],img:'myspace',wide:true,points:['<b>MySpace 런처</b>: 자주 쓰는 앱 · 파일 · 사이트를 모아 두는 애플 스타일 툴바','<b>Spotlight</b>: Shift 두 번 → Mac처럼 검색창 (Windows 전용, Mac은 원래 있어요)'],
     devs:{
       windows:{multi:[

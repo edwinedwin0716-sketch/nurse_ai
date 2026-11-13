@@ -21,6 +21,7 @@
 | **🗂️ 플래시카드** | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/StudyHelper/StudyHelper.apk) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-111111?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/flashcards/) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/StudyHelper/Flashcards-Windows-2.1.2.zip) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/flashcards/) |
 | **📝 HWP 편집기** | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/HwpEditor/HwpEditor.apk) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-111111?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/hwp/) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/HwpEditor/HwpEditor-Windows-1.2.2.zip) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/hwp/) |
 | **🍽️ 맛·볼거리** | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/matjip-finder/raw/main/download/Matjip.apk) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-111111?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/matjip-finder/) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/matjip-finder/raw/main/download/Matjip-Windows-1.0.1.zip) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/matjip-finder/) |
+| **🏮 등불 원정대 (게임)** | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/Lantern/Lantern.apk) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-111111?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/game/) | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/Lantern/Lantern-Windows-1.0.zip) | [![열기](https://img.shields.io/badge/%EC%97%B4%EA%B8%B0-555555?style=for-the-badge&logo=apple&logoColor=white)](https://edwinedwin0716-sketch.github.io/nurse_ai/game/) |
 | **🚀 MySpace 런처** | — | — | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/MySpaceLauncher/MySpaceLauncher-1.3.1.zip) | [![M1~M4](https://img.shields.io/badge/M1~M4-555555?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/MySpaceMac/MySpace-mac-AppleSilicon.tar.xz) [![인텔](https://img.shields.io/badge/%EC%9D%B8%ED%85%94-555555?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/MySpaceMac/MySpace-mac-Intel.tar.xz) |
 | **🔍 Spotlight** | — | — | [![받기](https://img.shields.io/badge/%EB%B0%9B%EA%B8%B0-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/edwinedwin0716-sketch/nurse_ai/raw/main/Spotlight/Spotlight-1.0.1.zip) | Mac에 기본으로 있어요 |
 
@@ -82,6 +83,22 @@
 | 🌐 아무 컴퓨터 브라우저: [`Flashcards-PC-2.1.1.zip`](StudyHelper/Flashcards-PC-2.1.1.zip) | 압축 해제 → `플래시카드.html` 더블클릭 |
 | 📱 아이폰 · 🍎 Mac: [웹앱 열기](https://edwinedwin0716-sketch.github.io/nurse_ai/flashcards/) | 사파리 → 홈 화면 / Dock에 추가 |
 | 📱 Android: [`StudyHelper.apk`](StudyHelper/StudyHelper.apk) | 설치 후 파일 올리기 또는 다른 앱에서 [공유] |
+
+## 🏮 등불 원정대 — 게임 (`Lantern/`)
+공부하다 쉬는 시간에 하는 **카드 전략 게임**이에요. 등불 하나 들고 어두운 동굴에 들어가 괴물을 물리쳐요.
+(이름 · 캐릭터 · 카드 · 그림 · 규칙 글은 모두 새로 만든 것이에요.)
+
+- **원정대**: 🛡️ 수호기사 · 🏹 바람사수 · 💉 야전 간호사 중 2명 또는 3명
+- **하는 법**: 라운드마다 영웅별로 카드 2장을 골라요. 먼저 고른 카드의 숫자가 순서(작을수록 먼저). 차례가 오면 한 카드의 위쪽 + 다른 카드의 아래쪽을 써요.
+- **모험 4개**: 무너진 입구 → 거미 굴 → 뼈의 회랑 → 잿빛 거인의 방. 처음 깰 때마다 원정대 강화를 하나 골라요. 기록은 자동 저장.
+- **혼자 하기**: 인터넷 없이 돼요. 혼자서 영웅을 모두 조종해요.
+- **🌐 친구와 온라인 (2~3명)**: 한 명이 **방 만들기** → 나온 **방 코드 5글자**(또는 초대 링크)를 친구에게 → 친구는 **방 들어가기**. 휴대폰 · 컴퓨터를 섞어서 해도 돼요.
+  - 각자 영웅을 맡고(남는 영웅은 방장이 함께), 카드는 동시에 골라 모두 **준비 완료**를 누르면 시작해요.
+  - 친구가 끊기면 방장이 대신 움직이고, 같은 코드 · 같은 별명으로 다시 들어오면 이어져요.
+  - 채팅은 정해진 말 버튼("도와줘!", "잘했어!" 등)만 있어요. 별명은 진짜 이름 말고 아무거나 쓰세요.
+  - 온라인은 **인터넷이 필요**해요. 서로를 찾아 연결할 때만 공개 PeerJS 중계 서버를 쓰고(방 코드만 전달, 개인정보 없음), 그 뒤에는 기기끼리 직접 주고받아요. **학교 · 회사 와이파이는 직접 연결을 막을 수 있어요** — 그럴 땐 휴대폰 데이터(핫스팟)로 해 보세요.
+- 게임 안 **규칙 보기**에 자세한 설명이 있어요.
+- 만드는 법: `python3 Lantern/build.py` → `sh Lantern/android/build-apk.sh` · `sh Lantern/windows/build.sh` → `python3 tools/build_pages.py`. 온라인 연결에 PeerJS(MIT)를 넣었어요 (`Lantern/NOTICE.md`).
 
 ## 🚀 MySpace 런처 (Windows `MySpaceLauncher/` · Mac `MySpaceMac/`)
 화면 아래쪽에 뜨는 애플(macOS) 스타일 툴바예요. 자주 쓰는 앱·파일·폴더·웹사이트를 한 곳에서 실행합니다.
