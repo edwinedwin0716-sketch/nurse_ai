@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>등불 원정대</title>
+<meta name="theme-color" content="#14100B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="등불원정대">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
 <style>
 /* 등불 하나로 어두운 동굴을 비추는 느낌: 따뜻한 검은 바탕 + 호박색(등불) 강조 하나 */
 :root{
@@ -232,7 +241,7 @@ var MON = {
   a: { name: '뼈 궁수', emoji: '💀', hp: 3, mv: 2, atk: 2, rng: 3, init: 38 },
   w: { name: '동굴 늑대', emoji: '🐺', hp: 4, mv: 3, atk: 2, rng: 1, init: 22 },
   p: { name: '독거미', emoji: '🕷️', hp: 3, mv: 2, atk: 1, rng: 1, init: 30, poison: true },
-  g: { name: '잿빛 거인', emoji: '🗿', hp: 15, mv: 2, atk: 3, rng: 1, init: 50, boss: true }
+  g: { name: '잿빛 거인', emoji: '🗿', hp: 12, mv: 2, atk: 3, rng: 1, init: 50, boss: true }
 };
 var MDECK = [
   { name: '평소대로', i: 0, m: 0, a: 0 }, { name: '재빠르게', i: -10, m: 1, a: -1 }, { name: '힘껏', i: 10, m: -1, a: 1 },
@@ -249,7 +258,7 @@ var SCEN = [
   { name: '거미 굴', intro: '독거미에게 물리면 차례마다 1씩 아파요. 치유로 독을 풀어요.', map: [
     '##.....##', '#..p..a..', 'H..X...P.', 'H....C..a', 'H..X.....', '#..p...A.', '##.....##'] },
   { name: '뼈의 회랑', intro: '궁수는 멀리서 쏴요. 빨리 붙어서 먼저 쓰러뜨려요.', map: [
-    'H...X..a.', '.H.s...wA', '..X..C.X.', 'H..S.....', '....X...a', '......W..', '#...#...#'] },
+    'H...X..a.', '.H.s...w.', '..X..C.X.', 'H..S.....', '....X...a', '......W..', '#...#...#'] },
   { name: '잿빛 거인의 방', intro: '거인은 옆에 붙은 모두를 한꺼번에 때리기도 해요.', map: [
     '#.......#', 'H..X..A..', '....C....', 'H.....G..', '....X...w', 'H..X..s..', '#...S...#'] }
 ];
@@ -318,7 +327,7 @@ function newGame(si, party) {
     else if (/[sawpg]/i.test(ch)) {
       var up = ch === ch.toUpperCase(), type = ch.toLowerCase();
       if (type !== 'g' && up && party.length < 3) continue;
-      var b = MON[type], hp = b.hp + (lvl >= 2 ? 1 : 0) + (b.boss && party.length > 2 ? 6 : 0);
+      var b = MON[type], hp = b.hp + (lvl >= 3 ? 1 : 0) + (b.boss && party.length > 2 ? 6 : 0);
       G.units.push({ id: 'm' + (uid++), kind: 'mon', type: type, name: b.name, emoji: b.emoji, hp: hp, max: hp, q: c.q, r: c.r, poison: false, stun: false, shield: 0 });
     }
   }
@@ -663,7 +672,7 @@ function showGame() {
   scr = 'game'; lastPanel = ''; closeOverlay(); ovKey = '';
   var sc = SCEN[V.si];
   $('app').innerHTML = '<header class="bar"><button class="btn small" id="home" aria-label="나가기">←</button><b>' + (V.si + 1) + '. ' + sc.name + '</b><span class="round" id="round"></span>' +
-    '<button class="btn small" id="rules">규칙 보기</button>' + (V.host ? '<button class="btn small" id="restart">다시 시작</button>' : '') + '</header>' +
+    '<button class="btn small" id="rules">규칙 보기</button>' + (V.host ? '<button class="btn small" id="restart" aria-label="다시 시작" title="다시 시작">↻ 다시</button>' : '') + '</header>' +
     '<div class="main"><div class="left"><div class="order" id="order" aria-label="행동 순서"></div><svg id="board" role="img" aria-label="전투 지도"></svg><div id="info"></div><div id="log" aria-live="polite"></div>' +
     (V.net ? '<div class="emotes" id="emotes">' + EMOTES.map(function (t, i) { return '<button class="btn small" data-emote="' + i + '">' + t + '</button>'; }).join('') + '</div>' : '') + '</div>' +
     '<section class="panel"><div id="prompt"><span id="ptext"></span><button class="btn small" id="skip" hidden>건너뛰기</button></div><div id="pbody"></div></section></div><div id="toasts"></div>';
@@ -883,6 +892,7 @@ function showRules() {
 /* ───────── 연결 통로: PeerJS(WebRTC) 또는 같은 브라우저 탭끼리(시험용 loop) ─────────
    둘 다 conn = { send(o), close(), ondata, onclose } 모양으로 맞춘다. */
 var LOOP = !!window.__loop || /[?&]loop\b/.test(location.search);
+var PEER_OPT = window.__peer || { debug: 0 };   // 기본: PeerJS 공개 중계 서버 (시험할 때만 window.__peer 로 바꾼다)
 var PAGE_URL = 'https://edwinedwin0716-sketch.github.io/nurse_ai/game/';
 function wrapDC(dc) {
   var c = { send: function (o) { dc.send(o); }, close: function () { try { dc.close(); } catch (e) {} }, ondata: null, onclose: null, shut: false };
@@ -894,7 +904,7 @@ function wrapDC(dc) {
 function peerHost(code, cb) {
   if (LOOP) return loopHost(code, cb);
   if (typeof Peer === 'undefined') { setTimeout(function () { cb.error('nolib'); }); return { close: function () {} }; }
-  var peer = new Peer('lantern-' + code, { debug: 0 }), dead = false;
+  var peer = new Peer('lantern-' + code, PEER_OPT), dead = false;
   peer.on('open', function () { cb.open(); });
   peer.on('connection', function (dc) { dc.on('open', function () { cb.conn(wrapDC(dc)); }); });
   peer.on('disconnected', function () { if (!dead) setTimeout(function () { try { if (!dead && !peer.destroyed) peer.reconnect(); } catch (e) {} }, 2000); });
@@ -904,7 +914,7 @@ function peerHost(code, cb) {
 function peerJoin(code, cb) {
   if (LOOP) return loopJoin(code, cb);
   if (typeof Peer === 'undefined') { setTimeout(function () { cb.error('nolib'); }); return { close: function () {} }; }
-  var peer = new Peer({ debug: 0 }), dead = false;
+  var peer = new Peer(PEER_OPT), dead = false;
   peer.on('open', function () {
     var dc = peer.connect('lantern-' + code, { reliable: true, serialization: 'json' });
     dc.on('open', function () { cb.open(wrapDC(dc)); });
@@ -1191,5 +1201,6 @@ window.onBack = function () {
 window.LD = { get G() { return G; }, get V() { return V; }, get S() { return S; }, get NET() { return NET; }, K: K, dist: dist };
 showTitle();
 </script>
+<script>if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(function () {});</script>
 </body>
 </html>

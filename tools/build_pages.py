@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""깃허브 페이지(docs/)를 만든다: 다운로드 모음 페이지 + 아이폰·Mac용 웹앱(간호과정 도우미, 간호 공부방, 플래시카드, HWP 편집기).
+"""깃허브 페이지(docs/)를 만든다: 다운로드 모음 페이지 + 아이폰·Mac용 웹앱(간호과정 도우미, 간호 공부방, 플래시카드, HWP 편집기, 등불 원정대).
 
     python3 StudyHelper/build.py        # 플래시카드 한 파일 묶기 (먼저)
     python3 HwpEditor/build.py          # HWP 편집기 한 파일 묶기 (먼저)
+    python3 Lantern/build.py            # 등불 원정대 한 파일 묶기 (먼저)
     python3 tools/build_pages.py        # docs/ 다시 만들기
     python3 tools/build_pages.py --artifact out.html   # 그림을 안에 넣은 한 파일짜리 다운로드 페이지
 """
@@ -12,7 +13,7 @@ from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS = os.path.join(ROOT, 'docs')
 PAGES = 'https://edwinedwin0716-sketch.github.io/nurse_ai/'
-IMGS = {'nurse': 'nurse.jpg', 'flash': 'flash.jpg', 'myspace': 'myspace.jpg', 'spot': 'spot.jpg', 'matjip': 'matjip.png', 'study': 'study.jpg', 'hwp': 'hwp.jpg'}
+IMGS = {'nurse': 'nurse.jpg', 'flash': 'flash.jpg', 'myspace': 'myspace.jpg', 'spot': 'spot.jpg', 'matjip': 'matjip.png', 'study': 'study.jpg', 'hwp': 'hwp.jpg', 'game': 'game.jpg'}
 
 APPS = {
     'nursing': dict(name='간호과정 도우미', short='간호과정', color='#F2F2F7', status='default',
@@ -34,6 +35,10 @@ APPS = {
                 icon='HwpEditor/icon/icon-1024.png',
                 files=['HwpEditor/dist/HWP편집기.html'],
                 desc='한글 문서(.hwp · .hwpx)를 열어 보고 고쳐요.'),
+    'game': dict(name='등불 원정대', short='등불원정대', color='#14100B', status='black-translucent',
+                 icon='Lantern/icon/icon-1024.png',
+                 files=['Lantern/dist/등불원정대.html'],
+                 desc='카드 두 장으로 싸우는 육각 칸 동굴 모험. 혼자서도, 친구와 온라인으로도.'),
 }
 
 SW = """// 한 번 열면 인터넷 없이도 열리게 저장해 두고, 인터넷이 되면 뒤에서 새 버전으로 바꾼다.
