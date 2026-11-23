@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""원시섬: web/index.html + web/three.min.js(3D 그리기, MIT)를 한 파일 HTML로 묶는다.
+"""원시섬: web/index.html + three.min.js(3D 그리기, MIT) + assets.js(STL 모형) + models.js + game.js 를 한 파일 HTML로 묶는다.
 
     python3 Primal/build.py      → dist/원시섬.html (웹앱·Windows·실험 서버), android/assets/index.html
 """
@@ -16,6 +16,12 @@ def main():
     if TAG not in html or '</script' in three.lower():
         raise SystemExit('묶을 자리를 찾지 못했어요')
     out = html.replace(TAG, '<script>/* three.js r158 (MIT) — Primal/NOTICE.md */\n' + three + '\n</script>', 1)
+    for f in ('assets.js', 'models.js', 'game.js'):
+        tag = '<script src="%s"></script>' % f
+        js = open(os.path.join(HERE, 'web', f), encoding='utf-8').read()
+        if tag not in out or '</script' in js.lower():
+            raise SystemExit(f + ' 을 묶지 못했어요')
+        out = out.replace(tag, '<script>\n' + js + '\n</script>', 1)
     for p in (os.path.join(HERE, 'dist', '원시섬.html'), os.path.join(HERE, 'android', 'assets', 'index.html')):
         os.makedirs(os.path.dirname(p), exist_ok=True)
         open(p, 'w', encoding='utf-8').write(out)
