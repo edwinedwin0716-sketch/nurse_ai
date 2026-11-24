@@ -1,7 +1,7 @@
-// 원시섬 모형 만들기: 외부 파일 없이 코드로 공룡·사람·나무·건물을 만든다 (모두 이 저장소에서 새로 만든 모양).
+// 원시섬 0.3 모형: STL 에셋(assets.js)에 재질(textures.js)을 입히고, 코드로 만든 공룡·사람·나무를 더한다.
 (function () {
   'use strict';
-  const T = THREE;
+  const T = THREE, X = window.TEXTURES;
 
   // 여러 조각을 한 덩어리로 (그리기 횟수 줄이기). parts: [[geometry, color]], shade(x,y,z,nx,ny,nz,c) 로 꼭짓점 색 조절
   function merge(parts, shade) {
@@ -57,78 +57,147 @@
   function ell(rx, ry, rz, x, y, z, seg) { return new T.SphereGeometry(1, seg || 14, seg ? Math.ceil(seg * .7) : 10).scale(rx, ry, rz).translate(x, y, z); }
   const mat = { v: new T.MeshLambertMaterial({ vertexColors: true }), vf: new T.MeshLambertMaterial({ vertexColors: true, flatShading: true }) };
 
+  // ---------- STL 에셋 (assets.js · convert.py 가 만든다) ----------
+  function b64(s) { const bin = atob(s), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; }
+  const _part = {}, _obj = {}, _inst = {}, _legGeo = {};
 
-  // ---------- 사용자 STL 모형 (assets.js) ----------
-  const _cache = {};
-  function b64(s){ const bin = atob(s), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; }
-  function decode(m, shade){
-    const q = new Uint16Array(b64(m.v)), pos = new Float32Array(q.length);
-    for (let i = 0; i < q.length; i++){ const a = i % 3; pos[i] = m.lo[a] + q[i] / 65535 * (m.hi[a] - m.lo[a]); }
-    const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(pos, 3));
-    g.setIndex(new T.BufferAttribute(m.b ? new Uint32Array(b64(m.i)) : new Uint16Array(b64(m.i)), 1));
+  // 16비트 위치 + 색인 → BufferGeometry (UV 는 법선이 가장 크게 보는 축으로 투영 · STL 에는 UV 가 없다)
+  function decodePart(p, uvScale) {
+    const q = new Uint16Array(b64(p.v)), n = q.length / 3;
+    const pos = new Float32Array(q.length);
+    const sp = [p.hi[0] - p.lo[0], p.hi[1] - p.lo[1], p.hi[2] - p.lo[2]];
+    for (let i = 0; i < n; i++) for (let a = 0; a < 3; a++)
+      pos[i * 3 + a] = p.lo[a] + (sp[a] > 1e-9 ? q[i * 3 + a] / 65535 * sp[a] : 0);
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.BufferAttribute(pos, 3));
+    g.setIndex(new T.BufferAttribute(p.b ? new Uint32Array(b64(p.i)) : new Uint16Array(b64(p.i)), 1));
     g.computeVertexNormals();
-    if (shade){
-      const n = g.attributes.normal, col = new Float32Array(pos.length), c = new T.Color();
-      for (let i = 0; i < pos.length / 3; i++){ c.set(0xffffff); shade(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2], n.getX(i), n.getY(i), n.getZ(i), c); col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; }
-      g.setAttribute('color', new T.BufferAttribute(col, 3));
+    const nor = g.attributes.normal, uv = new Float32Array(n * 2), s = uvScale === undefined ? .5 : uvScale;
+    for (let i = 0; i < n; i++) {
+      const nx = Math.abs(nor.getX(i)), ny = Math.abs(nor.getY(i)), nz = Math.abs(nor.getZ(i));
+      const x = pos[i * 3], y = pos[i * 3 + 1], z = pos[i * 3 + 2];
+      let u, v;
+      if (ny >= nx && ny >= nz) { u = x; v = z; }
+      else if (nx >= nz) { u = z; v = y; }
+      else { u = x; v = y; }
+      uv[i * 2] = u * s; uv[i * 2 + 1] = v * s;
     }
-    g.computeBoundingSphere(); return g;
+    g.setAttribute('uv', new T.BufferAttribute(uv, 2));
+    g.computeBoundingSphere();
+    return g;
   }
-  function hashv(x, y, z){ const h = Math.sin(x * 12.99 + y * 78.23 + z * 37.71) * 43758.5; return h - Math.floor(h); }
-  const SHADE = {
-    fence: (x, y, z, nx, ny, nz, c) => { c.set(0x7a5a3b); c.offsetHSL(0, 0, (hashv(Math.round(x * 2), 0, 0) - .5) * .08 + ny * .03); },
-    kiln: (x, y, z, nx, ny, nz, c) => { c.set(0x8c8579); c.lerp(new T.Color(0x9b7a5a), hashv(Math.round(x * 2.2), Math.round(y * 2.2), Math.round(z * 2.2)) * .5); c.offsetHSL(0, 0, (hashv(Math.round(x * 3), Math.round(y * 3), Math.round(z * 3)) - .5) * .14); if (y < .25) c.multiplyScalar(.8); },
-    tower: (x, y, z, nx, ny, nz, c) => { if (y > 5.3 && ny > .2) c.set(0xa08654); else c.set(0x76573a); c.offsetHSL(0, 0, (hashv(Math.round(x * 4), Math.round(y * 2), Math.round(z * 4)) - .5) * .08); },
-    well: (x, y, z, nx, ny, nz, c) => { if (y < 1.05) { c.set(0x8e887c); c.offsetHSL(0, 0, (hashv(Math.round(x * 2.5), Math.round(y * 3), Math.round(z * 2.5)) - .5) * .16); } else if (y > 2.2 && ny > .3) c.set(0x8a6a45); else c.set(0x6f5136); },
-    firering: (x, y, z, nx, ny, nz, c) => { const r = Math.hypot(x, z); if (r < .45) c.set(0x3a2a1c); else { c.set(0x8a857a); c.offsetHSL(0, 0, (hashv(Math.round(x * 4), 0, Math.round(z * 4)) - .5) * .15); } },
-    tent: (x, y, z, nx, ny, nz, c) => { const r = Math.hypot(x, z); c.set(r < 1.9 - y * .5 + .12 && y < 3 ? 0xb89a6a : 0x6a4b31); c.offsetHSL(0, 0, Math.sin(Math.atan2(z, x) * 9) * .03); },
-    shelter: (x, y, z, nx, ny, nz, c) => { if (y > 2.75 && ny > .3) { c.set(0x9c8150); c.offsetHSL(0, 0, (hashv(Math.round(x * 3), 0, Math.round(z * 3)) - .5) * .08); } else { c.set(0x7b5a3c); c.offsetHSL(0, 0, Math.sin(y * 9) * .03 + (hashv(0, Math.round(y * 3), 0) - .5) * .05); } }
-  };
-  function assetGeo(name){
-    if (!window.ASSETS || !ASSETS[name]) return null;
-    if (!_cache[name]) _cache[name] = decode(ASSETS[name].mesh, SHADE[name]);
-    return _cache[name];
+
+  function partGeo(k, p) {
+    if (!_part[k]) _part[k] = decodePart(p, X.uv(p.m));
+    return _part[k];
   }
+
+  // 재질별 Meshes 로 된 Group. opts: {scale:[x,y,z], material, noShadow}
+  function assetObject(name, opts) {
+    const A = window.ASSETS && window.ASSETS[name];
+    if (!A) return null;
+    opts = opts || {};
+    const g = new T.Group();
+    for (let i = 0; i < A.parts.length; i++) {
+      const p = A.parts[i];
+      const m = new T.Mesh(partGeo(name + '#' + i, p), opts.material || X.material(p.m));
+      m.castShadow = !opts.noShadow; m.receiveShadow = true;
+      g.add(m);
+    }
+    const sc = opts.scale || [1, 1, 1];
+    g.scale.set(sc[0], sc[1], sc[2]);
+    g.userData.size = assetSize(name);
+    return g;
+  }
+  function assetSize(name) {
+    const A = window.ASSETS && window.ASSETS[name];
+    if (!A) return [1, 1, 1];
+    const b = A.bb;
+    return [b[3] - b[0], b[4] - b[1], b[5] - b[2]];
+  }
+  function assetGeo(name) {   // 예전 이름: 재질 없는 한 덩어리(그림자·미리보기용)
+    if (!_obj[name]) {
+      const A = window.ASSETS && window.ASSETS[name];
+      if (!A) return null;
+      const parts = A.parts.map((p, i) => [partGeo(name + '#' + i, p), 0xffffff]);
+      _obj[name] = merge(parts);
+    }
+    return _obj[name];
+  }
+
+  // ---------- 자연물: 재질 계열별로 합쳐 InstancedMesh 로 많이 놓는다 ----------
+  const FAMILY_OF = { bark: 'bark', rachis: 'leaf', leaf: 'leaf', stem: 'leaf', coconut: 'coconut', basalt: 'basalt', stone: 'stone' };
+  function colorOf(m) { const p = X.profile(m); return new T.Color(p[1]).offsetHSL(0, -.08, .1); }
+  function instanceParts(name) {
+    if (_inst[name]) return _inst[name];
+    const A = window.ASSETS && window.ASSETS[name];
+    if (!A) return null;
+    const bucket = {};
+    A.parts.forEach((p, i) => {
+      const fam = FAMILY_OF[p.m] || p.m;
+      (bucket[fam] = bucket[fam] || []).push([partGeo(name + '#' + i, p), colorOf(p.m)]);
+    });
+    const out = [];
+    for (const fam in bucket) {
+      const g = merge(bucket[fam]);
+      out.push({ family: fam, geo: g });
+    }
+    _inst[name] = out;
+    return out;
+  }
+
   // ---------- 공룡 ----------
-  // 종류마다: 등뼈 선(꼬리 끝 → 머리 밑), 굵기, 머리, 다리, 색
+  // species: 이름·색조(stl 모형에 곱한다)·줄무늬, 그리고 모형이 없을 때 그릴 몸(등뼈 선·머리·다리)
   const SPECIES = {
-    grazer: {   // 풀뜯개: 두 발로 걷는 작은 초식 공룡, 볏이 있다
+    grazer: {
       spine: [[0, .95, -2.4], [0, 1.05, -1.3], [0, 1.15, -.2], [0, 1.3, .6], [0, 1.65, 1.05], [0, 1.95, 1.25]],
       r: [[0, .04], [.25, .2], [.5, .42], [.68, .34], [.85, .17], [1, .14]],
       head: [.17, .2, .34, 0, 2.02, 1.45], crest: true, legs: { biped: true, hip: [.24, 1.1, -.15], h: 1.05, r: .14 }, arms: [.2, 1.35, .55],
       base: 0x8f9c5c, back: 0x5f6b3a, belly: 0xd3cfa0
     },
-    claw: {     // 발톱이: 빠른 육식 공룡, 줄무늬
+    claw: {
       spine: [[0, 1.05, -2.6], [0, 1.15, -1.4], [0, 1.25, -.2], [0, 1.4, .55], [0, 1.75, .95], [0, 1.9, 1.1]],
       r: [[0, .03], [.3, .16], [.52, .33], [.7, .27], [.86, .13], [1, .11]],
       head: [.15, .2, .44, 0, 1.97, 1.42], jaw: true, legs: { biped: true, hip: [.2, 1.18, -.1], h: 1.15, r: .12 }, arms: [.17, 1.4, .5],
       base: 0xa96a3f, back: 0x5a3a22, belly: 0xe0c69a, stripes: 7
     },
-    longneck: { // 목긴이: 큰 목긴 초식 공룡 (온순, 때리면 반격)
+    longneck: {
       spine: [[0, 2.4, -9], [0, 3.4, -6], [0, 4.2, -3], [0, 4.5, 0], [0, 4.8, 2.4], [0, 6.6, 3.9], [0, 9.2, 4.9], [0, 11.2, 5.4]],
       r: [[0, .1], [.15, .65], [.3, 1.6], [.45, 2.0], [.58, 1.7], [.68, .75], [.85, .5], [1, .4]],
       head: [.55, .5, 1.05, 0, 11.4, 6.0], legs: { biped: false, hip: [.95, 3.9, -2.4], sh: [.95, 4.1, 2.2], h: 3.9, r: .62 },
-      base: 0x8e8f86, back: 0x5c5e57, belly: 0xbab7a6
+      base: 0x8e8f86, back: 0x5c5e57, belly: 0xbab7a6, stlTint: 0xdedfd6
     },
-    rex: {      // 큰이빨: 두 발로 걷는 거대한 육식 공룡 (모형은 assets.js, 아래는 모형이 없을 때만)
-      spine: [[0, 2.4, -6.5], [0, 2.6, -3], [0, 2.9, 0], [0, 3.1, 2.5], [0, 3.3, 3.8]], r: [[0, .05], [.4, .5], [.62, .95], [.85, .6], [1, .45]],
-      head: [.5, .55, 1, 0, 3.4, 4.2], jaw: true, legs: { biped: true, hip: [.6, 2.0, 0], h: 2.0, r: .35 },
-      base: 0x6b5a3f, back: 0x3e3324, belly: 0xb8a37c, stripes: 3
-    },
-    plate: {    // 판등이: 등에 큰 판, 꼬리에 가시 (건드리면 꼬리로 친다)
-      spine: [[0, 1.2, -4.3], [0, 1.5, -2.5], [0, 1.9, -.5], [0, 1.7, 1.8], [0, 1.2, 3.3]], r: [[0, .06], [.3, .55], [.55, .95], [.8, .55], [1, .3]],
-      head: [.3, .3, .5, 0, 1.15, 3.5], legs: { biped: false, hip: [.5, 1.2, -1.4], sh: [.5, 1.0, 1.4], h: 1.1, r: .25 },
-      base: 0x6f7a4a, back: 0x8a5a3a, belly: 0xc8c08f
-    },
-    horn: {     // 뿔방패: 머리에 넓은 방패와 뿔 세 개 (건드리면 돌진)
+    horn: {
       spine: [[0, 1.3, -4.2], [0, 1.7, -2.6], [0, 2.1, -1], [0, 2.2, .6], [0, 1.95, 1.9]],
       r: [[0, .07], [.25, .55], [.5, 1.05], [.75, 1.0], [1, .7]],
       head: [.62, .6, .95, 0, 1.85, 2.6], frill: true, horns: true, legs: { biped: false, hip: [.62, 1.6, -1.6], sh: [.6, 1.5, 1.1], h: 1.5, r: .3 },
-      base: 0x7a6a4a, back: 0x4f4430, belly: 0xc2b48c
-    }
+      base: 0x7a6a4a, back: 0x4f4430, belly: 0xc2b48c, stlTint: 0xb8a686
+    },
+    rex: {
+      spine: [[0, 2.4, -6.5], [0, 2.6, -3], [0, 2.9, 0], [0, 3.1, 2.5], [0, 3.3, 3.8]], r: [[0, .05], [.4, .5], [.62, .95], [.85, .6], [1, .45]],
+      head: [.5, .55, 1, 0, 3.4, 4.2], jaw: true, legs: { biped: true, hip: [.6, 2.0, 0], h: 2.0, r: .35 },
+      base: 0x6b5a3f, back: 0x3e3324, belly: 0xb8a37c, stripes: 3, stlTint: 0xb09a76
+    },
+    plate: {
+      spine: [[0, 1.2, -4.3], [0, 1.5, -2.5], [0, 1.9, -.5], [0, 1.7, 1.8], [0, 1.2, 3.3]], r: [[0, .06], [.3, .55], [.55, .95], [.8, .55], [1, .3]],
+      head: [.3, .3, .5, 0, 1.15, 3.5], legs: { biped: false, hip: [.5, 1.2, -1.4], sh: [.5, 1.0, 1.4], h: 1.1, r: .25 },
+      base: 0x6f7a4a, back: 0x8a5a3a, belly: 0xc8c08f, stlTint: 0x9aa277
+    },
+    // --- 0.3 에서 새로 들어온 STL 공룡·고생물 (그릴 몸 대신 STL 을 쓴다) ---
+    ptera: { stlTint: 0xc9cfc6, stripes: 0, wing: true },
+    mammoth: { stlTint: 0xa08a6c, stripes: 0, fur: true },
+    para: { stlTint: 0xa8b58c, stripes: 4 },
+    anky: { stlTint: 0xb0a280, stripes: 0 },
+    raptor: { stlTint: 0xc2a882, stripes: 8 },
+    dimetro: { stlTint: 0xa3927a, stripes: 0 },
+    spino: { stlTint: 0xa89078, stripes: 3 },
+    smilo: { stlTint: 0xb89a7e, stripes: 0 }
   };
+  // 몸빛을 받는 부품 (부리·발톱·뼈는 그대로 둔다)
+  const SKINNY = { hide: 1, skin: 1, fur: 1, feather: 1, ear: 1, trunk: 1, wing: 1, fin: 1, crest: 1, nose: 1, spine: 1, fringe: 1, plate: 1 };
+
   function dinoShade(sp) {
-    const base = new T.Color(sp.base), back = new T.Color(sp.back), belly = new T.Color(sp.belly);
+    const base = new T.Color(sp.base || 0x8f8f86), back = new T.Color(sp.back || 0x5f5f57), belly = new T.Color(sp.belly || 0xc9c2a8);
     return (x, y, z, nx, ny, nz, c) => {
       c.copy(base);
       if (ny > .25) c.lerp(back, Math.min(1, (ny - .25) * 1.6));
@@ -145,16 +214,82 @@
     const foot = ell(r * 1.0, r * .35, r * (biped ? 1.6 : 1.0), 0, -h + r * .25, biped ? .15 : .05, 8);
     return [g, foot];
   }
+
+  // STL 공룡: 부품을 한 덩어리로 합치고(그리기 1회) 색을 꼭짓점에 담는다 — 다리는 따로
+  function stlDino(kind) {
+    if (_legGeo[kind]) return _legGeo[kind];
+    const A = window.ASSETS[kind], sp = SPECIES[kind] || {};
+    const tint = new T.Color(sp.stlTint || 0xffffff);
+    function bake(parts) {
+      const pos = [], nor = [], uv = [], col = [], c = new T.Color();
+      for (const p of parts) {
+        const g = partGeo(p.key, p.data);
+        const P = g.attributes.position, N = g.attributes.normal, U = g.attributes.uv;
+        const base = SKINNY[p.data.m] ? new T.Color(sp.stlTint || 0xaaaa99).lerp(new T.Color(colorOf(p.data.m)), .3)
+                                      : new T.Color(colorOf(p.data.m));
+        const idx = g.index ? g.index.array : null;        // 색인 순서대로 펼쳐야 삼각형이 맞는다
+        const count = idx ? idx.length : P.count;
+        for (let t = 0; t < count; t++) {
+          const i = idx ? idx[t] : t;
+          pos.push(P.getX(i), P.getY(i), P.getZ(i));
+          nor.push(N.getX(i), N.getY(i), N.getZ(i));
+          uv.push(U.getX(i), U.getY(i));
+          col.push(base.r, base.g, base.b);
+        }
+      }
+      const g = new T.BufferGeometry();
+      g.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
+      g.setAttribute('normal', new T.Float32BufferAttribute(nor, 3));
+      g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2));
+      g.setAttribute('color', new T.Float32BufferAttribute(col, 3));
+      g.computeBoundingSphere();
+      return g;
+    }
+    // 배는 밝게, 등은 어둡게 + 줄무늬 (합친 뒤 법선을 보고 한 번 더 손본다)
+    function rebalance(g) {
+      const p = g.attributes.position, n = g.attributes.normal, cl = g.attributes.color;
+      const stripes = sp.stripes || 0, c = new T.Color();
+      for (let i = 0; i < p.count; i++) {
+        const ny = n.getY(i), z = p.getZ(i), y = p.getY(i);
+        c.setRGB(cl.getX(i), cl.getY(i), cl.getZ(i));
+        if (ny > .35) c.multiplyScalar(1 - Math.min(.3, (ny - .35) * .5));
+        if (ny < -.25) c.lerp(new T.Color(1, 1, .86), Math.min(.45, (-ny - .25) * .9));
+        if (stripes && ny > -.05 && Math.sin(z * stripes + .5) > .5) c.multiplyScalar(.78);
+        c.offsetHSL(0, 0, Math.sin(y * 2.3 + z * 1.7) * .015);
+        cl.setXYZ(i, c.r, c.g, c.b);
+      }
+      cl.needsUpdate = true;
+      return g;
+    }
+    const bodyParts = A.parts.map((p, i) => ({ key: kind + '#' + i, data: p }));
+    const out = { body: rebalance(bake(bodyParts)), legs: [], pivots: [] };
+    (A.legs || []).forEach((lg, li) => {
+      const parts = lg.parts.map((p, i) => ({ key: kind + '@' + li + '#' + i, data: p }));
+      const base = bake(parts), g = base.clone();
+      out.legs.push(rebalance(g));
+      out.pivots.push(lg.pivot);
+    });
+    _legGeo[kind] = out;
+    return out;
+  }
+
   function makeDino(kind) {
     const sp = SPECIES[kind];
-    if (window.ASSETS && ASSETS[kind] && ASSETS[kind].legs){
-      const A = ASSETS[kind], sh = dinoShade(sp), g = new T.Group();
-      if (!_cache[kind]) _cache[kind] = { body: decode(A.mesh, sh), legs: A.legs.map(l => decode(l.mesh, sh)) };
-      const body = new T.Mesh(_cache[kind].body, mat.v); body.castShadow = true; g.add(body);
-      const legs = A.legs.map((l, i) => { const p = new T.Group(); p.position.set(l.pivot[0], l.pivot[1], l.pivot[2]); const m = new T.Mesh(_cache[kind].legs[i], mat.v); m.castShadow = true; p.add(m); g.add(p); return p; });
+    if (window.ASSETS && window.ASSETS[kind]) {
+      const d = stlDino(kind), g = new T.Group(), skinMat = X.familyMaterial('hide');
+      const body = new T.Mesh(d.body, kind === 'raptor' || kind === 'ptera' ? X.familyMaterial('feather') : (kind === 'mammoth' || kind === 'smilo' ? X.familyMaterial('fur') : skinMat));
+      body.castShadow = true; g.add(body);
+      const legs = d.legs.map((geo, i) => {
+        const pv = d.pivots[i], grp = new T.Group();
+        grp.position.set(pv[0], pv[1], pv[2]);
+        const m = new T.Mesh(geo, kind === 'mammoth' || kind === 'smilo' ? X.familyMaterial('fur') : skinMat);
+        m.castShadow = true; grp.add(m); g.add(grp); return grp;
+      });
       // 다리 순서 [왼뒤, 왼앞, 오른뒤, 오른앞]: 게임에서 0·3, 1·2가 같이 움직여 대각선 걸음이 된다
-      g.userData = { legs, kind }; return g;
+      g.userData = { legs, kind, size: assetSize(kind) };
+      return g;
     }
+    if (!sp) return null;
     const parts = [], col = sp.base;
     parts.push([tube(sp.spine, profile(sp.r), 48, 12), col]);
     const H = sp.head; parts.push([ell(H[0], H[1], H[2], H[3], H[4], H[5], 14), col]);
@@ -165,7 +300,7 @@
       [[-.38, .55, -.2], [.38, .55, -.2]].forEach(([x, y, z]) => parts.push([new T.ConeGeometry(.12, 1.1, 8).rotateX(Math.PI / 2 - .35).translate(x, H[4] + y, H[5] + z + .45), 0xe6dcc0]));
       parts.push([new T.ConeGeometry(.1, .5, 8).rotateX(Math.PI / 2 - .5).translate(0, H[4] + .15, H[5] + .85), 0xe6dcc0]);
     }
-    [-1, 1].forEach(s => parts.push([ell(.05, .05, .05, s * H[0] * .75, H[4] + H[1] * .35, H[5] + H[2] * .3, 6), 0x15120e]));  // 눈
+    [-1, 1].forEach(s => parts.push([ell(.05, .05, .05, s * H[0] * .75, H[4] + H[1] * .35, H[5] + H[2] * .3, 6), 0x15120e]));
     const g = new T.Group();
     const body = new T.Mesh(merge(parts, dinoShade(sp)), mat.v); body.castShadow = true; g.add(body);
     const legs = [], L = sp.legs, lg = legGeo(L.h, L.r, L.biped);
@@ -188,7 +323,7 @@
     const g = new T.Group(), skin = 0xe2b18c;
     const torso = new T.Mesh(merge([
       [new T.CapsuleGeometry(.24, .42, 6, 12).scale(1, 1, .72).translate(0, 1.2, 0), shirt],
-      [new T.CylinderGeometry(.25, .22, .14, 12).translate(0, .9, 0), 0x5b4a35],          // 허리띠
+      [new T.CylinderGeometry(.25, .22, .14, 12).translate(0, .9, 0), 0x5b4a35],
       [new T.CylinderGeometry(.07, .08, .12, 8).translate(0, 1.58, 0), skin],
       [ell(.15, .18, .16, 0, 1.78, 0, 14), skin],
       [ell(.165, .11, .17, 0, 1.88, -.015, 12), hair || 0x3a2a1e],
@@ -204,22 +339,24 @@
     const tool = new T.Group(); tool.position.set(0, -.62, .05); P.ra.add(tool); P.tool = tool;
     g.userData = P; return g;
   }
-  function setTool(h, item) {
-    const t = h.userData.tool; while (t.children.length) t.remove(t.children[0]);
-    const wood = 0x7a5636, stone = 0x8f8c84;
-    let geo = null;
-    if (item === 'axe') geo = merge([[new T.CylinderGeometry(.03, .035, .75, 6).translate(0, .15, 0), wood], [new T.BoxGeometry(.06, .16, .26).translate(0, .45, .1), stone]]);
-    if (item === 'spear') geo = merge([[new T.CylinderGeometry(.025, .03, 1.7, 6).translate(0, .3, 0), wood], [new T.ConeGeometry(.05, .3, 6).translate(0, 1.3, 0), stone]]);
-    if (item === 'torch') geo = merge([[new T.CylinderGeometry(.03, .035, .6, 6), wood], [ell(.09, .14, .09, 0, .38, 0, 8), 0xffa035]]);
-    if (geo) { const m = new T.Mesh(geo, mat.v); m.rotation.x = Math.PI / 2; m.castShadow = true; t.add(m); }
-  }
   function animHuman(h, speed, t, swing) {
     const p = h.userData, k = Math.sin(t * 9) * Math.min(1, speed / 4) * .75;
     p.ll.rotation.x = k; p.rl.rotation.x = -k; p.la.rotation.x = -k * .8;
     p.ra.rotation.x = swing > 0 ? -2.3 * Math.sin(swing * Math.PI) : k * .8;
   }
+  function setTool(h, item) {
+    const t = h.userData.tool; while (t.children.length) t.remove(t.children[0]);
+    const wood = 0x7a5636, stone = 0x8f8c84;
+    let geo = null;
+    if (item === 'axe') geo = merge([[new T.CylinderGeometry(.03, .035, .75, 6).translate(0, .15, 0), wood], [new T.BoxGeometry(.06, .16, .26).translate(0, .45, .1), stone]]);
+    if (item === 'axe2') geo = merge([[new T.CylinderGeometry(.03, .035, .78, 6).translate(0, .15, 0), wood], [new T.BoxGeometry(.07, .19, .3).translate(0, .47, .1), 0x707078], [new T.ConeGeometry(.04, .22, 5).rotateZ(-Math.PI / 2).translate(-.11, .47, .1), 0xe6dcc0]]);
+    if (item === 'spear') geo = merge([[new T.CylinderGeometry(.025, .03, 1.7, 6).translate(0, .3, 0), wood], [new T.ConeGeometry(.05, .3, 6).translate(0, 1.3, 0), stone]]);
+    if (item === 'spear2') geo = merge([[new T.CylinderGeometry(.025, .03, 1.8, 6).translate(0, .3, 0), wood], [new T.ConeGeometry(.06, .42, 6).translate(0, 1.42, 0), 0xe6dcc0], [new T.CylinderGeometry(.035, .035, .1, 6).translate(0, 1.16, 0), 0x6b4a2e]]);
+    if (item === 'torch') geo = merge([[new T.CylinderGeometry(.03, .035, .6, 6), wood], [ell(.09, .14, .09, 0, .38, 0, 8), 0xffa035]]);
+    if (geo) { const m = new T.Mesh(geo, mat.v); m.rotation.x = Math.PI / 2; m.castShadow = true; t.add(m); }
+  }
 
-  // ---------- 나무·바위·풀 ----------
+  // ---------- 나무·바위·풀 (코드로 만드는 것) ----------
   function noiseDisplace(g, amt, seed) {
     const p = g.attributes.position;
     for (let i = 0; i < p.count; i++) {
@@ -255,7 +392,7 @@
     for (let k = 0; k < 3; k++) {
       const a = k / 3 * Math.PI, ox = Math.cos(a) * .12, oz = Math.sin(a) * .12, w = .05;
       const tip = .55 + k * .08;
-      pos.push(ox - w, 0, oz, ox + w, 0, oz, ox, tip, oz + .05, ox + w, 0, oz, ox - w, 0, oz, ox, tip, oz + .05);   // 앞·뒤 두 장 (뒤에서 봐도 밝게)
+      pos.push(ox - w, 0, oz, ox + w, 0, oz, ox, tip, oz + .05, ox + w, 0, oz, ox - w, 0, oz, ox, tip, oz + .05);
       for (let q = 0; q < 2; q++) col.push(c1.r, c1.g, c1.b, c1.r, c1.g, c1.b, c2.r, c2.g, c2.b);
     }
     const g = new T.BufferGeometry();
@@ -265,36 +402,33 @@
     return g;
   }
 
-  // ---------- 건물 (원시 캠프) ----------
+  // ---------- 건물 (STL 이 없을 때 쓰는 코드 모형) ----------
   const WOOD = 0x7b5a3c, WOOD2 = 0x6a4b31, THATCH = 0xb59a5e, CLOTH = 0xc8b48a, HIDE = 0x9a7350, STONE = 0x8a857a;
   function logLine(ax, az, bx, bz, y, r, parts, color) {
     const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz);
     const g = new T.CylinderGeometry(r, r, L, 7).rotateZ(Math.PI / 2).rotateY(-Math.atan2(dz, dx)).translate((ax + bx) / 2, y, (az + bz) / 2);
     parts.push([g, color || WOOD]);
   }
-  // 울타리 한 칸: 길이 len (x 방향), 말뚝 + 가로대
   function fenceGeo(len) {
     const parts = [], n = Math.max(2, Math.round(len / 1.5) + 1);
     for (let i = 0; i < n; i++) { const x = -len / 2 + len * i / (n - 1); parts.push([new T.CylinderGeometry(.09, .11, 1.7, 6).translate(x, .85, 0), WOOD2]); parts.push([new T.ConeGeometry(.1, .25, 6).translate(x, 1.82, 0), WOOD2]); }
     logLine(-len / 2, 0, len / 2, 0, .55, .06, parts); logLine(-len / 2, 0, len / 2, 0, 1.2, .06, parts);
     return merge(parts, (x, y, z, nx, ny, nz, c) => c.offsetHSL(0, 0, Math.sin(x * 7) * .03));
   }
-  // 통나무 오두막: w × d, 앞쪽(+z) 가운데에 문
   function cabinGeo(w, d) {
     const parts = [], H = 2.6, r = .17, door = 1.4;
     for (let y = r; y < H; y += r * 2) {
-      logLine(-w / 2 - .3, -d / 2, w / 2 + .3, -d / 2, y, r, parts);                         // 뒤
-      logLine(-w / 2, -d / 2 - .3, -w / 2, d / 2 + .3, y, r, parts); logLine(w / 2, -d / 2 - .3, w / 2, d / 2 + .3, y, r, parts);  // 옆
-      if (y > 2.1) logLine(-w / 2 - .3, d / 2, w / 2 + .3, d / 2, y, r, parts);                // 문 위
+      logLine(-w / 2 - .3, -d / 2, w / 2 + .3, -d / 2, y, r, parts);
+      logLine(-w / 2, -d / 2 - .3, -w / 2, d / 2 + .3, y, r, parts); logLine(w / 2, -d / 2 - .3, w / 2, d / 2 + .3, y, r, parts);
+      if (y > 2.1) logLine(-w / 2 - .3, d / 2, w / 2 + .3, d / 2, y, r, parts);
       else { logLine(-w / 2 - .3, d / 2, -door / 2, d / 2, y, r, parts); logLine(door / 2, d / 2, w / 2 + .3, d / 2, y, r, parts); }
     }
-    // 박공 벽 + 초가 지붕
     const ridge = H + w * .38;
     const gable = new T.BufferGeometry(); gable.setAttribute('position', new T.Float32BufferAttribute([-w / 2, H, 0, w / 2, H, 0, 0, ridge, 0], 3)); gable.computeVertexNormals();
     parts.push([gable.clone().translate(0, 0, -d / 2), WOOD2]); parts.push([gable.clone().rotateY(Math.PI).translate(0, 0, d / 2), WOOD2]);
     const slope = Math.hypot(w / 2 + .6, ridge - H + .3), ang = Math.atan2(ridge - H + .3, w / 2 + .6);
     [-1, 1].forEach(s => parts.push([new T.BoxGeometry(slope, .22, d + 1.2).rotateZ(-s * ang).translate(s * (w / 4 + .3), (H + ridge) / 2 - .05, 0), THATCH]));
-    logLine(0, -d / 2 - .7, 0, d / 2 + .7, ridge + .1, .14, [], 0); parts.push([new T.CylinderGeometry(.14, .14, d + 1.4, 7).rotateX(Math.PI / 2).translate(0, ridge + .1, 0), WOOD2]);
+    parts.push([new T.CylinderGeometry(.14, .14, d + 1.4, 7).rotateX(Math.PI / 2).translate(0, ridge + .1, 0), WOOD2]);
     return merge(parts, (x, y, z, nx, ny, nz, c) => c.offsetHSL(0, 0, Math.sin(y * 11 + x * .7) * .025));
   }
   function kilnGeo() {
@@ -304,12 +438,12 @@
   }
   function tentGeo() {
     const parts = [[new T.CylinderGeometry(.02, 2.0, 2.3, 4, 1, true).rotateY(Math.PI / 4).scale(1, 1, 1.3).translate(0, 1.15, 0), CLOTH]];
-    [[1.4, 0, 1.4], [-1.4, 0, 1.4], [1.4, 0, -1.4], [-1.4, 0, -1.4]].forEach(([x, , z]) => logLine(x * .2, z * .2, x * 1.02, z * 1.3, 1.2 + .3, .04, parts));
+    [[1.4, 0, 1.4], [-1.4, 0, 1.4], [1.4, 0, -1.4], [-1.4, 0, -1.4]].forEach(([x, , z]) => logLine(x * .2, z * .2, x * 1.02, z * 1.3, 1.5, .04, parts));
     const g = merge(parts); g.computeVertexNormals(); return g;
   }
   function rackGeo() {
     const parts = [];
-    [[-1, 0], [1, 0]].forEach(([x]) => { logLine(x, -.5, x, .0, .0, 0, []); parts.push([new T.CylinderGeometry(.05, .06, 1.8, 6).rotateZ(.15 * x).translate(x * 1.05, .9, -.4), WOOD2]); parts.push([new T.CylinderGeometry(.05, .06, 1.8, 6).rotateZ(.15 * x).translate(x * 1.05, .9, .4), WOOD2]); });
+    [[-1, 0], [1, 0]].forEach(([x]) => { parts.push([new T.CylinderGeometry(.05, .06, 1.8, 6).rotateZ(.15 * x).translate(x * 1.05, .9, -.4), WOOD2]); parts.push([new T.CylinderGeometry(.05, .06, 1.8, 6).rotateZ(.15 * x).translate(x * 1.05, .9, .4), WOOD2]); });
     logLine(-1.2, 0, 1.2, 0, 1.75, .05, parts);
     [-.6, 0, .6].forEach(x => parts.push([new T.PlaneGeometry(.5, .8).translate(x, 1.35, 0), HIDE]));
     return merge(parts);
@@ -330,6 +464,10 @@
   }
   function seatGeo() { return merge([[new T.CylinderGeometry(.25, .25, 1.6, 8).rotateZ(Math.PI / 2).translate(0, .25, 0), WOOD]]); }
 
-  window.MODELS = { assetGeo, merge, tube, profile, ell, mat, SPECIES, makeDino, makeHuman, setTool, animHuman, pineGeo, leafyGeo, rockGeo, bushGeo, grassBlade,
-    fenceGeo, cabinGeo, kilnGeo, tentGeo, rackGeo, fireGeo, fieldGeo, seatGeo, noiseDisplace };
+  window.MODELS = {
+    assetObject, assetGeo, assetSize, instanceParts, decodePart,
+    merge, tube, profile, ell, mat, SPECIES, makeDino, makeHuman, setTool, animHuman,
+    pineGeo, leafyGeo, rockGeo, bushGeo, grassBlade,
+    fenceGeo, cabinGeo, kilnGeo, tentGeo, rackGeo, fireGeo, fieldGeo, seatGeo, noiseDisplace
+  };
 })();
