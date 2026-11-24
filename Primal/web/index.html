@@ -57,7 +57,10 @@ body.mobile .touch{display:block}
 .recipe button:disabled{opacity:.35}
 /* 처음 화면 */
 .title{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(800px 500px at 50% 30%,rgba(240,169,59,.18),transparent),linear-gradient(#0e1a14cc,#0e1a14f2);text-align:center;padding:20px}
+.title{overflow-y:auto}
 .title h1{margin:0;font-size:clamp(40px,10vw,64px);letter-spacing:2px;text-shadow:0 0 30px rgba(240,169,59,.5)}
+@media (max-height:600px){.title{gap:8px;padding:10px}.title h1{font-size:clamp(30px,8vw,44px)}.title p{font-size:13px}
+ .tbtn{padding:10px 22px;font-size:15px;min-width:190px}.keys{font-size:11px;line-height:1.5}}
 .title p{margin:0;color:var(--sub);font-size:15px;max-width:440px}
 .tbtn{border:0;border-radius:16px;padding:14px 30px;font-size:17px;font-weight:800;background:var(--accent);color:#1d1406;min-width:220px}
 .tbtn.ghost{background:rgba(255,255,255,.1);color:var(--ink)}
