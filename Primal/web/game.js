@@ -1,13 +1,14 @@
-// 원시섬 0.2: 배그식 3인칭 섬 생존. 모형은 models.js, 3D 그리기는 three.js.
+// 원시섬 0.3: 배그식 3인칭 섬 생존. 모형은 models.js, 재질은 textures.js, 3D 그리기는 three.js.
 (function(){
 'use strict';
 const $ = id => document.getElementById(id);
-const M = window.MODELS, T = THREE;
+const M = window.MODELS, T = THREE, X = window.TEXTURES;
 const MOBILE = matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window;
 if (MOBILE) document.body.classList.add('mobile');
 // 그래픽 품질 (높음·보통·낮음): 휴대폰은 보통부터
 const QL = (function(){ try { return localStorage.getItem('primal_q'); } catch (e) { return null; } })() || (MOBILE ? 'mid' : 'high');
-const Q = { high: { pr: 1.75, sh: 2048, grass: 14000, gr: 38, fog: 240, land: 260, sea: 120 }, mid: { pr: 1.25, sh: 1024, grass: 5000, gr: 26, fog: 170, land: 170, sea: 50 }, low: { pr: 1, sh: 0, grass: 1800, gr: 18, fog: 140, land: 120, sea: 30 } }[QL] || null;
+const Q = { high: { pr: 1.75, sh: 2048, grass: 14000, gr: 38, fog: 240, land: 260, sea: 120, tex: 'high' }, mid: { pr: 1.25, sh: 1024, grass: 5000, gr: 26, fog: 170, land: 170, sea: 50, tex: 'mid' }, low: { pr: 1, sh: 0, grass: 1800, gr: 18, fog: 140, land: 120, sea: 30, tex: 'low' } }[QL] || null;
+X.init(Q.tex);   // 절차적 PBR 텍스처 (한 장씩 미뤄서 만든다)
 
 // ---------- 지형 ----------
 function hash(x, z){ let h = Math.sin(x * 127.1 + z * 311.7) * 43758.5453; return h - Math.floor(h); }
@@ -61,15 +62,7 @@ scene.add(new T.Mesh(new T.SphereGeometry(800, 32, 16), new T.ShaderMaterial({
   fragmentShader: 'uniform vec3 top,hor,sunDir,sunCol; varying vec3 vD; void main(){ float h = max(vD.y,0.); vec3 c = mix(hor, top, pow(h,.55)); if(vD.y<0.) c = hor*.9; float s = max(dot(normalize(vD), sunDir),0.); c += sunCol * (pow(s,900.)*2. + pow(s,12.)*.25); gl_FragColor = vec4(c,1.); }'
 })));
 
-// 땅: 높이 + 색 + 자잘한 무늬 그림
-function detailTex(){
-  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), im = g.createImageData(256, 256);
-  for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++){
-    const n = .78 + .22 * (vnoise(x * .09, y * .09) * .55 + vnoise(x * .37, y * .37) * .3 + hash(x, y) * .15), i = (y * 256 + x) * 4;
-    im.data[i] = im.data[i + 1] = im.data[i + 2] = n * 255; im.data[i + 3] = 255;
-  }
-  g.putImageData(im, 0, 0); const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(90, 90); t.colorSpace = T.SRGBColorSpace; return t;
-}
+// 땅: 높이 + 꼭짓점 색 + 절차적 PBR 텍스처 (textures.js 가 준비되는 대로 입혀진다)
 (function(){
   const S = 520, N = Q.land;
   const g = new T.PlaneGeometry(S, S, N, N); g.rotateX(-Math.PI / 2);
@@ -85,7 +78,7 @@ function detailTex(){
     col.push(c.r, c.g, c.b);
   }
   g.setAttribute('color', new T.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
-  const ground = new T.Mesh(g, new T.MeshLambertMaterial({ vertexColors: true, map: detailTex() })); ground.receiveShadow = true; scene.add(ground);
+  const ground = new T.Mesh(g, X.terrainMaterial()); ground.receiveShadow = true; scene.add(ground);
 })();
 
 // 물: 잔물결
@@ -103,23 +96,29 @@ const KIND = {
   rock:  { hp: 40, r: 1.1, give: 'stone', name: '바위', verb: '깨기', big: true },
   bush:  { hp: 1, r: .5, give: [['berry', 2], ['fiber', 2]], name: '열매 덤불', verb: '따기' },
   stick: { hp: 1, r: .2, give: [['wood', 1]], name: '나뭇가지', verb: '줍기' },
-  pebble:{ hp: 1, r: .2, give: [['stone', 1]], name: '돌멩이', verb: '줍기' }
+  pebble:{ hp: 1, r: .2, give: [['stone', 1]], name: '돌멩이', verb: '줍기' },
+  palm:  { hp: 44, r: .8, give: [['wood', 3], ['coconut', 1]], name: '야자수', verb: '베기', big: true },
+  fern:  { hp: 1, r: .7, give: [['fiber', 3], ['berry', 1]], name: '고사리 군락', verb: '뜯기' },
+  basalt:{ hp: 70, r: 1.5, give: [['stone', 3]], name: '현무암 바위', verb: '깨기', big: true, hard: true }
 };
 function rnd(seed){ let s = seed; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
 const NODES = [];
 const _m = new T.Matrix4(), _q = new T.Quaternion(), _v = new T.Vector3(), _s = new T.Vector3(), _y = new T.Vector3(0, 1, 0);
 function inCamp(x, z, pad){ return Math.abs(x - CAMP.x) < CAMP.w / 2 + (pad || 0) && Math.abs(z - CAMP.z) < CAMP.d / 2 + (pad || 0); }
 (function(){
-  const r = rnd(4242), want = { pine: 230, leafy: 150, rock: 110, bush: 130, stick: 110, pebble: 110 };
+  const r = rnd(4242), want = { pine: 210, leafy: 140, rock: 100, bush: 120, stick: 100, pebble: 100, palm: 26, fern: 40, basalt: 20 };
   for (const t in want){
     let n = 0, guard = 0;
-    while (n < want[t] && guard++ < 30000){
+    while (n < want[t] && guard++ < 40000){
       const a = r() * Math.PI * 2, d = Math.sqrt(r()) * R * .93, x = Math.cos(a) * d, z = Math.sin(a) * d, h = heightAt(x, z);
-      if (h < 1 || inCamp(x, z, t === 'stick' || t === 'pebble' ? -2 : 6)) continue;
+      if (h < .6 || inCamp(x, z, t === 'stick' || t === 'pebble' ? -2 : 6)) continue;
       const forest = fbm(x * .025 + 11, z * .025);
       if (t === 'pine' && (h > 20 || forest < .45)) continue;
       if (t === 'leafy' && (h > 12 || forest < .4 || forest > .62)) continue;
       if (t === 'rock' && h < 4 && r() < .6) continue;
+      if (t === 'palm' && (h > 5.5 || h < 1.1)) continue;                       // 번해변 (바다 가까운 낮은 땅)
+      if (t === 'fern' && (forest < .38 || h > 15)) continue;                    // 숲그늘
+      if (t === 'basalt' && !(h > 11 || fbm(x * .06, z * .06) > .58)) continue;  // 바위산·거친 땅
       NODES.push({ type: t, x, z, y: h, hp: KIND[t].hp, s: .8 + r() * .55, rot: r() * 6.28, var: Math.floor(r() * 3) });
       n++;
     }
@@ -133,19 +132,31 @@ const INST = {};
   const geos = { pine: M.pineGeo(), leafy: M.leafyGeo(), rock: M.rockGeo(1.7), bush: M.bushGeo(),
     stick: M.merge([[new T.CylinderGeometry(.045, .05, 1.1, 5).rotateZ(Math.PI / 2).translate(0, .06, 0), 0x7a5636]]),
     pebble: M.merge([[M.noiseDisplace(new T.IcosahedronGeometry(.2, 0), .2, 3).translate(0, .12, 0), 0x9a978f]]) };
-  for (const t in geos){
-    const list = NODES.filter(n => n.type === t);
-    const im = new T.InstancedMesh(geos[t], t === 'rock' || t === 'pebble' ? M.mat.vf : M.mat.v, list.length);
-    im.castShadow = t !== 'stick' && t !== 'pebble'; im.receiveShadow = t === 'rock';
-    scene.add(im); INST[t] = im;
+  function put(t, geo, material, list, shadow){
+    const im = new T.InstancedMesh(geo, material, list.length);
+    im.castShadow = shadow; im.receiveShadow = true;
+    if (t === 'palm' || t === 'fern' || t === 'basalt') im.frustumCulled = false;
+    scene.add(im); (INST[t] = INST[t] || []).push(im);
     const c = new T.Color();
-    list.forEach((n, i) => { n.idx = i; setNode(n, true); c.setHSL(0, 0, .85 + hash(n.x, n.z) * .3); im.setColorAt(i, c); });
+    list.forEach((n, i) => { n.idx = i; c.setHSL(0, 0, .82 + hash(n.x, n.z) * .34); im.setColorAt(i, c); });
+    return im;
   }
+  for (const t in geos) put(t, geos[t], t === 'rock' || t === 'pebble' ? M.mat.vf : M.mat.v, NODES.filter(n => n.type === t), t !== 'stick' && t !== 'pebble');
+  // STL 자연물 (야자수·고사리·현무암): 재질 계열별로 나눠 InstancedMesh 하나씩
+  for (const t of ['palm', 'fern', 'basalt']){
+    const list = NODES.filter(n => n.type === t);
+    const parts = list.length && M.instanceParts(t);
+    if (!parts) continue;
+    for (const p of parts) put(t, p.geo, X.familyMaterial(p.family), list, true);
+  }
+  for (const t in INST) for (const im of INST[t]) if (im.instanceColor) im.instanceColor.needsUpdate = true;
+  NODES.forEach(n => setNode(n, true));
 })();
 function setNode(n, show){
   _q.setFromAxisAngle(_y, n.rot); _s.setScalar(show ? n.s : 0); if (show && n.type === 'rock') _s.set(n.s * (1 + n.var * .3), n.s, n.s * (1.2 - n.var * .15));
-  _m.compose(_v.set(n.x, n.y - (n.type === 'rock' ? .2 : 0), n.z), _q, _s);
-  INST[n.type].setMatrixAt(n.idx, _m); INST[n.type].instanceMatrix.needsUpdate = true;
+  _m.compose(_v.set(n.x, n.y - (n.type === 'rock' || n.type === 'basalt' ? .2 : 0), n.z), _q, _s);
+  const list = INST[n.type]; if (!list) return;
+  for (const im of list){ im.setMatrixAt(n.idx, _m); im.instanceMatrix.needsUpdate = true; }
 }
 
 // ---------- 충돌 (원·선분, 8m 칸으로 나눠 찾기) ----------
@@ -182,64 +193,112 @@ function collide(x, z, rad){
 
 // ---------- 건물 (캠프 + 직접 짓기) ----------
 const BUILD = {
-  fence: { name: '울타리', e: '🪵', need: { wood: 4 }, desc: '4m 울타리 한 칸. 공룡이 못 넘어와요.', geo: () => M.fenceGeo(4) },
-  cabin: { name: '오두막', e: '🛖', need: { wood: 30, stone: 10, fiber: 10 }, desc: '통나무 오두막. 쓰러지면 여기서 깨어나고, 안에서는 체력이 빨리 차요.', geo: () => M.cabinGeo(6, 5) },
-  kiln:  { name: '가마', e: '🏺', need: { stone: 15, wood: 5 }, desc: '곁에서 ✋: 고기를 한 번에 세 개씩 구워요.', geo: () => M.kilnGeo() },
-  rack:  { name: '건조대', e: '🦴', need: { wood: 6, fiber: 4 }, desc: '곁에서 ✋: 생고기를 육포로 말려요 (배고픔 +25, 날고기 탈 없음).', geo: () => M.rackGeo() },
-  fire:  { name: '모닥불', e: '🏕️', need: { wood: 5, stone: 3 }, desc: '곁에서 ✋: 고기 굽기. 곁에 있으면 체력이 천천히 차요.', geo: () => M.fireGeo() },
-  tent:  { name: '천막', e: '⛺', need: { wood: 8, hide: 3, fiber: 4 }, desc: '쓰러지면 여기서 깨어나요.', geo: () => M.tentGeo() },
-  well:  { name: '우물', e: '🪣', need: { stone: 20, wood: 6 }, desc: '곁에서 ✋: 물 마시기 (기력이 다 차고 체력 +5).', geo: () => M.kilnGeo() },
-  tower: { name: '망루', e: '🗼', need: { wood: 24, fiber: 8 }, desc: '높은 곳에서 멀리 봐요. 꼭대기에 서 있으면 공룡이 못 올라와요.', geo: () => M.fenceGeo(3) }
+  fence:   { name: '울타리', e: '🪵', need: { wood: 4 }, desc: '4m 울타리 한 칸. 공룡이 못 넘어와요.', asset: 'fence' },
+  hut:     { name: '짚 움막', e: '🛖', need: { wood: 12, fiber: 10, stone: 2 }, desc: '짚으로 엮은 움막. 쓰러지면 여기서 깨어나고 체력이 조금씩 차요.', asset: 'hut' },
+  cabin:   { name: '오두막', e: '🏠', need: { wood: 30, stone: 10, fiber: 10 }, desc: '통나무 오두막. 쓰러지면 여기서 깨어나고, 안에서는 체력이 빨리 차요.', asset: 'shelter' },
+  kiln:    { name: '가마', e: '🏺', need: { stone: 15, wood: 5 }, desc: '곁에서 ✋: 고기를 한 번에 세 개씩 구워요.', asset: 'kiln' },
+  forge:   { name: '대장간', e: '⚒️', need: { stone: 18, wood: 8, hide: 2 }, desc: '곁에서 ✋: 이빨·뿔로 강화 도끼·창을 만들어요 (가방 > 만들기).', asset: 'forge' },
+  bench:   { name: '작업대', e: '🔨', need: { wood: 8, fiber: 4 }, desc: '곁에서 ✋: 나뭇가지 3 → 나무 1, 돌멩이 3 → 돌 1 로 묶어요.', asset: 'bench' },
+  fire:    { name: '모닥불', e: '🏕️', need: { wood: 5, stone: 3 }, desc: '곁에서 ✋: 고기 굽기. 곁에 있으면 체력이 천천히 차요.', asset: 'firering' },
+  tent:    { name: '천막', e: '⛺', need: { wood: 8, hide: 3, fiber: 4 }, desc: '쓰러지면 여기서 깨어나요.', asset: 'tent' },
+  rack:    { name: '건조대', e: '🦴', need: { wood: 6, fiber: 4 }, desc: '곁에서 ✋: 생고기를 육포로 말려요 (배고픔 +25, 날고기 탈 없음).' },
+  fishrack:{ name: '물고기 건조대', e: '🐟', need: { wood: 6, fiber: 6 }, desc: '곁에서 ✋: 생고기 두 개를 한 번에 육포로 말려요.', asset: 'fishrack' },
+  well:    { name: '우물', e: '🪣', need: { stone: 20, wood: 6 }, desc: '곁에서 ✋: 물 마시기 (기력이 다 차고 체력 +5).', asset: 'well' },
+  altar:   { name: '석조 제단', e: '🕯️', need: { stone: 20, wood: 4, tooth: 1 }, desc: '곁에서 ✋ (이빨 1): 체력·기력·배를 채우고 잠시 공룡이 다가오지 않아요.', asset: 'altar' },
+  tower:   { name: '망루', e: '🗼', need: { wood: 24, fiber: 8 }, desc: '높은 곳에서 멀리 봐요. 꼭대기에 서 있으면 공룡이 못 올라와요.', asset: 'tower' },
+  raft:    { name: '뗏목', e: '🛶', need: { wood: 14, fiber: 6 }, desc: '물가에서 짓고 ✋ 로 타요. 물 위를 빠르게 건너요.', asset: 'raft', water: true }
 };
-const buildMat = new T.MeshLambertMaterial({ vertexColors: true, side: T.DoubleSide });
+// 짓기 메뉴에 보이지 않는 장식·자연물 (캠프에 미리 놓여 있다)
+const DECO = { palm: { name: '야자수', asset: 'palm' }, fern: { name: '고사리 군락', asset: 'fern' }, basalt: { name: '현무암 바위', asset: 'basalt' }, props: { name: '야영 잡화', asset: 'props' } };
 const GEO_CACHE = {};
-// 사용자 STL 모형이 있으면 그것을 쓴다 (울타리 4.4m · 움막 7m×5.8m · 가마)
-const ASSET_OF = { fence: 'fence', cabin: 'shelter', kiln: 'kiln', tower: 'tower', well: 'well', fire: 'firering', tent: 'tent' };
-function assetFor(s){ const a = ASSET_OF[s.type] && M.assetGeo(ASSET_OF[s.type]); if (!a) return null;
-  if (s.type === 'fence') return { g: a, sc: [(s.len || 4) / 4.4, 1, 1] };
-  if (s.type === 'cabin'){ const sx = (s.w || 6) / 7.04, sz = (s.d || 5) / 5.8; return { g: a, sc: [sx, Math.min(sx, sz) * 1.02, sz] }; }
-  return { g: a, sc: [1, 1, 1] }; }
-function bgeo(s){ const A = assetFor(s); if (A) return A.g; const k = s.type + (s.w || '') + 'x' + (s.d || '') + (s.len || ''); if (!GEO_CACHE[k]) GEO_CACHE[k] = s.type === 'cabin' && s.w ? M.cabinGeo(s.w, s.d) : s.type === 'fence' && s.len ? M.fenceGeo(s.len) : s.type === 'field' ? M.fieldGeo(s.w, s.d) : s.type === 'seat' ? M.seatGeo() : BUILD[s.type].geo(); return GEO_CACHE[k]; }
+const GHOST_MAT = new T.MeshLambertMaterial({ color: 0x7bd88f, transparent: true, opacity: .55, depthWrite: false, side: T.DoubleSide });
+function assetFor(s){
+  const b = BUILD[s.type] || DECO[s.type];
+  if (!b || !b.asset || !(window.ASSETS && window.ASSETS[b.asset])) return null;
+  let sc = [1, 1, 1];
+  if (s.type === 'fence') sc = [(s.len || 4) / 4.4, 1, 1];
+  else if (s.type === 'cabin'){ const sx = (s.w || 6) / 7.04, sz = (s.d || 5) / 5.8; sc = [sx, Math.min(sx, sz) * 1.02, sz]; }
+  else if (s.type === 'raft') sc = [1.7, 1, 1.7];
+  else if (s.type === 'palm' || s.type === 'fern' || s.type === 'basalt') sc = [s.scale || 1, s.scale || 1, s.scale || 1];
+  return { name: b.asset, sc };
+}
+function fallbackGeo(s){
+  const k = s.type + (s.w || '') + 'x' + (s.d || '') + (s.len || '');
+  if (!GEO_CACHE[k]) GEO_CACHE[k] = s.type === 'cabin' && s.w ? M.cabinGeo(s.w, s.d) : s.type === 'fence' && s.len ? M.fenceGeo(s.len) : s.type === 'field' ? M.fieldGeo(s.w, s.d) : s.type === 'seat' ? M.seatGeo() : s.type === 'kiln' || s.type === 'well' ? M.kilnGeo() : s.type === 'tent' ? M.tentGeo() : s.type === 'rack' || s.type === 'fishrack' ? M.rackGeo() : M.fireGeo();
+  return GEO_CACHE[k];
+}
+function buildObj(s, ghost){
+  const A = assetFor(s);
+  const obj = A ? M.assetObject(A.name, { scale: A.sc, material: ghost ? GHOST_MAT : null, noShadow: !!ghost }) : null;
+  if (obj) return obj;
+  const m = new T.Mesh(fallbackGeo(s), ghost ? GHOST_MAT : M.mat.v);
+  m.castShadow = !ghost; m.receiveShadow = true; return m;
+}
 const STRUCTS = [], TOWER_H = 3.85;   // {type,x,z,rot,...,mesh,cols,fixed}
 function rotP(s, lx, lz){ const c = Math.cos(s.rot || 0), n = Math.sin(s.rot || 0); return [s.x + lx * c + lz * n, s.z - lx * n + lz * c]; }
 function placeStruct(s){
   const g = new T.Group(); s.y = heightAt(s.x, s.z);
-  const mesh = new T.Mesh(bgeo(s), buildMat); mesh.castShadow = true; mesh.receiveShadow = true; g.add(mesh);
-  const A = assetFor(s); if (A) mesh.scale.set(A.sc[0], A.sc[1], A.sc[2]);
+  g.add(buildObj(s, false));
   if (s.type === 'fire'){
-    const f = new T.Mesh(new T.ConeGeometry(.32, .9, 7), new T.MeshBasicMaterial({ color: 0xffa035 })); f.position.y = .5; g.add(f); g.userData.flame = f;
+    const f = new T.Mesh(new T.ConeGeometry(.32, .9, 7), new T.MeshBasicMaterial({ color: 0xffa035 })); f.position.y = .55; g.add(f); g.userData.flame = f;
     const l = new T.PointLight(0xff9a3d, 1.6, 18, 1.6); l.position.y = 1.3; g.add(l);
   }
   if (s.type === 'kiln'){ const f = new T.PointLight(0xff7a2a, .8, 6, 2); f.position.set(0, 1, 0); g.add(f); }
+  if (s.type === 'forge'){ const f = new T.PointLight(0xff6a1e, 1.1, 7, 2); f.position.set(0, 1.1, 0); g.add(f); g.userData.glow = f; }
+  if (s.type === 'altar'){ const f = new T.PointLight(0xffd68a, .7, 5, 2); f.position.set(0, 1.9, 0); g.add(f); }
   g.position.set(s.x, s.y, s.z); g.rotation.y = s.rot || 0; scene.add(g); s.mesh = g;
+  if (s.type === 'raft'){ s.y = Math.max(s.y, -.12); g.position.y = s.y; }
   // 부딪힘
   const C = s.cols = [];
   const seg = (ax, az, bx, bz, r) => { const a = rotP(s, ax, az), b = rotP(s, bx, bz); C.push(segCol(a[0], a[1], b[0], b[1], r)); };
   if (s.type === 'fence'){ const L = (s.len || 4) / 2; seg(-L, 0, L, 0, .22); }
   if (s.type === 'cabin'){ const w = (s.w || 6) / 2, d = (s.d || 5) / 2; seg(-w, -d, w, -d, .3); seg(-w, -d, -w, d, .3); seg(w, -d, w, d, .3); seg(-w, d, -.8, d, .3); seg(.8, d, w, d, .3); }
-  if (s.type === 'kiln') C.push(circleCol(s.x, s.z, M.assetGeo('kiln') ? 1.85 : 1.35));
+  if (s.type === 'hut'){ [[-2.2, -2.2], [2.2, -2.2], [-2.2, 2.2], [2.2, 2.2]].forEach(([a, b]) => { const q = rotP(s, a, b); C.push(circleCol(q[0], q[1], .5)); }); }
+  if (s.type === 'kiln') C.push(circleCol(s.x, s.z, 1.85));
+  if (s.type === 'forge') C.push(circleCol(s.x, s.z, 1.9));
+  if (s.type === 'bench') C.push(circleCol(s.x, s.z, 1.15));
+  if (s.type === 'altar') C.push(circleCol(s.x, s.z, 1.25));
   if (s.type === 'tent') C.push(circleCol(s.x, s.z, 1.4));
   if (s.type === 'well') C.push(circleCol(s.x, s.z, 1.5));
   if (s.type === 'tower'){ [[-1.4, -1.4], [1.4, -1.4], [-1.4, 1.4], [1.4, 1.4]].forEach(([a, b]) => { const q = rotP(s, a, b); C.push(circleCol(q[0], q[1], .25)); }); }
-  if (s.type === 'rack') seg(-1.1, 0, 1.1, 0, .25);
+  if (s.type === 'rack' || s.type === 'fishrack') seg(-1.2, 0, 1.2, 0, .25);
   if (s.type === 'fire') C.push(circleCol(s.x, s.z, .55));
   STRUCTS.push(s); return s;
 }
 // 시작 캠프 (버려진 캠프): 울타리 30m × 50m, 앞쪽에 5m 문
 (function(){
-  const X = CAMP.x, Z = CAMP.z, W = CAMP.w / 2, D = CAMP.d / 2, add = o => placeStruct(Object.assign({ fixed: true }, o));
-  for (let x = -W; x < W - .1; x += 5) add({ type: 'fence', len: 5, x: X + x + 2.5, z: Z - D, rot: 0 });            // 뒤
-  for (let z = -D; z < D - .1; z += 5){ add({ type: 'fence', len: 5, x: X - W, z: Z + z + 2.5, rot: Math.PI / 2 }); add({ type: 'fence', len: 5, x: X + W, z: Z + z + 2.5, rot: Math.PI / 2 }); }
-  for (let x = -W; x < W - .1; x += 5){ if (Math.abs(x + 2.5) < 3) continue; add({ type: 'fence', len: 5, x: X + x + 2.5, z: Z + D, rot: 0 }); }  // 앞 (가운데 문)
-  add({ type: 'cabin', w: 12, d: 8, x: X - 2, z: Z - D + 8, rot: 0 });
-  add({ type: 'kiln', x: X + 9, z: Z - D + 7, rot: -.4 });
-  add({ type: 'fire', x: X, z: Z + 2, rot: 0 });
-  [[-3, 2], [3, 2.4], [0, 5]].forEach(([dx, dz], i) => add({ type: 'seat', x: X + dx, z: Z + dz, rot: i * 1.1 }));
-  [[-9, 6], [-9, 11]].forEach(([dx, dz]) => add({ type: 'tent', x: X + dx, z: Z + dz, rot: .3 }));
-  add({ type: 'well', x: X + 5, z: Z - 4, rot: 0 });
-  add({ type: 'tower', x: X + W - 3, z: Z + D - 3, rot: 0 }); add({ type: 'tower', x: X - W + 3, z: Z - D + 3, rot: 0 });
-  [[9, 4], [9, 8], [9, 12]].forEach(([dx, dz]) => add({ type: 'rack', x: X + dx, z: Z + dz, rot: Math.PI / 2 }));
-  add({ type: 'field', w: 12, d: 9, x: X - 1, z: Z + 15, rot: 0 });
+  const X0 = CAMP.x, Z = CAMP.z, W = CAMP.w / 2, D = CAMP.d / 2, add = o => placeStruct(Object.assign({ fixed: true }, o));
+  for (let x = -W; x < W - .1; x += 5) add({ type: 'fence', len: 5, x: X0 + x + 2.5, z: Z - D, rot: 0 });            // 뒤
+  for (let z = -D; z < D - .1; z += 5){ add({ type: 'fence', len: 5, x: X0 - W, z: Z + z + 2.5, rot: Math.PI / 2 }); add({ type: 'fence', len: 5, x: X0 + W, z: Z + z + 2.5, rot: Math.PI / 2 }); }
+  for (let x = -W; x < W - .1; x += 5){ if (Math.abs(x + 2.5) < 3) continue; add({ type: 'fence', len: 5, x: X0 + x + 2.5, z: Z + D, rot: 0 }); }  // 앞 (가운데 문)
+  add({ type: 'cabin', w: 12, d: 8, x: X0 - 2, z: Z - D + 8, rot: 0 });
+  add({ type: 'kiln', x: X0 + 9, z: Z - D + 7, rot: -.4 });
+  add({ type: 'fire', x: X0, z: Z + 2, rot: 0 });
+  [[-3, 2], [3, 2.4], [0, 5]].forEach(([dx, dz], i) => add({ type: 'seat', x: X0 + dx, z: Z + dz, rot: i * 1.1 }));
+  [[-9, 6], [-9, 11]].forEach(([dx, dz]) => add({ type: 'tent', x: X0 + dx, z: Z + dz, rot: .3 }));
+  add({ type: 'well', x: X0 + 5, z: Z - 4, rot: 0 });
+  add({ type: 'tower', x: X0 + W - 3, z: Z + D - 3, rot: 0 }); add({ type: 'tower', x: X0 - W + 3, z: Z - D + 3, rot: 0 });
+  [[9, 4], [9, 8], [9, 12]].forEach(([dx, dz]) => add({ type: 'rack', x: X0 + dx, z: Z + dz, rot: Math.PI / 2 }));
+  add({ type: 'field', w: 12, d: 9, x: X0 - 1, z: Z + 15, rot: 0 });
+  // 0.3 에서 늘어난 시설 (대장간·작업대·짚 움막·물고기 건조대·석조 제단·야영 잡화)
+  add({ type: 'forge', x: X0 - 8, z: Z - 9, rot: .6 });
+  add({ type: 'bench', x: X0 + 1, z: Z - 12, rot: -.25 });
+  add({ type: 'hut', x: X0 + 10, z: Z - 14, rot: .2 });
+  add({ type: 'fishrack', x: X0 + 9, z: Z + 16, rot: 1.35 });
+  add({ type: 'altar', x: X0 - 5, z: Z + 1, rot: 0 });
+  add({ type: 'props', x: X0 + 4, z: Z + 4, rot: .9 });
+  // 캠프 둘레의 야자수·고사리·현무암
+  [[-13, 18, 1.0], [13, 22, .9], [-12, -18, .95]].forEach(([dx, dz, sc]) => add({ type: 'palm', x: X0 + dx, z: Z + dz, rot: 1.1, scale: sc }));
+  [[-11, 9, 1], [12, -5, 1.1], [6, 20, .9]].forEach(([dx, dz, sc]) => add({ type: 'fern', x: X0 + dx, z: Z + dz, rot: 2.2, scale: sc }));
+  [[14, 9, 1], [-14, -3, .8]].forEach(([dx, dz, sc]) => add({ type: 'basalt', x: X0 + dx, z: Z + dz, rot: .4, scale: sc }));
+  // 물가에 누가 두고 간 뗏목 (캠프에서 바다 쪽으로 나가며 물을 만나는 자리)
+  (function(){
+    const a = Math.atan2(CAMP.z, CAMP.x);
+    for (let d = 60; d < R; d += 3){
+      const x = Math.cos(a) * d, z = Math.sin(a) * d;
+      if (heightAt(x, z) < .25){ add({ type: 'raft', x, z, rot: -a + Math.PI / 2 }); break; }
+    }
+  })();
 })();
 
 // ---------- 풀 (내 주변에만, 바람에 흔들림) ----------
@@ -264,49 +323,91 @@ function placeGrass(cx, cz){
   grass.count = n; grass.instanceMatrix.needsUpdate = true; grassAt = { x: cx, z: cz };
 }
 
-// ---------- 공룡 ----------
+// ---------- 공룡·고생물 (0.3: 14종) ----------
 const DINO = {
-  grazer:   { name: '풀뜯개', hp: 30, speed: 2.6, run: 7.6, mood: 'shy', dmg: 0, reach: 1.2, rad: .6, drop: [['meat', 2], ['hide', 1]], n: 26, scale: 1 },
-  claw:     { name: '발톱이', hp: 45, speed: 3.2, run: 8.4, mood: 'angry', dmg: 9, reach: 1.6, rad: .55, drop: [['meat', 2], ['hide', 2], ['tooth', 1]], n: 11, scale: 1 },
-  longneck: { name: '목긴이', hp: 260, speed: 1.6, run: 3.8, mood: 'calm', dmg: 24, reach: 4.2, rad: 2.4, drop: [['meat', 10], ['hide', 6]], n: 6, scale: .85 },
-  rex:      { name: '큰이빨', hp: 320, speed: 2.4, run: 7.8, mood: 'angry', dmg: 30, reach: 2.6, rad: 1.6, drop: [['meat', 12], ['hide', 6], ['tooth', 3]], n: 3, scale: 1, sense: 1.6 },
-  plate:    { name: '판등이', hp: 160, speed: 1.6, run: 4.2, mood: 'guard', dmg: 20, reach: 2.4, rad: 1.3, drop: [['meat', 7], ['hide', 4], ['plate', 1]], n: 7, scale: 1 },
-  horn:     { name: '뿔방패', hp: 140, speed: 1.9, run: 6.6, mood: 'guard', dmg: 18, reach: 3.0, rad: 1.4, drop: [['meat', 6], ['hide', 4], ['horn', 1]], n: 8, scale: 1 }
+  grazer:   { name: '풀뜯개', hp: 30, speed: 2.6, run: 7.6, mood: 'shy', dmg: 0, reach: 1.2, rad: .6, drop: [['meat', 2], ['hide', 1]], n: 16, scale: 1, prey: true },
+  claw:     { name: '발톱이', hp: 45, speed: 3.2, run: 8.4, mood: 'angry', dmg: 9, reach: 1.6, rad: .55, drop: [['meat', 2], ['hide', 2], ['tooth', 1]], n: 7, scale: 1, hunter: true },
+  longneck: { name: '목긴이', hp: 260, speed: 1.6, run: 3.8, mood: 'calm', dmg: 24, reach: 4.2, rad: 2.4, drop: [['meat', 10], ['hide', 6]], n: 4, scale: .85 },
+  horn:     { name: '뿔방패', hp: 140, speed: 1.9, run: 6.6, mood: 'guard', dmg: 18, reach: 3.0, rad: 1.4, drop: [['meat', 6], ['hide', 4], ['horn', 1]], n: 5, scale: 1 },
+  rex:      { name: '큰이빨', hp: 320, speed: 2.4, run: 7.8, mood: 'angry', dmg: 30, reach: 2.6, rad: 1.6, drop: [['meat', 12], ['hide', 6], ['tooth', 3]], n: 2, scale: 1, sense: 1.6, hunter: true },
+  plate:    { name: '판등이', hp: 160, speed: 1.6, run: 4.2, mood: 'guard', dmg: 20, reach: 2.4, rad: 1.3, drop: [['meat', 7], ['hide', 4], ['plate', 1]], n: 5, scale: 1 },
+  ptera:    { name: '프테라노돈', hp: 60, speed: 7, run: 13, mood: 'shy', dmg: 8, reach: 2.2, rad: 1.1, drop: [['meat', 3], ['hide', 1], ['tooth', 1]], n: 6, scale: 1, sense: 1.3, fly: true, alt: 12 },
+  mammoth:  { name: '매머드', hp: 420, speed: 1.5, run: 3.4, mood: 'guard', dmg: 34, reach: 3.6, rad: 1.8, drop: [['meat', 14], ['hide', 8], ['horn', 1]], n: 3, scale: 1, herd: 2 },
+  para:     { name: '파라사우롤로푸스', hp: 95, speed: 2.9, run: 8.2, mood: 'shy', dmg: 0, reach: 1.6, rad: .9, drop: [['meat', 6], ['hide', 3]], n: 9, scale: 1, herd: 4, prey: true },
+  anky:     { name: '안킬로사우루스', hp: 250, speed: 1.2, run: 3.6, mood: 'guard', dmg: 26, reach: 2.6, rad: 1.2, drop: [['meat', 8], ['hide', 3], ['plate', 2]], n: 4, scale: 1 },
+  raptor:   { name: '벨로시랩터', hp: 55, speed: 4.6, run: 10.5, mood: 'angry', dmg: 12, reach: 1.7, rad: .5, drop: [['meat', 3], ['hide', 2], ['tooth', 1]], n: 7, scale: 1, sense: 1.5, herd: 3, hunter: true },
+  dimetro:  { name: '디메트로돈', hp: 125, speed: 2.3, run: 6.2, mood: 'angry', dmg: 16, reach: 2.1, rad: .95, drop: [['meat', 5], ['hide', 3], ['tooth', 1]], n: 4, scale: 1 },
+  spino:    { name: '스피노사우루스', hp: 480, speed: 2.3, run: 7.6, mood: 'angry', dmg: 38, reach: 3.4, rad: 1.8, drop: [['meat', 16], ['hide', 8], ['tooth', 4]], n: 2, scale: 1, sense: 1.3, water: true, hunter: true },
+  smilo:    { name: '스밀로돈', hp: 115, speed: 3.9, run: 9.8, mood: 'angry', dmg: 20, reach: 2.3, rad: .9, drop: [['meat', 6], ['hide', 4], ['tooth', 2]], n: 4, scale: 1, night: true, hunter: true }
 };
 const DINOS = [];
 function spawnDino(kind, x, z){
-  const m = M.makeDino(kind); m.scale.setScalar(DINO[kind].scale); scene.add(m);
-  const d = { kind, m, x, z, ry: Math.random() * 6.28, hp: DINO[kind].hp, state: 'wander', t: 0, cd: 0, hurt: 0, phase: Math.random() * 9 };
+  const m = M.makeDino(kind);
+  if (!m) return null;
+  m.scale.setScalar(DINO[kind].scale); scene.add(m);
+  const d = { kind, m, x, z, ry: Math.random() * 6.28, hp: DINO[kind].hp, state: 'wander', t: 0, cd: 0, huntCd: 4 + Math.random() * 8, hurt: 0, phase: Math.random() * 9 };
   DINOS.push(d); return d;
+}
+// 사는 자리: 물가·숲·들판을 종마다 다르게
+function habitat(kind, x, z, h){
+  const D = DINO[kind], forest = fbm(x * .025 + 11, z * .025);
+  if (D.water) return h > .6 && h < 3.4;
+  if (D.fly) return true;
+  if (kind === 'raptor' || kind === 'smilo') return forest > .42 && h > 1.5;
+  if (kind === 'mammoth') return h > 2 && forest < .52;
+  if (kind === 'para') return h > 1.2 && forest < .55;
+  if (kind === 'anky') return h > 1.2 && h < 18;
+  if (kind === 'dimetro') return h > 1.2 && forest < .58;
+  return h > 1.2;
 }
 (function(){
   const r = rnd(99);
-  for (const k in DINO) for (let i = 0; i < DINO[k].n; i++){
+  function spot(kind){
     let x, z, g = 0;
-    do { const a = r() * 6.28, dd = 40 + Math.sqrt(r()) * (R * .85 - 40); x = Math.cos(a) * dd; z = Math.sin(a) * dd; } while ((heightAt(x, z) < 1.5 || inCamp(x, z, 20)) && g++ < 80);
-    spawnDino(k, x, z);
+    do {
+      const a = r() * 6.28, dd = 38 + Math.sqrt(r()) * (R * .85 - 38);
+      x = Math.cos(a) * dd; z = Math.sin(a) * dd;
+    } while (g++ < 200 && (inCamp(x, z, 20) || !habitat(kind, x, z, heightAt(x, z))));
+    return [x, z];
+  }
+  for (const k in DINO){
+    const D = DINO[k], herds = D.herd ? Math.ceil(D.n / D.herd) : D.n;
+    for (let i = 0; i < herds; i++){
+      const [x, z] = spot(k);
+      spawnDino(k, x, z);
+      for (let j = 1; j < (D.herd || 1); j++){
+        const a = r() * 6.28, dd = 3 + r() * 6;
+        const hx = x + Math.cos(a) * dd, hz = z + Math.sin(a) * dd;
+        if (heightAt(hx, hz) > .5) spawnDino(k, hx, hz);
+      }
+    }
   }
 })();
 
 // ---------- 아이템·만들기 ----------
 const ITEM = {
-  wood: ['🪵', '나무'], stone: ['🪨', '돌'], fiber: ['🌿', '풀줄기'], berry: ['🍒', '열매'], meat: ['🥩', '생고기'], cooked: ['🍖', '구운 고기'], jerky: ['🥓', '육포'],
-  hide: ['🟫', '가죽'], tooth: ['🦷', '이빨'], horn: ['🦏', '뿔'], plate: ['🛡️', '등판'], axe: ['🪓', '돌도끼'], spear: ['🔱', '돌창'], torch: ['🔥', '횃불'], bandage: ['🩹', '붕대']
+  wood: ['🪵', '나무'], stone: ['🪨', '돌'], fiber: ['🌿', '풀줄기'], berry: ['🍒', '열매'], coconut: ['🥥', '야자열매'],
+  meat: ['🥩', '생고기'], cooked: ['🍖', '구운 고기'], jerky: ['🥓', '육포'],
+  hide: ['🟫', '가죽'], tooth: ['🦷', '이빨'], horn: ['🦏', '뿔'], plate: ['🛡️', '등판'],
+  axe: ['🪓', '돌도끼'], axe2: ['🪓', '강화 도끼'], spear: ['🔱', '돌창'], spear2: ['🔱', '뼈 창'], torch: ['🔥', '횃불'], bandage: ['🩹', '붕대']
 };
-const FOOD = { cooked: 35, jerky: 25, berry: 10, meat: 12 };
+const FOOD = { cooked: 35, jerky: 25, berry: 10, coconut: 18, meat: 12 };
 const RECIPES = [
   { out: 'axe', need: { wood: 3, stone: 2 }, desc: '나무·바위를 빨리 캐요. 들고 치면 공격도 세져요.' },
   { out: 'spear', need: { wood: 3, stone: 2, fiber: 2 }, desc: '멀리서 세게 찔러요. 사냥용.' },
   { out: 'torch', need: { wood: 2, fiber: 1 }, desc: '들고 있으면 밤에 주변이 밝아요.' },
-  { out: 'bandage', need: { fiber: 4 }, desc: '쓰면 체력 30 회복.' }
+  { out: 'bandage', need: { fiber: 4 }, desc: '쓰면 체력 30 회복.' },
+  { out: 'axe2', need: { horn: 1, wood: 3, stone: 2 }, desc: '대장간 곁에서만. 뿔을 붙여 돌도끼보다 훨씬 세게 캐고 칩니다.', near: 'forge' },
+  { out: 'spear2', need: { tooth: 2, wood: 3, fiber: 2 }, desc: '대장간 곁에서만. 이빨을 물려 사냥감을 더 아프게 찌릅니다.', near: 'forge' }
 ];
 const HOT = ['hand', 'axe', 'spear', 'torch', 'bandage'];
-const DMG = { hand: 4, axe: 11, spear: 20, torch: 6, bandage: 4 };
-const REACH = { hand: 2.0, axe: 2.4, spear: 3.4, torch: 2.3, bandage: 2.0 };
+const DMG = { hand: 4, axe: 11, axe2: 17, spear: 20, spear2: 29, torch: 6, bandage: 4 };
+const REACH = { hand: 2.0, axe: 2.4, axe2: 2.5, spear: 3.4, spear2: 3.6, torch: 2.3, bandage: 2.0 };
+const GATHER = { axe: 12, axe2: 20 };
 
 // ---------- 상태 ----------
 const START = { x: CAMP.x, z: CAMP.z + 6 };
-const S = { x: START.x, z: START.z, y: CAMP.h, vy: 0, ry: Math.PI, hp: 100, food: 100, sta: 100, inv: {}, equip: 'hand', day: 1, time: .3, placed: [], spawn: null, savedAt: 0, name: '' };
+const S = { x: START.x, z: START.z, y: CAMP.h, vy: 0, ry: Math.PI, hp: 100, food: 100, sta: 100, inv: {}, equip: 'hand', day: 1, time: .3, placed: [], spawn: null, savedAt: 0, name: '', raft: null, bless: 0 };
 const player = M.makeHuman(0x456b8f, 0x3a2a1e); scene.add(player);
 const torchLight = new T.PointLight(0xffa64d, 0, 15, 1.6); scene.add(torchLight);
 function has(need){ for (const k in need) if ((S.inv[k] || 0) < need[k]) return false; return true; }
@@ -377,6 +478,10 @@ function nearestDino(maxD){
   for (const d of DINOS){ if (d.dead) continue; const dx = d.x - S.x, dz = d.z - S.z, dist = Math.hypot(dx, dz) - DINO[d.kind].rad; if (dist < bd && (dx * f.x + dz * f.z) > -.3){ bd = dist; best = d; } }
   return best;
 }
+function giveOne(type){                 // 한 번 칠 때 들어오는 것 (돌·나무는 한 개, 야자수는 열매도)
+  const g = KIND[type].give;
+  if (typeof g === 'string') add(g, 1); else add(g[0][0], 1);
+}
 function attack(){
   if (!playing || swingCd > 0 || dead) return;
   if (S.equip === 'bandage'){ useBandage(); return; }
@@ -387,28 +492,53 @@ function attack(){
     const reach = REACH[S.equip], d = nearestDino(reach);
     if (d){ hitDino(d, DMG[S.equip]); return; }
     const n = nearestNode(reach, n => KIND[n.type].big);
-    if (n){ n.hp -= S.equip === 'axe' ? 12 : 4; add(KIND[n.type].give, 1); n.shake = .25; if (n.hp <= 0) killNode(n, true); }
+    if (n){
+      let hit = GATHER[S.equip] || 4;
+      if (KIND[n.type].hard && !GATHER[S.equip]) hit = 1;      // 현무암은 곡괭이(도끼)라야 깨진다
+      n.hp -= hit; giveOne(n.type); n.shake = .25;
+      if (n.hp <= 0) killNode(n, true);
+    }
   }, 160);
 }
 function killNode(n, give){
-  if (give && !KIND[n.type].big) KIND[n.type].give.forEach(([k, c]) => add(k, c));
-  if (give && KIND[n.type].big) add(KIND[n.type].give, 2);
+  const g = KIND[n.type].give;
+  if (give && !KIND[n.type].big) g.forEach(([k, c]) => add(k, c));
+  if (give && KIND[n.type].big){ if (typeof g === 'string') add(g, 2); else g.forEach(([k, c]) => add(k, c)); }
   n.dead = true; n.until = performance.now() + 180000; setNode(n, false);
   if (KIND[n.type].big) toast(KIND[n.type].name + '을(를) 다 캤어요');
 }
 function useAction(){
   if (!playing || dead) return;
-  const kiln = near('kiln', 3.2), fire = near('fire', 3), rack = near('rack', 2.8), well = near('well', 3);
+  const kiln = near('kiln', 3.4), fire = near('fire', 3), rack = near('rack', 3), well = near('well', 3);
+  const forge = near('forge', 3.8), bench = near('bench', 3), fish = near('fishrack', 3), altar = near('altar', 3);
+  const raft = S.raft || near('raft', 2.8);
+  if (raft){                                     // 뗏목 타기 · 내리기
+    if (S.raft){ S.raft = null; toast('🛶 뗏목에서 내렸어요'); }
+    else { S.raft = raft; S.x = raft.x; S.z = raft.z; S.y = Math.max(.12, heightAt(S.x, S.z)); toast('🛶 뗏목에 올랐어요. 물 위를 빠르게 건너요'); }
+    return;
+  }
   const tw = S.climb || near('tower', 2.8);
   if (tw){ if (S.climb){ S.climb = null; S.x = tw.x + 2.4; S.z = tw.z; toast('🪜 내려왔어요'); } else { S.climb = tw; S.x = tw.x; S.z = tw.z; S.y = tw.y + TOWER_H; toast('🗼 망루에 올라왔어요. 공룡이 못 올라와요'); } return; }
   if (well && (S.sta < 95 || S.hp < 100)){ S.sta = 100; S.hp = Math.min(100, S.hp + 5); toast('💧 시원한 물을 마셨어요 (기력 가득, 체력 +5)'); return; }
   if (kiln && S.inv.meat){ const n = Math.min(3, S.inv.meat); add('meat', -n); add('cooked', n); toast('🏺 가마에서 고기 ' + n + '개를 구웠어요'); return; }
   if (fire && S.inv.meat){ add('meat', -1); add('cooked', 1); toast('🍖 고기를 구웠어요'); return; }
   if (rack && S.inv.meat){ add('meat', -1); add('jerky', 1); toast('🥓 육포를 만들었어요'); return; }
+  if (fish && S.inv.meat >= 2){ add('meat', -2); add('jerky', 2); toast('🐟 생고기 2개를 한 번에 육포로 말렸어요'); return; }
+  if (altar){                                     // 이빨을 바치면 힘을 준다 (잠시 공룡이 다가오지 않는다)
+    if (!S.inv.tooth){ toast('🕯️ 제단: 이빨 1개를 바치면 힘을 줘요'); return; }
+    add('tooth', -1); S.hp = 100; S.sta = 100; S.food = Math.min(100, S.food + 40); S.bless = 90;
+    toast('🕯️ 이빨을 바쳤어요. 체력·기력이 차고 잠시 공룡이 다가오지 않아요'); return;
+  }
+  if (forge){ toast('⚒️ 대장간: 가방 > 만들기 에서 뿔도끼 · 뼈 창을 만들 수 있어요'); toggleBag(true); bagTab = 'make'; renderBag(); return; }
+  if (bench){                                     // 나무·가죽을 찢어 풀줄기로
+    if (S.inv.wood >= 2){ add('wood', -2); add('fiber', 1); toast('🔨 나무 2 → 풀줄기 1'); return; }
+    if (S.inv.hide){ add('hide', -1); add('fiber', 2); toast('🔨 가죽 1 → 풀줄기 2'); return; }
+    toast('🔨 작업대: 나무 2 → 풀줄기 1, 가죽 1 → 풀줄기 2'); return;
+  }
   const n = nearestNode(1.8, n => !KIND[n.type].big);
   if (n){ killNode(n, true); KIND[n.type].give.forEach(([k, c]) => toast('+' + c + ' ' + ITEM[k][1])); return; }
   if (S.equip === 'bandage'){ useBandage(); return; }
-  if (S.food < 95){ const k = ['cooked', 'jerky', 'berry'].find(k => S.inv[k]); if (k){ eat(k); return; } }
+  if (S.food < 95){ const k = ['cooked', 'jerky', 'coconut', 'berry'].find(k => S.inv[k]); if (k){ eat(k); return; } }
 }
 function eat(k){
   if (!S.inv[k]) return; add(k, -1); S.food = Math.min(100, S.food + FOOD[k]);
@@ -416,7 +546,13 @@ function eat(k){
   if ($('bag').classList.contains('on')) renderBag();
 }
 function useBandage(){ if (!S.inv.bandage) return; add('bandage', -1); S.hp = Math.min(100, S.hp + 30); toast('🩹 체력 +30'); if (!S.inv.bandage) pick('hand'); renderHot(); }
+function slotItem(k){                     // 손에 드는 것: 강화 장비가 있으면 그것부터
+  if (k === 'axe') return S.inv.axe2 ? 'axe2' : 'axe';
+  if (k === 'spear') return S.inv.spear2 ? 'spear2' : 'spear';
+  return k;
+}
 function pick(k){
+  if (k !== 'hand') k = slotItem(k);
   if (k !== 'hand' && !S.inv[k]){ toast(ITEM[k][1] + '이(가) 없어요. 가방에서 만들어요'); return; }
   S.equip = k; M.setTool(player, k); renderHot();
   $('tAtk').innerHTML = (k === 'hand' ? '✊' : ITEM[k][0]) + '<small>' + (k === 'bandage' ? '쓰기' : '치기') + '</small>';
@@ -437,19 +573,21 @@ const BM = {
   start(type){
     if (!has(BUILD[type].need)){ toast('재료가 모자라요'); return; }
     this.on = true; this.type = type; this.rot = S.ry;
-    const g = new T.Mesh(bgeo({ type, len: 4, w: 6, d: 5 }), new T.MeshLambertMaterial({ color: 0x7bd88f, transparent: true, opacity: .55, depthWrite: false }));
-    const A0 = assetFor({ type, len: 4, w: 6, d: 5 }); if (A0) g.scale.set(A0.sc[0], A0.sc[1], A0.sc[2]);
+    const g = buildObj({ type, len: 4, w: 6, d: 5 }, true);
     this.ghost = g; scene.add(g); document.body.classList.add('building'); toggleBag(false);
     toast(MOBILE ? '✓ 놓기 · ⟳ 돌리기 · ✕ 그만' : '클릭/E 놓기 · R 돌리기 · Esc 그만');
   },
-  where(){ const f = forward(), d = this.type === 'cabin' ? 6 : this.type === 'fence' ? 3 : 2.6; return { x: S.x + f.x * d, z: S.z + f.z * d }; },
+  where(){ const f = forward(), d = this.type === 'cabin' ? 6 : this.type === 'hut' ? 5 : this.type === 'fence' ? 3 : 2.8; return { x: S.x + f.x * d, z: S.z + f.z * d }; },
   update(){
     if (!this.on) return;
     const p = this.where(), h = heightAt(p.x, p.z); this.ghost.position.set(p.x, h, p.z); this.ghost.rotation.y = this.rot;
+    const B = BUILD[this.type];
     const flat = Math.abs(heightAt(p.x + 1.5, p.z) - h) + Math.abs(heightAt(p.x, p.z + 1.5) - h) < (this.type === 'cabin' ? 1.2 : 2);
-    const r = this.type === 'cabin' ? 4 : 1.2;
-    const blocked = h < .8 || NODES.some(n => !n.dead && KIND[n.type].big && Math.hypot(n.x - p.x, n.z - p.z) < r + .6) || STRUCTS.some(s => s.type !== 'field' && s.type !== 'seat' && Math.hypot(s.x - p.x, s.z - p.z) < r + (s.type === 'cabin' ? 4 : .8) && !(this.type === 'fence' && s.type === 'fence'));
-    this.ok = flat && !blocked; this.ghost.material.color.setHex(this.ok ? 0x7bd88f : 0xff6b6b);
+    const r = this.type === 'cabin' ? 4 : this.type === 'hut' ? 3 : this.type === 'forge' ? 2.2 : 1.2;
+    const blocked = NODES.some(n => !n.dead && KIND[n.type].big && Math.hypot(n.x - p.x, n.z - p.z) < r + .6) || STRUCTS.some(s => !s.deco && s.type !== 'field' && s.type !== 'seat' && Math.hypot(s.x - p.x, s.z - p.z) < r + (s.type === 'cabin' ? 4 : s.type === 'hut' ? 3 : .8) && !(this.type === 'fence' && s.type === 'fence'));
+    // 뗏목은 물 위에만, 나머지는 땅 위에만
+    this.ok = B.water ? (!blocked && h < .45) : (flat && !blocked && h > .8);
+    this.ghost.traverse ? this.ghost.traverse(o => { if (o.material && o.material.color) o.material.color.setHex(this.ok ? 0x7bd88f : 0xff6b6b); }) : this.ghost.material.color.setHex(this.ok ? 0x7bd88f : 0xff6b6b);
   },
   rotate(){ this.rot += Math.PI / 4; },
   confirm(){
@@ -459,7 +597,7 @@ const BM = {
     const p = this.where(), s = { type: this.type, x: +p.x.toFixed(2), z: +p.z.toFixed(2), rot: +this.rot.toFixed(3) };
     if (this.type === 'cabin'){ s.w = 6; s.d = 5; } if (this.type === 'fence') s.len = 4;
     S.placed.push(s); placeStruct(Object.assign({}, s));
-    if (this.type === 'tent' || this.type === 'cabin') S.spawn = { x: s.x, z: s.z };
+    if (this.type === 'tent' || this.type === 'cabin' || this.type === 'hut') S.spawn = { x: s.x, z: s.z };
     toast(b.e + ' ' + b.name + '을(를) 지었어요'); saveLocal();
     if (this.type === 'fence' && has(b.need)) return;   // 울타리는 이어서 놓기
     this.cancel();
@@ -476,9 +614,12 @@ function renderBag(){
   let h = '<div class="btabs">' + [['make', '🔨 만들기'], ['build', '🏗️ 짓기'], ['eat', '🍖 먹기']].map(([k, t]) => '<button data-tab="' + k + '" class="' + (bagTab === k ? 'on' : '') + '">' + t + '</button>').join('') + '</div>';
   h += '<div class="inv">' + (inv.length ? inv.map(k => '<div class="it"><b>' + ITEM[k][0] + '</b>' + ITEM[k][1] + ' ' + S.inv[k] + '</div>').join('') : '<div class="it" style="grid-column:1/-1">아직 없어요. 나뭇가지·돌멩이부터 주워 보세요</div>') + '</div>';
   const needTxt = need => Object.keys(need).map(k => ITEM[k][1] + ' ' + need[k] + ((S.inv[k] || 0) >= need[k] ? '' : ' ✗')).join(' · ');
-  if (bagTab === 'make') h += RECIPES.map((r, i) => '<div class="recipe"><span class="e">' + ITEM[r.out][0] + '</span><span class="t"><b>' + ITEM[r.out][1] + '</b><small>' + needTxt(r.need) + '<br>' + r.desc + '</small></span><button data-make="' + i + '"' + (has(r.need) ? '' : ' disabled') + '>만들기</button></div>').join('');
+  if (bagTab === 'make') h += RECIPES.map((r, i) => {
+    const okNear = !r.near || near(r.near, 3.8);
+    return '<div class="recipe" style="' + (okNear ? '' : 'opacity:.55') + '"><span class="e">' + ITEM[r.out][0] + '</span><span class="t"><b>' + ITEM[r.out][1] + '</b><small>' + needTxt(r.need) + '<br>' + r.desc + (r.near && !okNear ? ' <b>(대장간 곁에서)</b>' : '') + '</small></span><button data-make="' + i + '"' + (has(r.need) && okNear ? '' : ' disabled') + '>만들기</button></div>';
+  }).join('');
   if (bagTab === 'build') h += Object.keys(BUILD).map(k => { const b = BUILD[k]; return '<div class="recipe"><span class="e">' + b.e + '</span><span class="t"><b>' + b.name + '</b><small>' + needTxt(b.need) + '<br>' + b.desc + '</small></span><button data-build="' + k + '"' + (has(b.need) ? '' : ' disabled') + '>짓기</button></div>'; }).join('');
-  if (bagTab === 'eat') h += ['cooked', 'jerky', 'berry', 'meat'].map(k => '<div class="recipe"><span class="e">' + ITEM[k][0] + '</span><span class="t"><b>' + ITEM[k][1] + '</b><small>배고픔 +' + FOOD[k] + (k === 'meat' ? ' · 배탈 날 수 있어요 (모닥불·가마에서 구워요)' : '') + '</small></span><button data-eat="' + k + '"' + (S.inv[k] ? '' : ' disabled') + '>먹기 (' + (S.inv[k] || 0) + ')</button></div>').join('');
+  if (bagTab === 'eat') h += ['cooked', 'jerky', 'coconut', 'berry', 'meat'].map(k => '<div class="recipe"><span class="e">' + ITEM[k][0] + '</span><span class="t"><b>' + ITEM[k][1] + '</b><small>배고픔 +' + FOOD[k] + (k === 'meat' ? ' · 배탈 날 수 있어요 (모닥불·가마에서 구워요)' : '') + '</small></span><button data-eat="' + k + '"' + (S.inv[k] ? '' : ' disabled') + '>먹기 (' + (S.inv[k] || 0) + ')</button></div>').join('');
   $('bagBody').innerHTML = h;
   $('bagBody').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { bagTab = b.dataset.tab; renderBag(); });
   $('bagBody').querySelectorAll('[data-eat]').forEach(b => b.onclick = () => eat(b.dataset.eat));
@@ -486,13 +627,17 @@ function renderBag(){
   $('bagBody').querySelectorAll('[data-build]').forEach(b => b.onclick = () => BM.start(b.dataset.build));
 }
 function craft(r){
-  if (!has(r.need)) return; for (const k in r.need) add(k, -r.need[k]); add(r.out, 1);
+  if (!has(r.need)) return;
+  if (r.near && !near(r.near, 3.8)){ toast('대장간 곁에서만 만들 수 있어요'); return; }
+  for (const k in r.need) add(k, -r.need[k]); add(r.out, 1);
   toast(ITEM[r.out][0] + ' ' + ITEM[r.out][1] + ' 완성!'); if (r.out !== 'bandage') pick(r.out); renderBag(); renderHot(); saveLocal();
 }
 function renderHot(){
   $('hotbar').innerHTML = HOT.map((k, i) => {
-    const n = k === 'hand' ? '' : (S.inv[k] || 0);
-    return '<button class="slot' + (S.equip === k ? ' on' : '') + '" data-k="' + k + '"' + (k !== 'hand' && !n ? ' style="opacity:.4"' : '') + '><span class="k">' + (i + 1) + '</span>' + (k === 'hand' ? '✊' : ITEM[k][0]) + '<small>' + (k === 'hand' ? '맨손' : ITEM[k][1] + (k === 'bandage' ? ' ' + n : '')) + '</small></button>';
+    const it = k === 'hand' ? 'hand' : slotItem(k);
+    const n = k === 'hand' ? '' : (S.inv[it] || 0);
+    const on = S.equip === it || (it !== k && S.equip === k);
+    return '<button class="slot' + (on ? ' on' : '') + '" data-k="' + k + '"' + (k !== 'hand' && !n ? ' style="opacity:.4"' : '') + '><span class="k">' + (i + 1) + '</span>' + (k === 'hand' ? '✊' : ITEM[it][0]) + '<small>' + (k === 'hand' ? '맨손' : ITEM[it][1] + (k === 'bandage' ? ' ' + n : '')) + '</small></button>';
   }).join('');
   $('hotbar').querySelectorAll('.slot').forEach(b => b.onclick = () => pick(b.dataset.k));
 }
@@ -501,23 +646,29 @@ function showPrompt(){
   let t = ''; const U = MOBILE ? '✋' : 'E';
   if (BM.on) t = BUILD[BM.type].e + ' ' + BUILD[BM.type].name + (BM.ok ? ' 놓을 수 있어요' : ' — 여기는 안 돼요');
   else {
-    const well = near('well', 3), kiln = near('kiln', 3.2), fire = near('fire', 3), rack = near('rack', 2.8), n = nearestNode(1.8, n => !KIND[n.type].big), big = nearestNode(REACH[S.equip], n => KIND[n.type].big);
+    const well = near('well', 3), kiln = near('kiln', 3.4), fire = near('fire', 3), rack = near('rack', 3), n = nearestNode(1.8, n => !KIND[n.type].big), big = nearestNode(REACH[S.equip], n => KIND[n.type].big);
+    const forge = near('forge', 3.8), bench = near('bench', 3), fish = near('fishrack', 3), altar = near('altar', 3), raft = S.raft || near('raft', 2.8);
     if (S.climb) t = U + ': 망루에서 내려가기';
+    else if (raft) t = U + ': ' + (S.raft ? '뗏목에서 내리기' : '뗏목 타기');
     else if (near('tower', 2.8)) t = U + ': 망루에 올라가기';
     else if (well && (S.sta < 95 || S.hp < 100)) t = U + ': 우물 물 마시기';
     else if (kiln && S.inv.meat) t = U + ': 가마에서 고기 굽기 (' + S.inv.meat + ')';
     else if (fire && S.inv.meat) t = U + ': 고기 굽기 (' + S.inv.meat + ')';
     else if (rack && S.inv.meat) t = U + ': 육포 말리기 (' + S.inv.meat + ')';
+    else if (fish && S.inv.meat >= 2) t = U + ': 생고기 2개 육포로 말리기';
+    else if (altar) t = U + ': 제단에 이빨 바치기' + (S.inv.tooth ? '' : ' (이빨 필요)');
+    else if (forge) t = U + ': 대장간에서 만들기 (강화 도끼 · 뼈 창)';
+    else if (bench) t = U + ': 작업대에서 풀줄기 만들기';
     else if (n) t = U + ': ' + KIND[n.type].name + ' ' + KIND[n.type].verb;
-    else if (big) t = (MOBILE ? '치기' : '클릭') + ': ' + KIND[big.type].name + ' ' + KIND[big.type].verb + (S.equip === 'axe' ? '' : ' (돌도끼가 있으면 빨라요)');
+    else if (big) t = (MOBILE ? '치기' : '클릭') + ': ' + KIND[big.type].name + ' ' + KIND[big.type].verb + (GATHER[S.equip] ? '' : ' (돌도끼가 있으면 빨라요)');
   }
   if (t !== promptText){ promptText = t; $('prompt').textContent = t; $('prompt').style.display = t ? 'block' : 'none'; }
 }
 
 // ---------- 저장 ----------
-function snapshot(){ return { v: 2, savedAt: Date.now(), x: S.x, z: S.z, hp: S.hp, food: S.food, inv: S.inv, equip: S.equip, day: S.day, time: S.time, placed: S.placed, spawn: S.spawn }; }
+function snapshot(){ return { v: 3, savedAt: Date.now(), x: S.x, z: S.z, hp: S.hp, food: S.food, inv: S.inv, equip: S.equip, day: S.day, time: S.time, placed: S.placed, spawn: S.spawn }; }
 function apply(d){
-  if (!d || !(d.v === 1 || d.v === 2)) return;
+  if (!d || !(d.v === 1 || d.v === 2 || d.v === 3)) return;
   if (d.v === 1){ toast('🌴 새 섬(0.2)이 열렸어요. 가진 재료는 그대로 가져와요'); d = { v: 2, x: START.x, z: START.z, hp: d.hp, food: d.food, inv: d.inv, equip: d.equip, day: d.day, time: d.time, placed: [], spawn: null, savedAt: d.savedAt }; }
   Object.assign(S, { x: d.x, z: d.z, hp: d.hp, food: d.food, inv: d.inv || {}, day: d.day || 1, time: d.time || .3, spawn: d.spawn || null, savedAt: d.savedAt || 0 });
   for (let i = STRUCTS.length - 1; i >= 0; i--) if (!STRUCTS[i].fixed){ scene.remove(STRUCTS[i].mesh); STRUCTS[i].cols.forEach(c => c.off = true); STRUCTS.splice(i, 1); }
@@ -634,7 +785,7 @@ const QN = { high: '높음', mid: '보통', low: '낮음' };
 $('qBtn').textContent = '🎨 그래픽: ' + QN[QL];
 $('qBtn').onclick = () => { const nx = { high: 'mid', mid: 'low', low: 'high' }[QL]; try { localStorage.setItem('primal_q', nx); } catch (e) {} location.reload(); };
 if (MOBILE) $('keysHelp').innerHTML = '왼쪽 화면: 움직이기 · 오른쪽 화면 밀기: 둘러보기<br>🪓 치기 · ✋ 줍기·먹기·굽기 · 🎯 조준 · 🎒 가방에서 만들기·짓기';
-function die(){ dead = true; S.climb = null; BM.cancel(); $('dead').classList.add('on'); if (document.exitPointerLock) document.exitPointerLock(); for (const k in S.inv) if (!['axe', 'spear', 'torch'].includes(k)) S.inv[k] = Math.floor(S.inv[k] / 2); }
+function die(){ dead = true; S.climb = null; S.raft = null; BM.cancel(); $('dead').classList.add('on'); if (document.exitPointerLock) document.exitPointerLock(); for (const k in S.inv) if (!['axe', 'spear', 'torch'].includes(k)) S.inv[k] = Math.floor(S.inv[k] / 2); }
 $('reviveBtn').onclick = () => {
   dead = false; $('dead').classList.remove('on');
   const sp = S.spawn || START; S.x = sp.x + 1.5; S.z = sp.z + 1.5; S.y = heightAt(S.x, S.z); S.hp = 60; S.food = Math.max(S.food, 40); S.sta = 100;
@@ -654,7 +805,7 @@ function step(){
     const ml = Math.min(1, Math.hypot(mx, mz));
     const run = (key.ShiftLeft || key.ShiftRight || running) && S.sta > 1 && ml > .1 && !aiming;
     const inWater = heightAt(S.x, S.z) < -.1;
-    const speed = (run ? 7.2 : aiming ? 2.6 : 4.2) * (inWater ? .55 : 1) * ml;
+    const speed = (run ? 7.2 : aiming ? 2.6 : 4.2) * (inWater && !S.raft ? .55 : 1) * ml;
     if (ml > .05){
       const sy = Math.sin(yaw), cy = Math.cos(yaw), L = Math.hypot(mx, mz);
       const wx = (mx * cy + mz * sy) / L, wz = (-mx * sy + mz * cy) / L;
@@ -667,7 +818,8 @@ function step(){
       S.x = nx; S.z = nz;
     } else if (aiming){ let d = yaw + Math.PI - S.ry; d = Math.atan2(Math.sin(d), Math.cos(d)); S.ry += d * Math.min(1, dt * 12); }
     S.sta = Math.max(0, Math.min(100, S.sta + (run ? -14 : 9) * dt));
-    const ground = S.climb ? S.climb.y + TOWER_H : Math.max(heightAt(S.x, S.z), -1.1);
+    if (S.bless > 0) S.bless = Math.max(0, S.bless - dt);
+    const ground = S.climb ? S.climb.y + TOWER_H : S.raft ? Math.max(.12, heightAt(S.x, S.z)) : Math.max(heightAt(S.x, S.z), -1.1);
     if ((key.Space || jumpQ) && S.y <= ground + .01 && S.sta > 8){ S.vy = 6.5; S.sta -= 8; }
     jumpQ = false; S.vy -= 20 * dt; S.y += S.vy * dt; if (S.y < ground){ S.y = ground; S.vy = 0; }
     S.food = Math.max(0, S.food - dt * .2 * (run ? 1.6 : 1));
@@ -675,6 +827,13 @@ function step(){
     if (near('fire', 5) || near('kiln', 4)) S.hp = Math.min(100, S.hp + dt * 1.2);
     const cab = STRUCTS.find(s => s.type === 'cabin' && Math.abs(S.x - s.x) < (s.w || 6) / 2 && Math.abs(S.z - s.z) < (s.d || 5) / 2);
     if (cab) S.hp = Math.min(100, S.hp + dt * 2.5);
+    const hut = STRUCTS.find(s => s.type === 'hut' && Math.hypot(S.x - s.x, S.z - s.z) < 2.4);
+    if (hut) S.hp = Math.min(100, S.hp + dt * 1.4);
+    if (S.raft){                                 // 뗏목은 발밑을 따라온다
+      S.raft.x = S.x; S.raft.z = S.z;
+      if (S.raft.mesh){ S.raft.mesh.position.set(S.x, Math.max(.12, heightAt(S.x, S.z)) + .05, S.z); S.raft.mesh.rotation.y = S.ry; }
+      if (heightAt(S.x, S.z) > 1.2){ S.raft = null; toast('🛶 얕은 곳이라 뗏목에서 내렸어요'); }
+    }
     if (S.hp <= 0){ S.hp = 0; die(); }
     swingCd -= dt; if (swing > 0){ swing += dt * 2.6; if (swing >= 1) swing = 0; }
     player.position.set(S.x, S.y, S.z); player.rotation.y = S.ry;
@@ -691,7 +850,7 @@ function step(){
   const sd = new T.Vector3(Math.cos(ang), Math.max(.05, sunUp), .35).normalize();
   sun.position.set(S.x + sd.x * 120, sd.y * 120, S.z + sd.z * 120); sun.target.position.set(S.x, S.y, S.z);
   sun.intensity = 1.7 * light; sun.color.setHex(0xfff0d8).lerp(C_DUSK, dusk * .6);
-  hemi.intensity = .3 + .5 * light;
+  hemi.intensity = .42 + .55 * light;
   skyU.top.value.copy(C_NIGHT).lerp(C_DAY_TOP, light); skyU.hor.value.copy(C_NIGHT_HOR).lerp(C_DAY_HOR, light).lerp(C_DUSK, dusk * .55);
   skyU.sunDir.value.copy(sd).setY(sunUp);
   scene.fog.color.copy(skyU.hor.value);
@@ -699,27 +858,62 @@ function step(){
   $('clock').textContent = S.day + '일차 · ' + (isNight ? '🌙 밤' : dusk > .4 && sunUp < .3 ? '🌇 해질녘' : '☀️ 낮');
   torchLight.intensity = S.equip === 'torch' ? 2.4 : 0; torchLight.position.set(S.x, S.y + 2.1, S.z);
   STRUCTS.forEach(s => { const f = s.mesh.userData.flame; if (f){ f.scale.set(1 + Math.sin(tAcc * 17 + s.x) * .08, .85 + Math.sin(tAcc * 12 + s.z) * .2, 1); } });
-  // 공룡
+  // 공룡·고생물 (종마다 사는 곳·행동이 다르다)
   const now = performance.now();
   const onTower = !!S.climb;
   for (const d of DINOS){
     const D = DINO[d.kind];
     if (d.dead){ if (now > d.respawn){ d.dead = false; d.hp = D.hp; d.m.visible = true; d.m.rotation.z = 0; d.state = 'wander'; } continue; }
     const dx = S.x - d.x, dz = S.z - d.z, dist = Math.hypot(dx, dz);
-    if (dist > 160){ d.m.visible = false; continue; } d.m.visible = true;
-    d.t -= dt; d.cd -= dt; d.hurt -= dt;
+    if (dist > 170){ d.m.visible = false; continue; } d.m.visible = true;
+    d.t -= dt; d.cd -= dt; d.hurt -= dt; d.huntCd -= dt;
     const safe = inCamp(S.x, S.z, -1) && inCamp(d.x, d.z, 0) === false;
-    if (D.mood === 'angry' && !dead && playing && dist < (isNight ? 26 : 13) * (D.sense || 1) && d.state !== 'chase' && !safe && !onTower){ d.state = 'chase'; d.t = 10; if (d.kind === 'rex' && !d.roared){ d.roared = true; toast('⚠️ 큰이빨이 다가와요! 캠프나 망루로 피하세요'); } }
-    if (D.mood === 'shy' && dist < 8 && d.state === 'wander'){ d.state = 'flee'; d.t = 4; }
+    const blind = S.bless > 0;                     // 제단에 바친 동안은 다가오지 않는다
+    // 육식: 밤에는 더 멀리서도 알아챈다 (스밀로돈은 밤에만 사나워진다)
+    const angry = D.mood === 'angry' && (!D.night || isNight);
+    if (angry && !dead && playing && !blind && dist < (isNight ? 26 : 13) * (D.sense || 1) && d.state !== 'chase' && d.state !== 'hunt' && !safe && !onTower){
+      d.state = 'chase'; d.t = 10;
+      if ((d.kind === 'rex' || d.kind === 'spino') && !d.roared){ d.roared = true; toast('⚠️ ' + D.name + '이(가) 다가와요! 캠프나 망루로 피하세요'); }
+    }
+    if (D.mood === 'shy' && dist < 9 && d.state === 'wander'){ d.state = 'flee'; d.t = 4; }
+    // 사냥: 육식 공룡이 가까운 초식 공룡을 쫓는다 (섬 생태)
+    if (D.hunter && d.state === 'wander' && d.huntCd <= 0){
+      d.huntCd = 9 + Math.random() * 12;
+      let best = null, bd = 24;
+      for (const p of DINOS){
+        if (p === d || p.dead || !DINO[p.kind].prey) continue;
+        const dd = Math.hypot(p.x - d.x, p.z - d.z);
+        if (dd < bd){ bd = dd; best = p; }
+      }
+      if (best){ d.prey = best; d.state = 'hunt'; d.t = 12; }
+    }
     let sp = 0, tr = d.ry;
-    if (d.state === 'chase' && !dead){
+    if (d.state === 'hunt'){
+      const p = d.prey;
+      if (!p || p.dead || d.t <= 0){ d.state = 'wander'; d.prey = null; }
+      else {
+        tr = Math.atan2(p.x - d.x, p.z - d.z); sp = D.run;
+        if (Math.hypot(p.x - d.x, p.z - d.z) < D.rad + D.reach){
+          p.dead = true; p.respawn = now + 90000; p.m.visible = false; p.state = 'wander';
+          d.prey = null; d.state = 'eat'; d.t = 5;
+        }
+      }
+    } else if (d.state === 'eat'){ sp = 0; if (d.t <= 0) d.state = 'wander'; }
+    else if (d.state === 'chase' && !dead){
       tr = Math.atan2(dx, dz); sp = D.run;
       if (onTower){ d.state = 'wander'; } else if (dist < D.rad + D.reach){ sp = 0; if (d.cd <= 0){ d.roared = false; d.cd = D.mood === 'guard' ? 2 : 1.2; S.hp -= D.dmg; toast('🦖 ' + D.name + '에게 ' + (D.mood === 'guard' ? '받혔어요' : D.mood === 'calm' ? '밟혔어요' : '물렸어요') + '! -' + D.dmg); } }
-      if (d.t <= 0 || dist > 45) d.state = 'wander';
+      if (d.t <= 0 || dist > 45 || blind) d.state = 'wander';
     } else if (d.state === 'flee'){ tr = Math.atan2(-dx, -dz); sp = D.run; if (d.t <= 0) d.state = 'wander'; }
     else { if (d.t <= 0){ d.t = 3 + Math.random() * 6; d.goal = Math.random() < .55 ? d.ry + (Math.random() - .5) * 2 : null; } if (d.goal != null){ tr = d.goal; sp = D.speed; } }
     let a = tr - d.ry; a = Math.atan2(Math.sin(a), Math.cos(a)); d.ry += a * Math.min(1, dt * (D.rad > 2 ? 1.5 : 4));
     let nx = d.x + Math.sin(d.ry) * sp * dt, nz = d.z + Math.cos(d.ry) * sp * dt;
+    if (D.fly){                                   // 나는 공룡: 땅·충돌을 무시하고 섬 위를 돈다
+      if (Math.hypot(nx, nz) < R * 1.05){ d.x = nx; d.z = nz; } else { d.ry += 1.5; d.goal = null; }
+      d.m.position.set(d.x, Math.max(heightAt(d.x, d.z), 0) + (D.alt || 10) + Math.sin(tAcc * .8 + d.phase) * 1.8, d.z);
+      d.m.rotation.y = d.ry; d.m.rotation.z = Math.sin(tAcc * .55 + d.phase) * .14;
+      d.m.userData.legs.forEach((l, i) => { l.rotation.x = Math.sin(tAcc * 2.2 + d.phase + i) * .3; });
+      continue;
+    }
     [nx, nz] = collide(nx, nz, Math.min(D.rad, 1.2));
     if (heightAt(nx, nz) > .4 && Math.hypot(nx, nz) < R * .95){ d.x = nx; d.z = nz; } else { d.ry += 1.5; d.goal = null; }
     d.m.position.set(d.x, heightAt(d.x, d.z), d.z); d.m.rotation.y = d.ry;
@@ -752,11 +946,12 @@ function step(){
   const fv = aiming ? 45 : 60; if (Math.abs(fov - fv) > .1){ fov += (fv - fov) * Math.min(1, dt * 10); camera.fov = fov; camera.updateProjectionMatrix(); }
   $('cross').classList.toggle('aim', aiming);
   if (playing){ $('bHp').style.transform = 'scaleX(' + S.hp / 100 + ')'; $('bFood').style.transform = 'scaleX(' + S.food / 100 + ')'; $('bSta').style.transform = 'scaleX(' + S.sta / 100 + ')'; showPrompt(); }
+  if (X.pending && X.pending()) X.pump();        // 남은 텍스처를 한 프레임에 한 장씩 만든다
   renderer.render(scene, camera);
   requestAnimationFrame(step);
 }
 requestAnimationFrame(step);
 addEventListener('pagehide', saveLocal);
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveLocal(); });
-window.__primal = { S, NODES, DINOS, NET, STRUCTS, BM, renderer, heightAt, CAMP, setYaw: v => { yaw = v; } };
+window.__primal = { S, NODES, DINOS, NET, STRUCTS, BM, renderer, scene, camera, TEX: X, heightAt, CAMP, setYaw: v => { yaw = v; } };
 })();
